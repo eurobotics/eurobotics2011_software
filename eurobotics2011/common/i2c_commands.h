@@ -19,6 +19,14 @@
  *
  */
 
+/*  
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
+ *  Javier Baliñas Santos <javier@arc-robots.org>
+ *
+ *  Code ported to family of microcontrollers dsPIC from
+ *  i2c_commands.h,v 1.9 2009/05/27 20:04:06 zer0 Exp.
+ */
+
 #ifndef _I2C_COMMANDS_H_
 #define _I2C_COMMANDS_H_
 
