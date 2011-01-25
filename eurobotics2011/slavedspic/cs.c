@@ -50,22 +50,24 @@
 /* called every 5 ms */
 static void do_cs(__attribute__((unused)) void *dummy) 
 {
-	/* read encoders */
-	if (slavedspic.flags & DO_ENCODERS) {
-		encoders_dspic_manage(NULL);
-	}
 	/* control system */
 	if (slavedspic.flags & DO_CS) {
-		if (slavedspic.arm.on)
-			cs_manage(&slavedspic.arm.cs);
+//		/* front belts system */
+//		if (slavedspic.linear_front.on)
+//			cs_manage(&slavedspic.linear_front.cs);
+//		if (slavedspic.linear_rear.on)
+//			cs_manage(&slavedspic.linear_front.cs);
+//
+//		/* rear belts system */		
+//		if (slavedspic.linear_rear.on)
+//			cs_manage(&slavedspic.linear_front.cs);
+//		if (slavedspic.linear_rear.on)
+//			cs_manage(&slavedspic.linear_front.cs);
 	}
 	if (slavedspic.flags & DO_BD) {
-		bd_manage_from_cs(&slavedspic.arm.bd, &slavedspic.arm.cs);
+		//bd_manage_from_cs(&slavedspic.arm.bd, &slavedspic.arm.cs);
 	}
-	if (slavedspic.flags & DO_POWER)
-		BRAKE_OFF();
-	else
-		BRAKE_ON();
+
 }
 
 void dump_cs_debug(const char *name, struct cs *cs)
@@ -96,92 +98,92 @@ void dump_pid(const char *name, struct pid_filter *pid)
 		 pid_get_value_out(pid));
 }
 
-void microb_cs_init(void)
+void slavedspic_cs_init(void)
 {
 	
-	/* ---- CS arm */
-	/* PID */
-	pid_init(&slavedspic.arm.pid);
-	pid_set_gains(&slavedspic.arm.pid, 1500, 40, 15000); //1200, 20, 2000, //180, 6, 2100);
-	pid_set_maximums(&slavedspic.arm.pid, 0, 10000, 60000);
-	pid_set_out_shift(&slavedspic.arm.pid, 6);
-	pid_set_derivate_filter(&slavedspic.arm.pid, 4);
-
-	/* QUADRAMP */
-	quadramp_init(&slavedspic.arm.qr);
-	quadramp_set_1st_order_vars(&slavedspic.arm.qr, 4000, 4000); 	/* set speed */
-	quadramp_set_2nd_order_vars(&slavedspic.arm.qr, 10, 10); 			/* set accel */
-
-	/* CS */
-	cs_init(&slavedspic.arm.cs);
-	cs_set_consign_filter(&slavedspic.arm.cs, quadramp_do_filter, &slavedspic.arm.qr);
-	cs_set_correct_filter(&slavedspic.arm.cs, pid_do_filter, &slavedspic.arm.pid);
-	cs_set_process_in(&slavedspic.arm.cs, dac_mc_set, ARM_DAC);
-	cs_set_process_out(&slavedspic.arm.cs, encoders_dspic_get_value, ARM_ENCODER);
-	cs_set_consign(&slavedspic.arm.cs, 0);
-
-	/* Blocking detection */
-	bd_init(&slavedspic.arm.bd);
-	bd_set_speed_threshold(&slavedspic.arm.bd, 150);
-	bd_set_current_thresholds(&slavedspic.arm.bd, 500, 8000, 1000000, 40);
-
-//	/* ---- CS left_arm */
+//	/* ---- CS arm */
 //	/* PID */
-//	pid_init(&mechboard.left_arm.pid);
-//	pid_set_gains(&mechboard.left_arm.pid, 500, 40, 5000);
-//	pid_set_maximums(&mechboard.left_arm.pid, 0, 5000, 2400); /* max is 12 V */
-//	pid_set_out_shift(&mechboard.left_arm.pid, 10);
-//	pid_set_derivate_filter(&mechboard.left_arm.pid, 4);
+//	pid_init(&slavedspic.arm.pid);
+//	pid_set_gains(&slavedspic.arm.pid, 1500, 40, 15000); //1200, 20, 2000, //180, 6, 2100);
+//	pid_set_maximums(&slavedspic.arm.pid, 0, 10000, 60000);
+//	pid_set_out_shift(&slavedspic.arm.pid, 6);
+//	pid_set_derivate_filter(&slavedspic.arm.pid, 4);
 //
 //	/* QUADRAMP */
-//	quadramp_init(&mechboard.left_arm.qr);
-//	quadramp_set_1st_order_vars(&mechboard.left_arm.qr, 2000, 2000); /* set speed */
-//	quadramp_set_2nd_order_vars(&mechboard.left_arm.qr, 20, 20); /* set accel */
+//	quadramp_init(&slavedspic.arm.qr);
+//	quadramp_set_1st_order_vars(&slavedspic.arm.qr, 4000, 4000); 	/* set speed */
+//	quadramp_set_2nd_order_vars(&slavedspic.arm.qr, 10, 10); 			/* set accel */
 //
 //	/* CS */
-//	cs_init(&mechboard.left_arm.cs);
-//	cs_set_consign_filter(&mechboard.left_arm.cs, quadramp_do_filter, &mechboard.left_arm.qr);
-//	cs_set_correct_filter(&mechboard.left_arm.cs, pid_do_filter, &mechboard.left_arm.pid);
-//	cs_set_process_in(&mechboard.left_arm.cs, pwm_ng_set, LEFT_ARM_PWM);
-//	cs_set_process_out(&mechboard.left_arm.cs, encoders_spi_get_value, LEFT_ARM_ENCODER);
-//	cs_set_consign(&mechboard.left_arm.cs, 0);
+//	cs_init(&slavedspic.arm.cs);
+//	cs_set_consign_filter(&slavedspic.arm.cs, quadramp_do_filter, &slavedspic.arm.qr);
+//	cs_set_correct_filter(&slavedspic.arm.cs, pid_do_filter, &slavedspic.arm.pid);
+//	cs_set_process_in(&slavedspic.arm.cs, dac_mc_set, ARM_DAC);
+//	cs_set_process_out(&slavedspic.arm.cs, encoders_dspic_get_value, ARM_ENCODER);
+//	cs_set_consign(&slavedspic.arm.cs, 0);
 //
 //	/* Blocking detection */
-//	bd_init(&mechboard.left_arm.bd);
-//	bd_set_speed_threshold(&mechboard.left_arm.bd, 150);
-//	bd_set_current_thresholds(&mechboard.left_arm.bd, 500, 8000, 1000000, 40);
+//	bd_init(&slavedspic.arm.bd);
+//	bd_set_speed_threshold(&slavedspic.arm.bd, 150);
+//	bd_set_current_thresholds(&slavedspic.arm.bd, 500, 8000, 1000000, 40);
 //
-//	/* ---- CS right_arm */
-//	/* PID */
-//	pid_init(&mechboard.right_arm.pid);
-//	pid_set_gains(&mechboard.right_arm.pid, 500, 40, 5000);
-//	pid_set_maximums(&mechboard.right_arm.pid, 0, 5000, 2400); /* max is 12 V */
-//	pid_set_out_shift(&mechboard.right_arm.pid, 10);
-//	pid_set_derivate_filter(&mechboard.right_arm.pid, 6);
+////	/* ---- CS left_arm */
+////	/* PID */
+////	pid_init(&mechboard.left_arm.pid);
+////	pid_set_gains(&mechboard.left_arm.pid, 500, 40, 5000);
+////	pid_set_maximums(&mechboard.left_arm.pid, 0, 5000, 2400); /* max is 12 V */
+////	pid_set_out_shift(&mechboard.left_arm.pid, 10);
+////	pid_set_derivate_filter(&mechboard.left_arm.pid, 4);
+////
+////	/* QUADRAMP */
+////	quadramp_init(&mechboard.left_arm.qr);
+////	quadramp_set_1st_order_vars(&mechboard.left_arm.qr, 2000, 2000); /* set speed */
+////	quadramp_set_2nd_order_vars(&mechboard.left_arm.qr, 20, 20); /* set accel */
+////
+////	/* CS */
+////	cs_init(&mechboard.left_arm.cs);
+////	cs_set_consign_filter(&mechboard.left_arm.cs, quadramp_do_filter, &mechboard.left_arm.qr);
+////	cs_set_correct_filter(&mechboard.left_arm.cs, pid_do_filter, &mechboard.left_arm.pid);
+////	cs_set_process_in(&mechboard.left_arm.cs, pwm_ng_set, LEFT_ARM_PWM);
+////	cs_set_process_out(&mechboard.left_arm.cs, encoders_spi_get_value, LEFT_ARM_ENCODER);
+////	cs_set_consign(&mechboard.left_arm.cs, 0);
+////
+////	/* Blocking detection */
+////	bd_init(&mechboard.left_arm.bd);
+////	bd_set_speed_threshold(&mechboard.left_arm.bd, 150);
+////	bd_set_current_thresholds(&mechboard.left_arm.bd, 500, 8000, 1000000, 40);
+////
+////	/* ---- CS right_arm */
+////	/* PID */
+////	pid_init(&mechboard.right_arm.pid);
+////	pid_set_gains(&mechboard.right_arm.pid, 500, 40, 5000);
+////	pid_set_maximums(&mechboard.right_arm.pid, 0, 5000, 2400); /* max is 12 V */
+////	pid_set_out_shift(&mechboard.right_arm.pid, 10);
+////	pid_set_derivate_filter(&mechboard.right_arm.pid, 6);
+////
+////	/* QUADRAMP */
+////	quadramp_init(&mechboard.right_arm.qr);
+////	quadramp_set_1st_order_vars(&mechboard.right_arm.qr, 1000, 1000); /* set speed */
+////	quadramp_set_2nd_order_vars(&mechboard.right_arm.qr, 20, 20); /* set accel */
+////
+////	/* CS */
+////	cs_init(&mechboard.right_arm.cs);
+////	cs_set_consign_filter(&mechboard.right_arm.cs, quadramp_do_filter, &mechboard.right_arm.qr);
+////	cs_set_correct_filter(&mechboard.right_arm.cs, pid_do_filter, &mechboard.right_arm.pid);
+////	cs_set_process_in(&mechboard.right_arm.cs, pwm_ng_set, RIGHT_ARM_PWM);
+////	cs_set_process_out(&mechboard.right_arm.cs, encoders_spi_get_value, RIGHT_ARM_ENCODER);
+////	cs_set_consign(&mechboard.right_arm.cs, 0);
+////
+////	/* Blocking detection */
+////	bd_init(&mechboard.right_arm.bd);
+////	bd_set_speed_threshold(&mechboard.right_arm.bd, 150);
+////	bd_set_current_thresholds(&mechboard.right_arm.bd, 500, 8000, 1000000, 40);
 //
-//	/* QUADRAMP */
-//	quadramp_init(&mechboard.right_arm.qr);
-//	quadramp_set_1st_order_vars(&mechboard.right_arm.qr, 1000, 1000); /* set speed */
-//	quadramp_set_2nd_order_vars(&mechboard.right_arm.qr, 20, 20); /* set accel */
+//	/* set them on !! */
+//	slavedspic.arm.on = 1;
 //
-//	/* CS */
-//	cs_init(&mechboard.right_arm.cs);
-//	cs_set_consign_filter(&mechboard.right_arm.cs, quadramp_do_filter, &mechboard.right_arm.qr);
-//	cs_set_correct_filter(&mechboard.right_arm.cs, pid_do_filter, &mechboard.right_arm.pid);
-//	cs_set_process_in(&mechboard.right_arm.cs, pwm_ng_set, RIGHT_ARM_PWM);
-//	cs_set_process_out(&mechboard.right_arm.cs, encoders_spi_get_value, RIGHT_ARM_ENCODER);
-//	cs_set_consign(&mechboard.right_arm.cs, 0);
 //
-//	/* Blocking detection */
-//	bd_init(&mechboard.right_arm.bd);
-//	bd_set_speed_threshold(&mechboard.right_arm.bd, 150);
-//	bd_set_current_thresholds(&mechboard.right_arm.bd, 500, 8000, 1000000, 40);
-
-	/* set them on !! */
-	slavedspic.arm.on = 1;
-
-
-	scheduler_add_periodical_event_priority(do_cs, NULL, 
-						CS_PERIOD / SCHEDULER_UNIT, 
-						CS_PRIO);
+//	scheduler_add_periodical_event_priority(do_cs, NULL, 
+//						CS_PERIOD / SCHEDULER_UNIT, 
+//						CS_PRIO);
 }

@@ -55,7 +55,7 @@ struct csb_list {
 
 prog_char csb_arm_str[] = "arm";
 struct csb_list csb_list[] = {
-	{ .name = csb_arm_str, .csb = &slavedspic.arm },
+	{ .name = csb_arm_str, .csb = &slavedspic.linear_rear },
 };
 
 struct cmd_cs_result {

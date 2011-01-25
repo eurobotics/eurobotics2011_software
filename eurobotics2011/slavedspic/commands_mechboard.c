@@ -107,7 +107,7 @@ static void cmd_event_parsed(void *parsed_result, __attribute__((unused)) void *
 		slavedspic.flags |= bit;
 	else if (!strcmp_P(res->arg2, PSTR("off"))) {
 		if (!strcmp_P(res->arg1, PSTR("cs"))) {
-			dac_mc_set(ARM_DAC, 0);
+			//dac_mc_set(ARM_DAC, 0);
 		}
 		slavedspic.flags &= (~bit);
 	}
@@ -174,630 +174,630 @@ parse_pgm_inst_t cmd_color = {
 	},
 };
 
-/**********************************************************/
-/* arm_show */
-
-/* this structure is filled when cmd_arm_show is parsed successfully */
-struct cmd_arm_show_result {
-	fixed_string_t arg0;
-	fixed_string_t arg2;
-};
-
-/* function called when cmd_arm_show is parsed successfully */
-static void cmd_arm_show_parsed(void *parsed_result, __attribute__((unused)) void *data)
-{
-	arm_dump(&right_arm);
-}
-
-prog_char str_arm_show_arg0[] = "arm";
-parse_pgm_token_string_t cmd_arm_show_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_show_result, arg0, str_arm_show_arg0);
-prog_char str_arm_show_arg2[] = "show";
-parse_pgm_token_string_t cmd_arm_show_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_arm_show_result, arg2, str_arm_show_arg2);
-
-prog_char help_arm_show[] = "Show arm status";
-parse_pgm_inst_t cmd_arm_show = {
-	.f = cmd_arm_show_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_arm_show,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_arm_show_arg0,
-//		(prog_void *)&cmd_arm_show_arg1,
-		(prog_void *)&cmd_arm_show_arg2,
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* arm_goto */
-
-/* this structure is filled when cmd_arm_goto is parsed successfully */
-struct cmd_arm_goto_result {
-	fixed_string_t arg0;
-//	fixed_string_t arg1;
-	int16_t arg2;
-	int16_t arg3;
-//	int16_t arg4;
-};
-
-/* function called when cmd_arm_goto is parsed successfully */
-static void cmd_arm_goto_parsed(void *parsed_result, __attribute__((unused)) void *data)
-{
-	struct cmd_arm_goto_result *res = parsed_result;
-	uint8_t err;
-
-		arm_do_xy(&right_arm, res->arg2, res->arg3);//, res->arg4);
-		err = arm_wait_traj_end(&right_arm, ARM_TRAJ_ALL);
-		if (err != ARM_TRAJ_END)
-			printf_P(PSTR("err %x\r\n"), err);
-}
-
-prog_char str_arm_goto_arg0[] = "arm";
-parse_pgm_token_string_t cmd_arm_goto_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_result, arg0, str_arm_goto_arg0);
-parse_pgm_token_num_t cmd_arm_goto_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_arm_goto_result, arg2, INT16);
-parse_pgm_token_num_t cmd_arm_goto_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_arm_goto_result, arg3, INT16);
-//parse_pgm_token_num_t cmd_arm_goto_arg4 = TOKEN_NUM_INITIALIZER(struct cmd_arm_goto_result, arg4, INT16);
-
-prog_char help_arm_goto[] = "Arm goto a_deg,h_mm";
-parse_pgm_inst_t cmd_arm_goto = {
-	.f = cmd_arm_goto_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_arm_goto,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_arm_goto_arg0,
-//		(prog_void *)&cmd_arm_goto_arg1,
-		(prog_void *)&cmd_arm_goto_arg2,
-		(prog_void *)&cmd_arm_goto_arg3,
-//		(prog_void *)&cmd_arm_goto_arg4,
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* arm_goto_fixed */
-
-/* this structure is filled when cmd_arm_goto_fixed is parsed successfully */
-struct cmd_arm_goto_fixed_result {
-	fixed_string_t arg0;
-	//fixed_string_t arg1;
-	fixed_string_t arg2;
-	//fixed_string_t arg3;
-};
-
-/* function called when cmd_arm_goto_fixed is parsed successfully */
-static void cmd_arm_goto_fixed_parsed(void *parsed_result, __attribute__((unused)) void *data)
-{
-	struct cmd_arm_goto_fixed_result *res = parsed_result;
-	uint8_t err;
-
-	if (strcmp_P(res->arg2, PSTR("hide_inter")) == 0)
-		arm_goto_hide_intermediate();
-	else if (strcmp_P(res->arg2, PSTR("hide_final")) == 0)
-		arm_goto_hide_final();
-	else if (strcmp_P(res->arg2, PSTR("prepare_get_ball")) == 0)
-		arm_goto_prepare_get_ball();
-	else if (strcmp_P(res->arg2, PSTR("get_tomato_inter")) == 0)
-		arm_goto_get_tomato_intermediate();
-	else if (strcmp_P(res->arg2, PSTR("get_tomato_final")) == 0)
-		arm_goto_get_tomato_final();
-	else if (strcmp_P(res->arg2, PSTR("put_ball_inter")) == 0)
-		arm_goto_put_ball_intermediate();
-	else if (strcmp_P(res->arg2, PSTR("put_ball_inter2")) == 0)
-		arm_goto_put_ball_intermediate2();
-	else if (strcmp_P(res->arg2, PSTR("put_ball_final")) == 0)
-		arm_goto_put_ball_final();
-	else if (strcmp_P(res->arg2, PSTR("up_tomato")) == 0)
-		arm_goto_up_tomato();
-	else if (strcmp_P(res->arg2, PSTR("last_ball")) == 0)
-		arm_goto_hold_last_ball();
-	else if (strcmp_P(res->arg2, PSTR("get_orange_small")) == 0)
-		arm_goto_get_orange_small();
-	else if (strcmp_P(res->arg2, PSTR("get_orange_medium")) == 0)
-		arm_goto_get_orange_medium();
-	else if (strcmp_P(res->arg2, PSTR("get_orange_tall")) == 0)
-		arm_goto_get_orange_tall();	
-	else
-		return;
-
-	err = arm_wait_traj_end(&right_arm, ARM_TRAJ_ALL);
-	if (err != ARM_TRAJ_END)
-		printf_P(PSTR("arm err %x\r\n"), err);
-
-}
-
-prog_char str_arm_goto_fixed_arg0[] = "arm";
-parse_pgm_token_string_t cmd_arm_goto_fixed_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg0, str_arm_goto_fixed_arg0);
-//prog_char str_arm_goto_fixed_arg1[] = "left#right#both";
-//parse_pgm_token_string_t cmd_arm_goto_fixed_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg1, str_arm_goto_fixed_arg1);
-prog_char str_arm_goto_fixed_arg2[] = "hide_inter#hide_final#prepare_get_ball#get_tomato_inter#get_tomato_final#put_ball_inter#put_ball_inter2#put_ball_final#up_tomato#last_ball";
-parse_pgm_token_string_t cmd_arm_goto_fixed_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg2, str_arm_goto_fixed_arg2);
-//prog_char str_arm_goto_fixed_arg3[] = "p1#p2";
-//parse_pgm_token_string_t cmd_arm_goto_fixed_arg3 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg3, str_arm_goto_fixed_arg3);
-
-prog_char help_arm_goto_fixed[] = "Goto fixed positions";
-parse_pgm_inst_t cmd_arm_goto_fixed = {
-	.f = cmd_arm_goto_fixed_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_arm_goto_fixed,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_arm_goto_fixed_arg0,
-		//(prog_void *)&cmd_arm_goto_fixed_arg1,
-		(prog_void *)&cmd_arm_goto_fixed_arg2,
-		//(prog_void *)&cmd_arm_goto_fixed_arg3,
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* arm_simulate */
-
-/* this structure is filled when cmd_arm_simulate is parsed successfully */
-struct cmd_arm_simulate_result {
-	fixed_string_t arg0;
-//	fixed_string_t arg1;
-	fixed_string_t arg2;
-};
-
-/* function called when cmd_arm_simulate is parsed successfully */
-static void cmd_arm_simulate_parsed(void *parsed_result, __attribute__((unused)) void *data)
-{
-	struct cmd_arm_simulate_result *res = parsed_result;
-	uint8_t val;
-
-	if (strcmp_P(res->arg2, PSTR("simulate")) == 0)
-		val = 1;
-	else
-		val = 0;
-
-//	if (strcmp_P(res->arg1, PSTR("left")) == 0)
-//		left_arm.config.simulate = 1;
-//	else if (strcmp_P(res->arg1, PSTR("right")) == 0)
-		right_arm.config.simulate = 1;
-//	else {
-//		left_arm.config.simulate = 1;
+///**********************************************************/
+///* arm_show */
+//
+///* this structure is filled when cmd_arm_show is parsed successfully */
+//struct cmd_arm_show_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg2;
+//};
+//
+///* function called when cmd_arm_show is parsed successfully */
+//static void cmd_arm_show_parsed(void *parsed_result, __attribute__((unused)) void *data)
+//{
+//	arm_dump(&right_arm);
+//}
+//
+//prog_char str_arm_show_arg0[] = "arm";
+//parse_pgm_token_string_t cmd_arm_show_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_show_result, arg0, str_arm_show_arg0);
+//prog_char str_arm_show_arg2[] = "show";
+//parse_pgm_token_string_t cmd_arm_show_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_arm_show_result, arg2, str_arm_show_arg2);
+//
+//prog_char help_arm_show[] = "Show arm status";
+//parse_pgm_inst_t cmd_arm_show = {
+//	.f = cmd_arm_show_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_arm_show,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_arm_show_arg0,
+////		(prog_void *)&cmd_arm_show_arg1,
+//		(prog_void *)&cmd_arm_show_arg2,
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* arm_goto */
+//
+///* this structure is filled when cmd_arm_goto is parsed successfully */
+//struct cmd_arm_goto_result {
+//	fixed_string_t arg0;
+////	fixed_string_t arg1;
+//	int16_t arg2;
+//	int16_t arg3;
+////	int16_t arg4;
+//};
+//
+///* function called when cmd_arm_goto is parsed successfully */
+//static void cmd_arm_goto_parsed(void *parsed_result, __attribute__((unused)) void *data)
+//{
+//	struct cmd_arm_goto_result *res = parsed_result;
+//	uint8_t err;
+//
+//		arm_do_xy(&right_arm, res->arg2, res->arg3);//, res->arg4);
+//		err = arm_wait_traj_end(&right_arm, ARM_TRAJ_ALL);
+//		if (err != ARM_TRAJ_END)
+//			printf_P(PSTR("err %x\r\n"), err);
+//}
+//
+//prog_char str_arm_goto_arg0[] = "arm";
+//parse_pgm_token_string_t cmd_arm_goto_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_result, arg0, str_arm_goto_arg0);
+//parse_pgm_token_num_t cmd_arm_goto_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_arm_goto_result, arg2, INT16);
+//parse_pgm_token_num_t cmd_arm_goto_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_arm_goto_result, arg3, INT16);
+////parse_pgm_token_num_t cmd_arm_goto_arg4 = TOKEN_NUM_INITIALIZER(struct cmd_arm_goto_result, arg4, INT16);
+//
+//prog_char help_arm_goto[] = "Arm goto a_deg,h_mm";
+//parse_pgm_inst_t cmd_arm_goto = {
+//	.f = cmd_arm_goto_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_arm_goto,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_arm_goto_arg0,
+////		(prog_void *)&cmd_arm_goto_arg1,
+//		(prog_void *)&cmd_arm_goto_arg2,
+//		(prog_void *)&cmd_arm_goto_arg3,
+////		(prog_void *)&cmd_arm_goto_arg4,
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* arm_goto_fixed */
+//
+///* this structure is filled when cmd_arm_goto_fixed is parsed successfully */
+//struct cmd_arm_goto_fixed_result {
+//	fixed_string_t arg0;
+//	//fixed_string_t arg1;
+//	fixed_string_t arg2;
+//	//fixed_string_t arg3;
+//};
+//
+///* function called when cmd_arm_goto_fixed is parsed successfully */
+//static void cmd_arm_goto_fixed_parsed(void *parsed_result, __attribute__((unused)) void *data)
+//{
+//	struct cmd_arm_goto_fixed_result *res = parsed_result;
+//	uint8_t err;
+//
+//	if (strcmp_P(res->arg2, PSTR("hide_inter")) == 0)
+//		arm_goto_hide_intermediate();
+//	else if (strcmp_P(res->arg2, PSTR("hide_final")) == 0)
+//		arm_goto_hide_final();
+//	else if (strcmp_P(res->arg2, PSTR("prepare_get_ball")) == 0)
+//		arm_goto_prepare_get_ball();
+//	else if (strcmp_P(res->arg2, PSTR("get_tomato_inter")) == 0)
+//		arm_goto_get_tomato_intermediate();
+//	else if (strcmp_P(res->arg2, PSTR("get_tomato_final")) == 0)
+//		arm_goto_get_tomato_final();
+//	else if (strcmp_P(res->arg2, PSTR("put_ball_inter")) == 0)
+//		arm_goto_put_ball_intermediate();
+//	else if (strcmp_P(res->arg2, PSTR("put_ball_inter2")) == 0)
+//		arm_goto_put_ball_intermediate2();
+//	else if (strcmp_P(res->arg2, PSTR("put_ball_final")) == 0)
+//		arm_goto_put_ball_final();
+//	else if (strcmp_P(res->arg2, PSTR("up_tomato")) == 0)
+//		arm_goto_up_tomato();
+//	else if (strcmp_P(res->arg2, PSTR("last_ball")) == 0)
+//		arm_goto_hold_last_ball();
+//	else if (strcmp_P(res->arg2, PSTR("get_orange_small")) == 0)
+//		arm_goto_get_orange_small();
+//	else if (strcmp_P(res->arg2, PSTR("get_orange_medium")) == 0)
+//		arm_goto_get_orange_medium();
+//	else if (strcmp_P(res->arg2, PSTR("get_orange_tall")) == 0)
+//		arm_goto_get_orange_tall();	
+//	else
+//		return;
+//
+//	err = arm_wait_traj_end(&right_arm, ARM_TRAJ_ALL);
+//	if (err != ARM_TRAJ_END)
+//		printf_P(PSTR("arm err %x\r\n"), err);
+//
+//}
+//
+//prog_char str_arm_goto_fixed_arg0[] = "arm";
+//parse_pgm_token_string_t cmd_arm_goto_fixed_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg0, str_arm_goto_fixed_arg0);
+////prog_char str_arm_goto_fixed_arg1[] = "left#right#both";
+////parse_pgm_token_string_t cmd_arm_goto_fixed_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg1, str_arm_goto_fixed_arg1);
+//prog_char str_arm_goto_fixed_arg2[] = "hide_inter#hide_final#prepare_get_ball#get_tomato_inter#get_tomato_final#put_ball_inter#put_ball_inter2#put_ball_final#up_tomato#last_ball";
+//parse_pgm_token_string_t cmd_arm_goto_fixed_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg2, str_arm_goto_fixed_arg2);
+////prog_char str_arm_goto_fixed_arg3[] = "p1#p2";
+////parse_pgm_token_string_t cmd_arm_goto_fixed_arg3 = TOKEN_STRING_INITIALIZER(struct cmd_arm_goto_fixed_result, arg3, str_arm_goto_fixed_arg3);
+//
+//prog_char help_arm_goto_fixed[] = "Goto fixed positions";
+//parse_pgm_inst_t cmd_arm_goto_fixed = {
+//	.f = cmd_arm_goto_fixed_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_arm_goto_fixed,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_arm_goto_fixed_arg0,
+//		//(prog_void *)&cmd_arm_goto_fixed_arg1,
+//		(prog_void *)&cmd_arm_goto_fixed_arg2,
+//		//(prog_void *)&cmd_arm_goto_fixed_arg3,
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* arm_simulate */
+//
+///* this structure is filled when cmd_arm_simulate is parsed successfully */
+//struct cmd_arm_simulate_result {
+//	fixed_string_t arg0;
+////	fixed_string_t arg1;
+//	fixed_string_t arg2;
+//};
+//
+///* function called when cmd_arm_simulate is parsed successfully */
+//static void cmd_arm_simulate_parsed(void *parsed_result, __attribute__((unused)) void *data)
+//{
+//	struct cmd_arm_simulate_result *res = parsed_result;
+//	uint8_t val;
+//
+//	if (strcmp_P(res->arg2, PSTR("simulate")) == 0)
+//		val = 1;
+//	else
+//		val = 0;
+//
+////	if (strcmp_P(res->arg1, PSTR("left")) == 0)
+////		left_arm.config.simulate = 1;
+////	else if (strcmp_P(res->arg1, PSTR("right")) == 0)
 //		right_arm.config.simulate = 1;
+////	else {
+////		left_arm.config.simulate = 1;
+////		right_arm.config.simulate = 1;
+////	}
+//}
+//
+//prog_char str_arm_simulate_arg0[] = "arm";
+//parse_pgm_token_string_t cmd_arm_simulate_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_simulate_result, arg0, str_arm_simulate_arg0);
+////prog_char str_arm_simulate_arg1[] = "left#right#both";
+////parse_pgm_token_string_t cmd_arm_simulate_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_arm_simulate_result, arg1, str_arm_simulate_arg1);
+//prog_char str_arm_simulate_arg2[] = "simulate#real";
+//parse_pgm_token_string_t cmd_arm_simulate_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_arm_simulate_result, arg2, str_arm_simulate_arg2);
+//
+//prog_char help_arm_simulate[] = "Simulation or real for arm";
+//parse_pgm_inst_t cmd_arm_simulate = {
+//	.f = cmd_arm_simulate_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_arm_simulate,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_arm_simulate_arg0,
+////		(prog_void *)&cmd_arm_simulate_arg1,
+//		(prog_void *)&cmd_arm_simulate_arg2,
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* corn_rolls tests */
+//
+///* this structure is filled when cmd_pwm is parsed successfully */
+//struct cmd_corn_rolls_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//	int16_t arg2;
+//};
+//
+///* function called when cmd_pwm is parsed successfully */
+//static void cmd_corn_rolls_parsed(void * parsed_result, __attribute__((unused)) void *data)
+//{
+//	struct cmd_corn_rolls_result * res = parsed_result;
+//	uint8_t mode=0xFF;
+//
+//	if (!strcmp_P(res->arg1, PSTR("out")))
+//		mode = ROLLS_MODE_OUT;
+//	else if (!strcmp_P(res->arg1, PSTR("in")))
+//		mode = ROLLS_MODE_IN;
+//	else if (!strcmp_P(res->arg1, PSTR("right")))
+//		mode = ROLLS_MODE_RIGHT;
+//	else if (!strcmp_P(res->arg1, PSTR("left")))
+//		mode = ROLLS_MODE_LEFT;
+//
+//	if(mode!=0xFF)
+//		corn_rolls_set(mode, res->arg2);
+//
+//	printf_P(PSTR("Done\r\n"));
+//}
+//
+//prog_char str_corn_rolls_arg0[] = "corn_rolls";
+//parse_pgm_token_string_t cmd_corn_rolls_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_corn_rolls_result, arg0, str_corn_rolls_arg0);
+//prog_char str_corn_rolls_arg1[] = "out#in#right#left";
+//parse_pgm_token_string_t cmd_corn_rolls_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_corn_rolls_result, arg1, str_corn_rolls_arg1);
+//parse_pgm_token_num_t cmd_corn_rolls_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_corn_rolls_result, arg2, INT16);
+//
+//prog_char help_corn_rolls[] = "Set corn_rolls mode and value";
+//parse_pgm_inst_t cmd_corn_rolls = {
+//	.f = cmd_corn_rolls_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_corn_rolls,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_corn_rolls_arg0, 
+//		(prog_void *)&cmd_corn_rolls_arg1, 
+//		(prog_void *)&cmd_corn_rolls_arg2, 
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* ball finger */
+//
+///* this structure is filled when cmd_finger is parsed successfully */
+//struct cmd_ball_finger_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_ball_finger is parsed successfully */
+//static void cmd_ball_finger_parsed(void *parsed_result, __attribute__((unused)) void *data)
+//{
+//	struct cmd_ball_finger_result *res = parsed_result;
+//	uint16_t dest = 0;
+//
+//	if (strcmp_P(res->arg1, PSTR("left")) == 0)
+//		dest = BALL_FINGER_LEFT;
+//	else if (strcmp_P(res->arg1, PSTR("left_last")) == 0)
+//		dest = BALL_FINGER_LEFT_LAST;
+//	else if (strcmp_P(res->arg1, PSTR("right")) == 0)
+//		dest = BALL_FINGER_RIGHT;
+//	else if (strcmp_P(res->arg1, PSTR("right_last")) == 0)
+//		dest = BALL_FINGER_RIGHT_LAST;
+//	else if (strcmp_P(res->arg1, PSTR("center")) == 0)
+//		dest = BALL_FINGER_CENTER;
+//	ball_finger_goto(dest);
+//}
+//
+//prog_char str_ball_finger_arg0[] = "ball_finger";
+//parse_pgm_token_string_t cmd_ball_finger_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_ball_finger_result, arg0, str_ball_finger_arg0);
+//prog_char str_ball_finger_arg1[] = "left#left_last#right#right_last#center";
+//parse_pgm_token_string_t cmd_ball_finger_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_ball_finger_result, arg1, str_ball_finger_arg1);
+//
+//prog_char help_ball_finger[] = "Move ball_finger";
+//parse_pgm_inst_t cmd_ball_finger = {
+//	.f = cmd_ball_finger_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_ball_finger,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_ball_finger_arg0,
+//		(prog_void *)&cmd_ball_finger_arg1,
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* corn finger */
+//
+///* this structure is filled when cmd_finger is parsed successfully */
+//struct cmd_corn_finger_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_corn_finger is parsed successfully */
+//static void cmd_corn_finger_parsed(void *parsed_result, __attribute__((unused)) void *data)
+//{
+//	struct cmd_corn_finger_result *res = parsed_result;
+//	uint16_t dest = 0;
+//
+//	if (strcmp_P(res->arg1, PSTR("left")) == 0)
+//		dest = CORN_FINGER_LEFT;
+//	else if (strcmp_P(res->arg1, PSTR("left_inter")) == 0)
+//		dest = CORN_FINGER_LEFT_INTER;
+//	else if (strcmp_P(res->arg1, PSTR("left_last")) == 0)
+//		dest = CORN_FINGER_LEFT_LAST;
+//	else if (strcmp_P(res->arg1, PSTR("right")) == 0)
+//		dest = CORN_FINGER_RIGHT;
+//	else if (strcmp_P(res->arg1, PSTR("right_inter")) == 0)
+//		dest = CORN_FINGER_RIGHT_INTER;
+//	else if (strcmp_P(res->arg1, PSTR("right_last")) == 0)
+//		dest = CORN_FINGER_RIGHT_LAST;
+//	else if (strcmp_P(res->arg1, PSTR("right_out")) == 0)
+//		dest = CORN_FINGER_RIGHT_OUT;
+//	else if (strcmp_P(res->arg1, PSTR("left_out")) == 0)
+//		dest = CORN_FINGER_LEFT_OUT;
+//	else if (strcmp_P(res->arg1, PSTR("right_3th")) == 0)
+//		dest = CORN_FINGER_RIGHT_OUT;
+//	else if (strcmp_P(res->arg1, PSTR("left_3th")) == 0)
+//		dest = CORN_FINGER_LEFT_OUT;
+//
+//
+//	corn_finger_goto(dest);
+//}
+//
+//prog_char str_corn_finger_arg0[] = "corn_finger";
+//parse_pgm_token_string_t cmd_corn_finger_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_corn_finger_result, arg0, str_corn_finger_arg0);
+//prog_char str_corn_finger_arg1[] = "left#left_inter#left_last#left_out#left_3th#right#right_inter#right_last#right_out#right_3th";
+//parse_pgm_token_string_t cmd_corn_finger_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_corn_finger_result, arg1, str_corn_finger_arg1);
+//
+//prog_char help_corn_finger[] = "Move corn_finger";
+//parse_pgm_inst_t cmd_corn_finger = {
+//	.f = cmd_corn_finger_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_corn_finger,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_corn_finger_arg0,
+//		(prog_void *)&cmd_corn_finger_arg1,
+//		NULL,
+//	},
+//};
+//
+//
+///**********************************************************/
+///* pump */
+//
+///* this structure is filled when cmd_pump is parsed successfully */
+//struct cmd_pump_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_pump is parsed successfully */
+//static void cmd_pump_parsed(void *parsed_result, 
+//			    __attribute__((unused)) void *data)
+//{
+//	struct cmd_pump_result *res = parsed_result;
+//	int16_t val = 0;
+//
+//	if (strcmp_P(res->arg1, PSTR("on")) == 0)
+//		val = PUMP_ON;
+//	else if (strcmp_P(res->arg1, PSTR("off")) == 0)
+//		val = PUMP_OFF;
+//	else if (strcmp_P(res->arg1, PSTR("reverse")) == 0)
+//		val = PUMP_REVERSE;
+//
+//	pump_set(val);
+//}
+//
+//prog_char str_pump_arg0[] = "pump";
+//parse_pgm_token_string_t cmd_pump_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_pump_result, arg0, str_pump_arg0);
+//prog_char str_pump_arg1[] = "on#off#reverse";
+//parse_pgm_token_string_t cmd_pump_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_pump_result, arg1, str_pump_arg1);
+//
+//prog_char help_pump[] = "activate pump";
+//parse_pgm_inst_t cmd_pump = {
+//	.f = cmd_pump_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_pump,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_pump_arg0,
+//		(prog_void *)&cmd_pump_arg1,
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* corn_servo */
+//
+///* this structure is filled when cmd_servo_corn is parsed successfully */
+//struct cmd_servo_corn_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_servo_corn is parsed successfully */
+//static void cmd_servo_corn_parsed(void *parsed_result, 
+//			    __attribute__((unused)) void *data)
+//{
+//	struct cmd_servo_corn_result *res = parsed_result;
+//
+//	if (strcmp_P(res->arg1, PSTR("hold_r_up")) == 0)
+//		servo_corn_hold_right_up();
+//	else if (strcmp_P(res->arg1, PSTR("hold_r_down")) == 0)
+//		servo_corn_hold_right_down();
+//	else if (strcmp_P(res->arg1, PSTR("hold_l_up")) == 0)
+//		servo_corn_hold_left_up();
+//	else if (strcmp_P(res->arg1, PSTR("hold_l_down")) == 0)
+//		servo_corn_hold_left_down();
+//	else if (strcmp_P(res->arg1, PSTR("push_out")) == 0)
+//		servo_corn_push_out();
+//	else if (strcmp_P(res->arg1, PSTR("push_in")) == 0)
+//		servo_corn_push_in();
+//	else if (strcmp_P(res->arg1, PSTR("push")) == 0)
+//		corn_push();
+//
+//
+//	printf("Done\n\r");
+//}
+//
+//prog_char str_servo_corn_arg0[] = "corn_servo";
+//parse_pgm_token_string_t cmd_servo_corn_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_servo_corn_result, arg0, str_servo_corn_arg0);
+//prog_char str_servo_corn_arg1[] = "hold_r_up#hold_r_down#hold_l_up#hold_l_down#push_out#push_in#push";
+//parse_pgm_token_string_t cmd_servo_corn_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_servo_corn_result, arg1, str_servo_corn_arg1);
+//
+//prog_char help_servo_corn[] = "activate servos of corn store system";
+//parse_pgm_inst_t cmd_servo_corn = {
+//	.f = cmd_servo_corn_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_servo_corn,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_servo_corn_arg0,
+//		(prog_void *)&cmd_servo_corn_arg1,
+//		NULL,
+//	},
+//};
+//
+//
+///**********************************************************/
+///* State1 */
+//
+///* this structure is filled when cmd_state1 is parsed successfully */
+//struct cmd_state1_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_state1 is parsed successfully */
+//static void cmd_state1_parsed(void *parsed_result,
+//			      __attribute__((unused)) void *data)
+//{
+//	struct cmd_state1_result *res = parsed_result;
+//	struct i2c_cmd_slavedspic_set_mode command;
+//
+//	if (!strcmp_P(res->arg1, PSTR("init"))) {
+//		state_init();
+//		return;
 //	}
-}
-
-prog_char str_arm_simulate_arg0[] = "arm";
-parse_pgm_token_string_t cmd_arm_simulate_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_arm_simulate_result, arg0, str_arm_simulate_arg0);
-//prog_char str_arm_simulate_arg1[] = "left#right#both";
-//parse_pgm_token_string_t cmd_arm_simulate_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_arm_simulate_result, arg1, str_arm_simulate_arg1);
-prog_char str_arm_simulate_arg2[] = "simulate#real";
-parse_pgm_token_string_t cmd_arm_simulate_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_arm_simulate_result, arg2, str_arm_simulate_arg2);
-
-prog_char help_arm_simulate[] = "Simulation or real for arm";
-parse_pgm_inst_t cmd_arm_simulate = {
-	.f = cmd_arm_simulate_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_arm_simulate,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_arm_simulate_arg0,
-//		(prog_void *)&cmd_arm_simulate_arg1,
-		(prog_void *)&cmd_arm_simulate_arg2,
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* corn_rolls tests */
-
-/* this structure is filled when cmd_pwm is parsed successfully */
-struct cmd_corn_rolls_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-	int16_t arg2;
-};
-
-/* function called when cmd_pwm is parsed successfully */
-static void cmd_corn_rolls_parsed(void * parsed_result, __attribute__((unused)) void *data)
-{
-	struct cmd_corn_rolls_result * res = parsed_result;
-	uint8_t mode=0xFF;
-
-	if (!strcmp_P(res->arg1, PSTR("out")))
-		mode = ROLLS_MODE_OUT;
-	else if (!strcmp_P(res->arg1, PSTR("in")))
-		mode = ROLLS_MODE_IN;
-	else if (!strcmp_P(res->arg1, PSTR("right")))
-		mode = ROLLS_MODE_RIGHT;
-	else if (!strcmp_P(res->arg1, PSTR("left")))
-		mode = ROLLS_MODE_LEFT;
-
-	if(mode!=0xFF)
-		corn_rolls_set(mode, res->arg2);
-
-	printf_P(PSTR("Done\r\n"));
-}
-
-prog_char str_corn_rolls_arg0[] = "corn_rolls";
-parse_pgm_token_string_t cmd_corn_rolls_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_corn_rolls_result, arg0, str_corn_rolls_arg0);
-prog_char str_corn_rolls_arg1[] = "out#in#right#left";
-parse_pgm_token_string_t cmd_corn_rolls_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_corn_rolls_result, arg1, str_corn_rolls_arg1);
-parse_pgm_token_num_t cmd_corn_rolls_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_corn_rolls_result, arg2, INT16);
-
-prog_char help_corn_rolls[] = "Set corn_rolls mode and value";
-parse_pgm_inst_t cmd_corn_rolls = {
-	.f = cmd_corn_rolls_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_corn_rolls,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_corn_rolls_arg0, 
-		(prog_void *)&cmd_corn_rolls_arg1, 
-		(prog_void *)&cmd_corn_rolls_arg2, 
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* ball finger */
-
-/* this structure is filled when cmd_finger is parsed successfully */
-struct cmd_ball_finger_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_ball_finger is parsed successfully */
-static void cmd_ball_finger_parsed(void *parsed_result, __attribute__((unused)) void *data)
-{
-	struct cmd_ball_finger_result *res = parsed_result;
-	uint16_t dest = 0;
-
-	if (strcmp_P(res->arg1, PSTR("left")) == 0)
-		dest = BALL_FINGER_LEFT;
-	else if (strcmp_P(res->arg1, PSTR("left_last")) == 0)
-		dest = BALL_FINGER_LEFT_LAST;
-	else if (strcmp_P(res->arg1, PSTR("right")) == 0)
-		dest = BALL_FINGER_RIGHT;
-	else if (strcmp_P(res->arg1, PSTR("right_last")) == 0)
-		dest = BALL_FINGER_RIGHT_LAST;
-	else if (strcmp_P(res->arg1, PSTR("center")) == 0)
-		dest = BALL_FINGER_CENTER;
-	ball_finger_goto(dest);
-}
-
-prog_char str_ball_finger_arg0[] = "ball_finger";
-parse_pgm_token_string_t cmd_ball_finger_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_ball_finger_result, arg0, str_ball_finger_arg0);
-prog_char str_ball_finger_arg1[] = "left#left_last#right#right_last#center";
-parse_pgm_token_string_t cmd_ball_finger_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_ball_finger_result, arg1, str_ball_finger_arg1);
-
-prog_char help_ball_finger[] = "Move ball_finger";
-parse_pgm_inst_t cmd_ball_finger = {
-	.f = cmd_ball_finger_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_ball_finger,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_ball_finger_arg0,
-		(prog_void *)&cmd_ball_finger_arg1,
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* corn finger */
-
-/* this structure is filled when cmd_finger is parsed successfully */
-struct cmd_corn_finger_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_corn_finger is parsed successfully */
-static void cmd_corn_finger_parsed(void *parsed_result, __attribute__((unused)) void *data)
-{
-	struct cmd_corn_finger_result *res = parsed_result;
-	uint16_t dest = 0;
-
-	if (strcmp_P(res->arg1, PSTR("left")) == 0)
-		dest = CORN_FINGER_LEFT;
-	else if (strcmp_P(res->arg1, PSTR("left_inter")) == 0)
-		dest = CORN_FINGER_LEFT_INTER;
-	else if (strcmp_P(res->arg1, PSTR("left_last")) == 0)
-		dest = CORN_FINGER_LEFT_LAST;
-	else if (strcmp_P(res->arg1, PSTR("right")) == 0)
-		dest = CORN_FINGER_RIGHT;
-	else if (strcmp_P(res->arg1, PSTR("right_inter")) == 0)
-		dest = CORN_FINGER_RIGHT_INTER;
-	else if (strcmp_P(res->arg1, PSTR("right_last")) == 0)
-		dest = CORN_FINGER_RIGHT_LAST;
-	else if (strcmp_P(res->arg1, PSTR("right_out")) == 0)
-		dest = CORN_FINGER_RIGHT_OUT;
-	else if (strcmp_P(res->arg1, PSTR("left_out")) == 0)
-		dest = CORN_FINGER_LEFT_OUT;
-	else if (strcmp_P(res->arg1, PSTR("right_3th")) == 0)
-		dest = CORN_FINGER_RIGHT_OUT;
-	else if (strcmp_P(res->arg1, PSTR("left_3th")) == 0)
-		dest = CORN_FINGER_LEFT_OUT;
-
-
-	corn_finger_goto(dest);
-}
-
-prog_char str_corn_finger_arg0[] = "corn_finger";
-parse_pgm_token_string_t cmd_corn_finger_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_corn_finger_result, arg0, str_corn_finger_arg0);
-prog_char str_corn_finger_arg1[] = "left#left_inter#left_last#left_out#left_3th#right#right_inter#right_last#right_out#right_3th";
-parse_pgm_token_string_t cmd_corn_finger_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_corn_finger_result, arg1, str_corn_finger_arg1);
-
-prog_char help_corn_finger[] = "Move corn_finger";
-parse_pgm_inst_t cmd_corn_finger = {
-	.f = cmd_corn_finger_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_corn_finger,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_corn_finger_arg0,
-		(prog_void *)&cmd_corn_finger_arg1,
-		NULL,
-	},
-};
-
-
-/**********************************************************/
-/* pump */
-
-/* this structure is filled when cmd_pump is parsed successfully */
-struct cmd_pump_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_pump is parsed successfully */
-static void cmd_pump_parsed(void *parsed_result, 
-			    __attribute__((unused)) void *data)
-{
-	struct cmd_pump_result *res = parsed_result;
-	int16_t val = 0;
-
-	if (strcmp_P(res->arg1, PSTR("on")) == 0)
-		val = PUMP_ON;
-	else if (strcmp_P(res->arg1, PSTR("off")) == 0)
-		val = PUMP_OFF;
-	else if (strcmp_P(res->arg1, PSTR("reverse")) == 0)
-		val = PUMP_REVERSE;
-
-	pump_set(val);
-}
-
-prog_char str_pump_arg0[] = "pump";
-parse_pgm_token_string_t cmd_pump_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_pump_result, arg0, str_pump_arg0);
-prog_char str_pump_arg1[] = "on#off#reverse";
-parse_pgm_token_string_t cmd_pump_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_pump_result, arg1, str_pump_arg1);
-
-prog_char help_pump[] = "activate pump";
-parse_pgm_inst_t cmd_pump = {
-	.f = cmd_pump_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_pump,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_pump_arg0,
-		(prog_void *)&cmd_pump_arg1,
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* corn_servo */
-
-/* this structure is filled when cmd_servo_corn is parsed successfully */
-struct cmd_servo_corn_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_servo_corn is parsed successfully */
-static void cmd_servo_corn_parsed(void *parsed_result, 
-			    __attribute__((unused)) void *data)
-{
-	struct cmd_servo_corn_result *res = parsed_result;
-
-	if (strcmp_P(res->arg1, PSTR("hold_r_up")) == 0)
-		servo_corn_hold_right_up();
-	else if (strcmp_P(res->arg1, PSTR("hold_r_down")) == 0)
-		servo_corn_hold_right_down();
-	else if (strcmp_P(res->arg1, PSTR("hold_l_up")) == 0)
-		servo_corn_hold_left_up();
-	else if (strcmp_P(res->arg1, PSTR("hold_l_down")) == 0)
-		servo_corn_hold_left_down();
-	else if (strcmp_P(res->arg1, PSTR("push_out")) == 0)
-		servo_corn_push_out();
-	else if (strcmp_P(res->arg1, PSTR("push_in")) == 0)
-		servo_corn_push_in();
-	else if (strcmp_P(res->arg1, PSTR("push")) == 0)
-		corn_push();
-
-
-	printf("Done\n\r");
-}
-
-prog_char str_servo_corn_arg0[] = "corn_servo";
-parse_pgm_token_string_t cmd_servo_corn_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_servo_corn_result, arg0, str_servo_corn_arg0);
-prog_char str_servo_corn_arg1[] = "hold_r_up#hold_r_down#hold_l_up#hold_l_down#push_out#push_in#push";
-parse_pgm_token_string_t cmd_servo_corn_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_servo_corn_result, arg1, str_servo_corn_arg1);
-
-prog_char help_servo_corn[] = "activate servos of corn store system";
-parse_pgm_inst_t cmd_servo_corn = {
-	.f = cmd_servo_corn_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_servo_corn,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_servo_corn_arg0,
-		(prog_void *)&cmd_servo_corn_arg1,
-		NULL,
-	},
-};
-
-
-/**********************************************************/
-/* State1 */
-
-/* this structure is filled when cmd_state1 is parsed successfully */
-struct cmd_state1_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_state1 is parsed successfully */
-static void cmd_state1_parsed(void *parsed_result,
-			      __attribute__((unused)) void *data)
-{
-	struct cmd_state1_result *res = parsed_result;
-	struct i2c_cmd_slavedspic_set_mode command;
-
-	if (!strcmp_P(res->arg1, PSTR("init"))) {
-		state_init();
-		return;
-	}
-
-	if (!strcmp_P(res->arg1, PSTR("hide_arm")))
-		command.mode = I2C_SLAVEDSPIC_MODE_HIDE_ARM;
-	else if (!strcmp_P(res->arg1, PSTR("show_arm")))
-		command.mode = I2C_SLAVEDSPIC_MODE_SHOW_ARM;
-	else if (!strcmp_P(res->arg1, PSTR("prepare_harvest_ball")))
-		command.mode = I2C_SLAVEDSPIC_MODE_PREPARE_HARVEST_BALL;
-	else if (!strcmp_P(res->arg1, PSTR("harvest_tomato")))
-		command.mode = I2C_SLAVEDSPIC_MODE_HARVEST_TOMATO;
-	else if (!strcmp_P(res->arg1, PSTR("finger_ball")))
-		command.mode = I2C_SLAVEDSPIC_MODE_PUTIN_FINGER_BALL;
-	
-	state_set_mode(&command);
-}
-
-prog_char str_state1_arg0[] = "slavedspic";
-parse_pgm_token_string_t cmd_state1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state1_result, arg0, str_state1_arg0);
-prog_char str_state1_arg1[] = "init#hide_arm#show_arm#prepare_harvest_ball#harvest_tomato#finger_ball";
-parse_pgm_token_string_t cmd_state1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state1_result, arg1, str_state1_arg1);
-
-prog_char help_state1[] = "set slavedspic mode";
-parse_pgm_inst_t cmd_state1 = {
-	.f = cmd_state1_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_state1,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_state1_arg0, 
-		(prog_void *)&cmd_state1_arg1, 
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* State2 */
-
-/* this structure is filled when cmd_state2 is parsed successfully */
-struct cmd_state2_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_state2 is parsed successfully */
-static void cmd_state2_parsed(void *parsed_result,
-			      __attribute__((unused)) void *data)
-{
-	struct cmd_state2_result *res = parsed_result;
-	struct i2c_cmd_slavedspic_set_mode command;
-
-	if (!strcmp_P(res->arg1, PSTR("init"))) {
-		state_init();
-		return;
-	}
-
-
-	if (!strcmp_P(res->arg1, PSTR("pump_on")))
-		command.mode = I2C_SLAVEDSPIC_MODE_ARM_PUMP_ON;
-	else if (!strcmp_P(res->arg1, PSTR("pump_off")))
-		command.mode = I2C_SLAVEDSPIC_MODE_ARM_PUMP_OFF;
-	else if (!strcmp_P(res->arg1, PSTR("rolls_in")))
-		command.mode = I2C_SLAVEDSPIC_MODE_CORN_ROLLS_IN;
-	else if (!strcmp_P(res->arg1, PSTR("rolls_out")))
-		command.mode = I2C_SLAVEDSPIC_MODE_CORN_ROLLS_OUT;
-	else if (!strcmp_P(res->arg1, PSTR("rolls_stop")))
-		command.mode = I2C_SLAVEDSPIC_MODE_CORN_ROLLS_STOP;
-	else if (!strcmp_P(res->arg1, PSTR("harvest_corn")))
-		command.mode = I2C_SLAVEDSPIC_MODE_HARVEST_CORN;
-	else if (!strcmp_P(res->arg1, PSTR("out_corns")))
-		command.mode = I2C_SLAVEDSPIC_MODE_OUT_CORNS;
-	
-	state_set_mode(&command);
-}
-
-prog_char str_state2_arg0[] = "slavedspic";
-parse_pgm_token_string_t cmd_state2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg0, str_state2_arg0);
-prog_char str_state2_arg1[] = "pump_on#pump_off#rolls_in#rolls_out#rolls_stop#harvest_corn#out_corns";
-parse_pgm_token_string_t cmd_state2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg1, str_state2_arg1);
-
-prog_char help_state2[] = "set slavedspic mode";
-parse_pgm_inst_t cmd_state2 = {
-	.f = cmd_state2_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_state2,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_state2_arg0, 
-		(prog_void *)&cmd_state2_arg1, 
-		NULL,
-	},
-};
-
-
-/**********************************************************/
-/* State3 */
-
-/* this structure is filled when cmd_state3 is parsed successfully */
-struct cmd_state3_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-	int16_t arg2;
-	int16_t arg3;
-};
-
-/* function called when cmd_state3 is parsed successfully */
-static void cmd_state3_parsed(void *parsed_result,
-			      __attribute__((unused)) void *data)
-{
-	struct cmd_state3_result *res = parsed_result;
-	struct i2c_cmd_slavedspic_set_mode command;
-
-	if (!strcmp_P(res->arg1, PSTR("init"))) {
-		state_init();
-		return;
-	}
-
-
-	if (!strcmp_P(res->arg1, PSTR("arm_goto_ah"))){
-		command.mode = I2C_SLAVEDSPIC_MODE_ARM_GOTO_AH;
-		command.arm_goto.angle = res->arg2;
-		command.arm_goto.height = res->arg3;
-	}
-	else if (!strcmp_P(res->arg1, PSTR("harvest_orange"))){
-		command.mode = I2C_SLAVEDSPIC_MODE_HARVEST_ORANGE;
-		command.harvest_orange.position = CUSTOM_POSITION;
-		command.harvest_orange.angle = res->arg2;
-		command.harvest_orange.height = res->arg3;
-		command.harvest_orange.vacuum_time_div10 = 0;
-		
-	}
-	
-	state_set_mode(&command);
-}
-
-prog_char str_state3_arg0[] = "slavedspic";
-parse_pgm_token_string_t cmd_state3_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state3_result, arg0, str_state3_arg0);
-prog_char str_state3_arg1[] = "arm_goto_ah#harvest_orange";
-parse_pgm_token_string_t cmd_state3_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state3_result, arg1, str_state3_arg1);
-parse_pgm_token_num_t cmd_state3_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_state3_result, arg2, INT16);
-parse_pgm_token_num_t cmd_state3_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_state3_result, arg3, INT16);
-
-prog_char help_state3[] = "set slavedspic mode";
-parse_pgm_inst_t cmd_state3 = {
-	.f = cmd_state3_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_state3,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_state3_arg0, 
-		(prog_void *)&cmd_state3_arg1, 
-		(prog_void *)&cmd_state3_arg2, 
-		(prog_void *)&cmd_state3_arg3, 
-		NULL,
-	},
-};
-
+//
+//	if (!strcmp_P(res->arg1, PSTR("hide_arm")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_HIDE_ARM;
+//	else if (!strcmp_P(res->arg1, PSTR("show_arm")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_SHOW_ARM;
+//	else if (!strcmp_P(res->arg1, PSTR("prepare_harvest_ball")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_PREPARE_HARVEST_BALL;
+//	else if (!strcmp_P(res->arg1, PSTR("harvest_tomato")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_HARVEST_TOMATO;
+//	else if (!strcmp_P(res->arg1, PSTR("finger_ball")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_PUTIN_FINGER_BALL;
+//	
+//	state_set_mode(&command);
+//}
+//
+//prog_char str_state1_arg0[] = "slavedspic";
+//parse_pgm_token_string_t cmd_state1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state1_result, arg0, str_state1_arg0);
+//prog_char str_state1_arg1[] = "init#hide_arm#show_arm#prepare_harvest_ball#harvest_tomato#finger_ball";
+//parse_pgm_token_string_t cmd_state1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state1_result, arg1, str_state1_arg1);
+//
+//prog_char help_state1[] = "set slavedspic mode";
+//parse_pgm_inst_t cmd_state1 = {
+//	.f = cmd_state1_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_state1,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_state1_arg0, 
+//		(prog_void *)&cmd_state1_arg1, 
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* State2 */
+//
+///* this structure is filled when cmd_state2 is parsed successfully */
+//struct cmd_state2_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_state2 is parsed successfully */
+//static void cmd_state2_parsed(void *parsed_result,
+//			      __attribute__((unused)) void *data)
+//{
+//	struct cmd_state2_result *res = parsed_result;
+//	struct i2c_cmd_slavedspic_set_mode command;
+//
+//	if (!strcmp_P(res->arg1, PSTR("init"))) {
+//		state_init();
+//		return;
+//	}
+//
+//
+//	if (!strcmp_P(res->arg1, PSTR("pump_on")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_ARM_PUMP_ON;
+//	else if (!strcmp_P(res->arg1, PSTR("pump_off")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_ARM_PUMP_OFF;
+//	else if (!strcmp_P(res->arg1, PSTR("rolls_in")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_CORN_ROLLS_IN;
+//	else if (!strcmp_P(res->arg1, PSTR("rolls_out")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_CORN_ROLLS_OUT;
+//	else if (!strcmp_P(res->arg1, PSTR("rolls_stop")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_CORN_ROLLS_STOP;
+//	else if (!strcmp_P(res->arg1, PSTR("harvest_corn")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_HARVEST_CORN;
+//	else if (!strcmp_P(res->arg1, PSTR("out_corns")))
+//		command.mode = I2C_SLAVEDSPIC_MODE_OUT_CORNS;
+//	
+//	state_set_mode(&command);
+//}
+//
+//prog_char str_state2_arg0[] = "slavedspic";
+//parse_pgm_token_string_t cmd_state2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg0, str_state2_arg0);
+//prog_char str_state2_arg1[] = "pump_on#pump_off#rolls_in#rolls_out#rolls_stop#harvest_corn#out_corns";
+//parse_pgm_token_string_t cmd_state2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg1, str_state2_arg1);
+//
+//prog_char help_state2[] = "set slavedspic mode";
+//parse_pgm_inst_t cmd_state2 = {
+//	.f = cmd_state2_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_state2,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_state2_arg0, 
+//		(prog_void *)&cmd_state2_arg1, 
+//		NULL,
+//	},
+//};
+//
+//
+///**********************************************************/
+///* State3 */
+//
+///* this structure is filled when cmd_state3 is parsed successfully */
+//struct cmd_state3_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//	int16_t arg2;
+//	int16_t arg3;
+//};
+//
+///* function called when cmd_state3 is parsed successfully */
+//static void cmd_state3_parsed(void *parsed_result,
+//			      __attribute__((unused)) void *data)
+//{
+//	struct cmd_state3_result *res = parsed_result;
+//	struct i2c_cmd_slavedspic_set_mode command;
+//
+//	if (!strcmp_P(res->arg1, PSTR("init"))) {
+//		state_init();
+//		return;
+//	}
+//
+//
+//	if (!strcmp_P(res->arg1, PSTR("arm_goto_ah"))){
+//		command.mode = I2C_SLAVEDSPIC_MODE_ARM_GOTO_AH;
+//		command.arm_goto.angle = res->arg2;
+//		command.arm_goto.height = res->arg3;
+//	}
+//	else if (!strcmp_P(res->arg1, PSTR("harvest_orange"))){
+//		command.mode = I2C_SLAVEDSPIC_MODE_HARVEST_ORANGE;
+//		command.harvest_orange.position = CUSTOM_POSITION;
+//		command.harvest_orange.angle = res->arg2;
+//		command.harvest_orange.height = res->arg3;
+//		command.harvest_orange.vacuum_time_div10 = 0;
+//		
+//	}
+//	
+//	state_set_mode(&command);
+//}
+//
+//prog_char str_state3_arg0[] = "slavedspic";
+//parse_pgm_token_string_t cmd_state3_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state3_result, arg0, str_state3_arg0);
+//prog_char str_state3_arg1[] = "arm_goto_ah#harvest_orange";
+//parse_pgm_token_string_t cmd_state3_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state3_result, arg1, str_state3_arg1);
+//parse_pgm_token_num_t cmd_state3_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_state3_result, arg2, INT16);
+//parse_pgm_token_num_t cmd_state3_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_state3_result, arg3, INT16);
+//
+//prog_char help_state3[] = "set slavedspic mode";
+//parse_pgm_inst_t cmd_state3 = {
+//	.f = cmd_state3_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_state3,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_state3_arg0, 
+//		(prog_void *)&cmd_state3_arg1, 
+//		(prog_void *)&cmd_state3_arg2, 
+//		(prog_void *)&cmd_state3_arg3, 
+//		NULL,
+//	},
+//};
+//
 ///**********************************************************/
 ///* State2 */
 //
@@ -1055,34 +1055,34 @@ parse_pgm_inst_t cmd_state3 = {
 //	},
 //};
 
-/**********************************************************/
-/* State_Machine */
-
-/* this structure is filled when cmd_state_machine is parsed successfully */
-struct cmd_state_machine_result {
-	fixed_string_t arg0;
-};
-
-/* function called when cmd_state_machine is parsed successfully */
-static void cmd_state_machine_parsed(__attribute__((unused)) void *parsed_result,
-				     __attribute__((unused)) void *data)
-{
-	state_machine();
-}
-
-prog_char str_state_machine_arg0[] = "state_machine";
-parse_pgm_token_string_t cmd_state_machine_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state_machine_result, arg0, str_state_machine_arg0);
-
-prog_char help_state_machine[] = "launch state machine";
-parse_pgm_inst_t cmd_state_machine = {
-	.f = cmd_state_machine_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_state_machine,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_state_machine_arg0, 
-		NULL,
-	},
-};
+///**********************************************************/
+///* State_Machine */
+//
+///* this structure is filled when cmd_state_machine is parsed successfully */
+//struct cmd_state_machine_result {
+//	fixed_string_t arg0;
+//};
+//
+///* function called when cmd_state_machine is parsed successfully */
+//static void cmd_state_machine_parsed(__attribute__((unused)) void *parsed_result,
+//				     __attribute__((unused)) void *data)
+//{
+//	state_machine();
+//}
+//
+//prog_char str_state_machine_arg0[] = "state_machine";
+//parse_pgm_token_string_t cmd_state_machine_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state_machine_result, arg0, str_state_machine_arg0);
+//
+//prog_char help_state_machine[] = "launch state machine";
+//parse_pgm_inst_t cmd_state_machine = {
+//	.f = cmd_state_machine_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_state_machine,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_state_machine_arg0, 
+//		NULL,
+//	},
+//};
 
 ///**********************************************************/
 ///* State_Debug */
@@ -1225,30 +1225,32 @@ parse_pgm_inst_t cmd_state_machine = {
 //	},
 //};
 
-/**********************************************************/
-/* Test */
+///**********************************************************/
+///* Test */
+//
+///* this structure is filled when cmd_test is parsed successfully */
+//struct cmd_test_result {
+//	fixed_string_t arg0;
+//};
+//
+///* function called when cmd_test is parsed successfully */
+//static void cmd_test_parsed(__attribute__((unused)) void *parsed_result,
+//			    __attribute__((unused)) void *data)
+//{
+//}
+//
+//prog_char str_test_arg0[] = "test";
+//parse_pgm_token_string_t cmd_test_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_test_result, arg0, str_test_arg0);
+//
+//prog_char help_test[] = "Test function";
+//parse_pgm_inst_t cmd_test = {
+//	.f = cmd_test_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_test,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_test_arg0, 
+//		NULL,
+//	},
+//};
+//
 
-/* this structure is filled when cmd_test is parsed successfully */
-struct cmd_test_result {
-	fixed_string_t arg0;
-};
-
-/* function called when cmd_test is parsed successfully */
-static void cmd_test_parsed(__attribute__((unused)) void *parsed_result,
-			    __attribute__((unused)) void *data)
-{
-}
-
-prog_char str_test_arg0[] = "test";
-parse_pgm_token_string_t cmd_test_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_test_result, arg0, str_test_arg0);
-
-prog_char help_test[] = "Test function";
-parse_pgm_inst_t cmd_test = {
-	.f = cmd_test_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_test,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_test_arg0, 
-		NULL,
-	},
-};

@@ -46,6 +46,8 @@
 #include "ax12_user.h"
 #include "main.h"
 
+#if 0
+
 #define FINGER_DEBUG(args...) DEBUG(E_USER_FINGER, args)
 #define FINGER_NOTICE(args...) NOTICE(E_USER_FINGER, args)
 #define FINGER_ERROR(args...) ERROR(E_USER_FINGER, args)
@@ -266,3 +268,5 @@ void actuator_init(void)
 {
 	finger_init();
 }
+#endif
+

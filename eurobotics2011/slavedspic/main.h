@@ -1,5 +1,5 @@
 /*  
- *  Copyright Droids Corporation (2009)
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,8 +15,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  Revision : $Id: main.h,v 1.5 2009/05/27 20:04:07 zer0 Exp $
+ *  Revision : $Id$
  *
+ *  Javier Baliñas Santos <javier@arc-robots.org>
  */
 
 #define LED_TOGGLE(port, bit) do {		\
@@ -28,45 +29,18 @@
 
 #define LED1_ON() 		cbi(LATC, 9)
 #define LED1_OFF() 		sbi(LATC, 9)
-#define LED1_TOGGLE() LED_TOGGLE(LATC, 9)
+#define LED1_TOGGLE() 	LED_TOGGLE(LATC, 9)
 
-/* Brakes on/off: 
- * - arm motor: clear/set RA7.
- * - pickup motors: disable/enable PWM module.
- * - compressor_power: set/- RC8 and RA4 (notice that we only apply brake on).
- */
 
-#define BRAKE_ON()      do{															\
-														_LATA7 = 0; 								\
-														_LATC8 = 1;	_LATA4 = 1;			\
-													} while(0)
-#define BRAKE_OFF()			do{															\
-														_LATA7 = 1;									\
-													} while(0)
-
-#define ARM_ENCODER		((void *)1)
-#define ARM_DAC				((void *)&gen.dac_mc_left)
-
-#define COMPRESSOR_POWER	_LATC8
-#define VACUUM_REV				_LATA4
-
-#define R_ELBOW_AX12			3
-#define BALL_FINGER_AX12 	2
-#define CORN_FINGER_AX12 	1
-
-#define R_CORN_MOT	&gen.pwm_mc_mod1_ch2
-#define L_CORN_MOT	&gen.pwm_mc_mod2_ch1
-
-#define SERVO_CORN_HOLD_R	&gen.pwm_servo_oc3
-#define SERVO_CORN_HOLD_L	&gen.pwm_servo_oc2
-#define SERVO_CORN_PUSH		&gen.pwm_servo_oc1
+#define AX12_FRONT_BELT_L	1
+#define AX12_FRONT_BELT_R	2
+#define AX12_REAR_BELT_L	3
+#define AX12_REAR_BELT_R	4
 
 
 /** ERROR NUMS */
 #define E_USER_I2C_PROTO       195
 #define E_USER_SENSOR          196
-#define E_USER_ARM             197
-#define E_USER_FINGER          198
 #define E_USER_ST_MACH         199
 #define E_USER_CS              200
 #define E_USER_AX12            201
@@ -88,19 +62,6 @@ struct genboard {
 	struct rdline rdl;
 	char prompt[RDLINE_PROMPT_SIZE];
 
-	/* dc motors */
-	struct pwm_mc pwm_mc_mod1_ch2;
-	struct pwm_mc pwm_mc_mod2_ch1;
-
-	/* brushless motors */
-	struct dac_mc dac_mc_left;
-	
-	/* servos */
-	struct pwm_servo pwm_servo_oc1;
-	struct pwm_servo pwm_servo_oc2;
-	struct pwm_servo pwm_servo_oc3;
-
-	
 	/* ax12 interface */
 	AX12 ax12;
 
@@ -112,14 +73,15 @@ struct genboard {
 
 struct cs_block {
 	uint8_t on;
-  struct cs cs;
-  struct pid_filter pid;
+	struct cs cs;
+	struct pid_filter pid;
 	struct quadramp_filter qr;
 	struct blocking_detection bd;
 };
 
 /* mechboard specific */
 struct slavedspic {
+
 #define DO_ENCODERS  1
 #define DO_CS        2
 #define DO_BD        4
@@ -129,25 +91,19 @@ struct slavedspic {
 	uint8_t flags;
 
 	/* control systems */
-  struct cs_block arm;
+  	struct cs_block angular_front;
+  	struct cs_block angular_rear;
+  	struct cs_block linear_front;
+  	struct cs_block linear_rear;
 
 	/* robot status */
-	volatile uint8_t balls_count;
-	volatile uint8_t corns_count;
-	volatile uint8_t corns_right_count;
-	volatile uint8_t corns_left_count;
-	volatile uint8_t status;
+	/* add here variable related with robot */
+
 };
 
 extern struct genboard gen;
 extern struct slavedspic slavedspic;
 
-///* start the bootloader */
-//void bootloader(void);
-
-#define DEG(x) (((double)(x)) * (180.0 / M_PI))
-#define RAD(x) (((double)(x)) * (M_PI / 180.0))
-#define M_2PI (2*M_PI)
 
 #define WAIT_COND_OR_TIMEOUT(cond, timeout)                   \
 ({                                                            \

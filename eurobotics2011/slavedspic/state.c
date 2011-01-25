@@ -55,6 +55,8 @@
 #include "arm_highlevel.h"
 #include "state.h"
 
+#if 0
+
 #define STMCH_DEBUG(args...) DEBUG(E_USER_ST_MACH, args)
 #define STMCH_NOTICE(args...) NOTICE(E_USER_ST_MACH, args)
 #define STMCH_ERROR(args...) ERROR(E_USER_ST_MACH, args)
@@ -1336,3 +1338,4 @@ void state_init(void)
 	slavedspic.corns_left_count = 0;	
 
 }
+#endif
