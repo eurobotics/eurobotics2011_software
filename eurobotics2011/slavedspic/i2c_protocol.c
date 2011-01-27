@@ -60,13 +60,7 @@ static uint8_t dummy=0;
 /*** LED CONTROL ***/
 void i2c_led_control(uint8_t l, uint8_t state)
 {
-	switch(l) {
-	case 1:
-		state? LED1_ON():LED1_OFF();
-		break;
-	default:
-		break;
-	}
+	state? LED1_ON():LED1_OFF();
 }
 
 static int8_t i2c_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)

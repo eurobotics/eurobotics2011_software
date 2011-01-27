@@ -43,7 +43,6 @@
 #include "state.h"
 #include "i2c_protocol.h"
 #include "actuator.h"
-#include "actuator.h"
 
 extern uint16_t state_debug;
 

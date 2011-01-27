@@ -36,12 +36,6 @@
 #include <timer.h>
 #include <scheduler.h>
 #include <time.h>
-
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <blocking_detection_manager.h>
-
 #include <parse.h>
 #include <rdline.h>
 
@@ -53,7 +47,6 @@
 #include "sensor.h"
 #include "state.h"
 #include "actuator.h"
-#include "cs.h"
 #include "i2c_protocol.h"
 
 
@@ -221,9 +214,6 @@ int main(void)
 						I2C_POLL_PRIO);
 
 
-	/* CONTROL SYSTEM MANAGEMENT */
-	//cs_init();
-
 	/* SENSORS */
 	sensor_init();
 
@@ -253,8 +243,15 @@ int main(void)
  	gen.logs[0] = E_USER_ST_MACH;
 	gen.log_level = 5;
 	
-	//state_machine();
-	cmdline_interact();
+	/* init cmdline */
+	cmdline_init();
+
+	/* main loop */
+	while(1)
+	{
+		//state_machine();
+		cmdline_interact_nowait();
+	}
 
 	return 0;
 }

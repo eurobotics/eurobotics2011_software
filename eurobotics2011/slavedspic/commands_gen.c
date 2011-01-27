@@ -65,7 +65,7 @@ struct cmd_reset_result {
 static void cmd_reset_parsed(__attribute__((unused)) void *parsed_result,
 			     __attribute__((unused)) void *data)
 {
-	//reset();
+	asm("Reset");
 }
 
 prog_char str_reset_arg0[] = "reset";
@@ -111,49 +111,6 @@ parse_pgm_inst_t cmd_reset = {
 //	},
 //};
 
-///**********************************************************/
-///* Encoders tests */
-//
-///* this structure is filled when cmd_encoders is parsed successfully */
-//struct cmd_encoders_result {
-//	fixed_string_t arg0;
-//	fixed_string_t arg1;
-//};
-//
-///* function called when cmd_encoders is parsed successfully */
-//static void cmd_encoders_parsed(void *parsed_result, __attribute__((unused)) void *data)
-//{
-//	struct cmd_encoders_result *res = parsed_result;
-//
-//	if (!strcmp_P(res->arg1, PSTR("reset"))) {
-//		encoders_dspic_set_value((void *)1, 0);
-//		return;
-//	}
-//
-//	/* show */
-//	while(!cmdline_keypressed()) {
-//		printf_P(PSTR("% .8ld\r\n"), 
-//			 encoders_dspic_get_value((void *)1));
-//		wait_ms(100);
-//	}
-//}
-//
-//prog_char str_encoders_arg0[] = "encoders";
-//parse_pgm_token_string_t cmd_encoders_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_encoders_result, arg0, str_encoders_arg0);
-//prog_char str_encoders_arg1[] = "show#reset";
-//parse_pgm_token_string_t cmd_encoders_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_encoders_result, arg1, str_encoders_arg1);
-//
-//prog_char help_encoders[] = "Show encoders values";
-//parse_pgm_inst_t cmd_encoders = {
-//	.f = cmd_encoders_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_encoders,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_encoders_arg0, 
-//		(prog_void *)&cmd_encoders_arg1, 
-//		NULL,
-//	},
-//};
 
 /**********************************************************/
 /* Scheduler show */
@@ -187,223 +144,6 @@ parse_pgm_inst_t cmd_scheduler = {
 		NULL,
 	},
 };
-
-///**********************************************************/
-///* pwm_mc tests */
-//
-///* this structure is filled when cmd_pwm is parsed successfully */
-//struct cmd_pwm_mc_result {
-//	fixed_string_t arg0;
-//	fixed_string_t arg1;
-//	int16_t arg2;
-//};
-//
-///* function called when cmd_pwm is parsed successfully */
-//static void cmd_pwm_mc_parsed(void * parsed_result, __attribute__((unused)) void *data)
-//{
-//	void * pwm_mc_ptr = NULL;
-//	struct cmd_pwm_mc_result * res = parsed_result;
-//
-//	if (!strcmp_P(res->arg1, PSTR("mod1_ch2")))
-//		pwm_mc_ptr = &gen.pwm_mc_mod1_ch2;
-//	else if (!strcmp_P(res->arg1, PSTR("mod2_ch1")))
-//		pwm_mc_ptr = &gen.pwm_mc_mod2_ch1;
-//
-//	if (pwm_mc_ptr)
-//		pwm_mc_set(pwm_mc_ptr, res->arg2);
-//
-//	printf_P(PSTR("done\r\n"));
-//}
-//
-//prog_char str_pwm_mc_arg0[] = "pwm_mc";
-//parse_pgm_token_string_t cmd_pwm_mc_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_pwm_mc_result, arg0, str_pwm_mc_arg0);
-//prog_char str_pwm_mc_arg1[] = "mod1_ch2#mod2_ch1";
-//parse_pgm_token_string_t cmd_pwm_mc_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_pwm_mc_result, arg1, str_pwm_mc_arg1);
-//parse_pgm_token_num_t cmd_pwm_mc_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_pwm_mc_result, arg2, INT16);
-//
-//prog_char help_pwm_mc[] = "Set pwm_mc values [-3333 ; 3333]";
-//parse_pgm_inst_t cmd_pwm_mc = {
-//	.f = cmd_pwm_mc_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_pwm_mc,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_pwm_mc_arg0, 
-//		(prog_void *)&cmd_pwm_mc_arg1, 
-//		(prog_void *)&cmd_pwm_mc_arg2, 
-//		NULL,
-//	},
-//};
-//
-///**********************************************************/
-///* pwm_servo tests */
-//
-///* this structure is filled when cmd_pwm is parsed successfully */
-//struct cmd_pwm_servo_result {
-//	fixed_string_t arg0;
-//	fixed_string_t arg1;
-//	uint16_t arg2;
-//};
-//
-///* function called when cmd_pwm is parsed successfully */
-//static void cmd_pwm_servo_parsed(void *parsed_result, void *show_range)
-//{
-//	void * pwm_servo_ptr = NULL;
-//	struct cmd_pwm_servo_result * res = parsed_result;
-//
-//	if(show_range){
-//		if (!strcmp_P(res->arg1, PSTR("oc1")))
-//			printf("oc1 range = [0 ; %d]\r\n", gen.pwm_servo_oc1.range);
-//		else if (!strcmp_P(res->arg1, PSTR("oc2")))
-//			printf("oc2 range = [0 ; %d]\r\n", gen.pwm_servo_oc2.range);
-//		else if (!strcmp_P(res->arg1, PSTR("oc3")))
-//			printf("oc3 range = [0 ; %d]\r\n", gen.pwm_servo_oc3.range);
-//	}
-//	else{
-//		if (!strcmp_P(res->arg1, PSTR("oc1")))
-//			pwm_servo_ptr = &gen.pwm_servo_oc1;
-//		else if (!strcmp_P(res->arg1, PSTR("oc2")))
-//			pwm_servo_ptr = &gen.pwm_servo_oc2;
-//		else if (!strcmp_P(res->arg1, PSTR("oc3")))
-//			pwm_servo_ptr = &gen.pwm_servo_oc3;
-//	
-//		if (pwm_servo_ptr)
-//			pwm_servo_set(pwm_servo_ptr, res->arg2);
-//	
-//		printf("done\r\n");
-//	}
-//}
-//
-//prog_char str_pwm_servo_arg0[] = "pwm_servo";
-//parse_pgm_token_string_t cmd_pwm_servo_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_pwm_servo_result, arg0, str_pwm_servo_arg0);
-//prog_char str_pwm_servo_arg1[] = "oc1#oc2#oc3";
-//parse_pgm_token_string_t cmd_pwm_servo_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_pwm_servo_result, arg1, str_pwm_servo_arg1);
-//parse_pgm_token_num_t cmd_pwm_servo_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_pwm_servo_result, arg2, INT16);
-//
-//prog_char help_pwm_servo[] = "Set pwm_servo values";
-//parse_pgm_inst_t cmd_pwm_servo = {
-//	.f = cmd_pwm_servo_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_pwm_servo,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_pwm_servo_arg0, 
-//		(prog_void *)&cmd_pwm_servo_arg1, 
-//		(prog_void *)&cmd_pwm_servo_arg2, 
-//		NULL,
-//	},
-//};
-//
-///* show range */
-//
-///* this structure is filled when cmd_pwm_servo is parsed successfully */
-//struct cmd_pwm_servo_show_range_result {
-//	fixed_string_t arg0;
-//	fixed_string_t show_range;
-//	fixed_string_t arg1;
-//};
-//prog_char str_pwm_servo_show_range_arg[] = "show_range";
-//parse_pgm_token_string_t cmd_pwm_servo_show_range_arg = TOKEN_STRING_INITIALIZER(struct cmd_pwm_servo_show_range_result, show_range, str_pwm_servo_show_range_arg);
-//
-//prog_char help_pwm_servo_show_range[] = "Show range values of pwm_servo channel";
-//parse_pgm_inst_t cmd_pwm_servo_show_range = {
-//	.f = cmd_pwm_servo_parsed,  /* function to call */
-//	.data = (void *)1,      /* 2nd arg of func */
-//	.help_str = help_pwm_servo_show_range,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_pwm_servo_arg0, 
-//		(prog_void *)&cmd_pwm_servo_show_range_arg,
-//		(prog_void *)&cmd_pwm_servo_arg1, 
-//		NULL,
-//	},
-//};
-//
-///**********************************************************/
-///* DAC MC tests */
-//
-///* this structure is filled when cmd_dac_mc is parsed successfully */
-//struct cmd_dac_mc_result {
-//	fixed_string_t arg0;
-//	fixed_string_t arg1;
-//	int32_t arg2;
-//};
-//
-///* function called when cmd_dac_mc is parsed successfully */
-//static void cmd_dac_mc_parsed(void * parsed_result, __attribute__((unused)) void *data)
-//{
-//	void * dac_mc_ptr = NULL;
-//	struct cmd_dac_mc_result * res = parsed_result;
-//	
-//	if (!strcmp_P(res->arg1, PSTR("left")))
-//		dac_mc_ptr = &gen.dac_mc_left;
-//	
-//	if (dac_mc_ptr)
-//		dac_mc_set(dac_mc_ptr, res->arg2);
-//
-//	printf_P(PSTR("done\r\n"));
-//}
-//
-//prog_char str_dac_mc_arg0[] = "dac_mc";
-//parse_pgm_token_string_t cmd_dac_mc_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_dac_mc_result, arg0, str_dac_mc_arg0);
-//prog_char str_dac_mc_arg1[] = "left";
-//parse_pgm_token_string_t cmd_dac_mc_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_dac_mc_result, arg1, str_dac_mc_arg1);
-//parse_pgm_token_num_t cmd_dac_mc_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_dac_mc_result, arg2, INT32);
-//
-//prog_char help_dac_mc[] = "Set dac_mc values [-65535 ; 65535]";
-//parse_pgm_inst_t cmd_dac_mc = {
-//	.f = cmd_dac_mc_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_dac_mc,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_dac_mc_arg0, 
-//		(prog_void *)&cmd_dac_mc_arg1, 
-//		(prog_void *)&cmd_dac_mc_arg2, 
-//		NULL,
-//	},
-//};
-
-///**********************************************************/
-///* Adcs tests */
-//
-///* this structure is filled when cmd_adc is parsed successfully */
-//struct cmd_adc_result {
-//	fixed_string_t arg0;
-//	fixed_string_t arg1;
-//};
-//
-///* function called when cmd_adc is parsed successfully */
-//static void cmd_adc_parsed(void *parsed_result, __attribute__((unused)) void *data)
-//{
-//	struct cmd_adc_result *res = parsed_result;
-//	uint8_t i, loop = 0;
-//
-//	if (!strcmp_P(res->arg1, PSTR("loop_show")))
-//		loop = 1;
-//	
-//	do {
-//		printf_P(PSTR("ADC values: "));
-//		for (i=0; i<ADC_MAX; i++) {
-//			printf_P(PSTR("%.4d "), sensor_get_adc(i));
-//		}
-//		printf_P(PSTR("\r\n"));
-//		wait_ms(100);
-//	} while (loop && !cmdline_keypressed());
-//}
-//
-//prog_char str_adc_arg0[] = "adc";
-//parse_pgm_token_string_t cmd_adc_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg0, str_adc_arg0);
-//prog_char str_adc_arg1[] = "show#loop_show";
-//parse_pgm_token_string_t cmd_adc_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg1, str_adc_arg1);
-//
-//prog_char help_adc[] = "Show adc values";
-//parse_pgm_inst_t cmd_adc = {
-//	.f = cmd_adc_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_adc,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_adc_arg0, 
-//		(prog_void *)&cmd_adc_arg1, 
-//		NULL,
-//	},
-//};
 
 
 /**********************************************************/
@@ -468,9 +208,6 @@ static const prog_char uart_log[] = "uart";
 static const prog_char i2c_log[] = "i2c";
 static const prog_char i2cproto_log[] = "i2cproto";
 static const prog_char sensor_log[] = "sensor";
-static const prog_char block_log[] = "bd";
-static const prog_char arm_log[] = "arm";
-static const prog_char finger_log[] = "finger";
 static const prog_char state_log[] = "state";
 static const prog_char ax12_log[] = "ax12";
 
@@ -484,7 +221,6 @@ static const struct log_name_and_num log_name_and_num[] = {
 	{ i2c_log, E_I2C },
 	{ i2cproto_log, E_USER_I2C_PROTO },
 	{ sensor_log, E_USER_SENSOR },
-	{ block_log, E_BLOCKING_DETECTION_MANAGER },
 	{ state_log, E_USER_ST_MACH },
 	{ ax12_log, E_USER_AX12 },
 };
@@ -635,7 +371,7 @@ static void cmd_log_type_parsed(void * parsed_result, __attribute__((unused)) vo
 prog_char str_log_arg1_type[] = "type";
 parse_pgm_token_string_t cmd_log_arg1_type = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg1, str_log_arg1_type);
 /* keep it sync with log_name_and_num above */
-prog_char str_log_arg2_type[] = "uart#i2c#i2cproto#sensor#bd#arm#finger#state#ax12";
+prog_char str_log_arg2_type[] = "uart#i2c#i2cproto#sensor#state#ax12";
 parse_pgm_token_string_t cmd_log_arg2_type = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg2, str_log_arg2_type);
 prog_char str_log_arg3[] = "on#off";
 parse_pgm_token_string_t cmd_log_arg3 = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg3, str_log_arg3);
@@ -654,33 +390,3 @@ parse_pgm_inst_t cmd_log_type = {
 	},
 };
 
-
-///**********************************************************/
-///* Stack_Space */
-//
-///* this structure is filled when cmd_stack_space is parsed successfully */
-//struct cmd_stack_space_result {
-//	fixed_string_t arg0;
-//};
-//
-///* function called when cmd_stack_space is parsed successfully */
-//static void cmd_stack_space_parsed(__attribute__((unused)) void *parsed_result,
-//				   __attribute__((unused)) void *data)
-//{
-//	printf("res stack: %d\r\n", min_stack_space_available());
-//	
-//}
-//
-//prog_char str_stack_space_arg0[] = "stack_space";
-//parse_pgm_token_string_t cmd_stack_space_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_stack_space_result, arg0, str_stack_space_arg0);
-//
-//prog_char help_stack_space[] = "Display remaining stack space";
-//parse_pgm_inst_t cmd_stack_space = {
-//	.f = cmd_stack_space_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_stack_space,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_stack_space_arg0, 
-//		NULL,
-//	},
-//};

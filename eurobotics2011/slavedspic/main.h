@@ -42,17 +42,12 @@
 #define E_USER_I2C_PROTO       195
 #define E_USER_SENSOR          196
 #define E_USER_ST_MACH         199
-#define E_USER_CS              200
-#define E_USER_AX12            201
+#define E_USER_AX12            200
 
 #define LED_PRIO           170
 #define TIME_PRIO          160
-#define ADC_PRIO           120
-#define CS_PRIO            100
-#define ARM_PRIO            50
+#define SENSOR_PRIO        120
 #define I2C_POLL_PRIO       20
-
-#define CS_PERIOD 5000L
 
 #define NB_LOGS 4
 
@@ -71,33 +66,15 @@ struct genboard {
 	uint8_t debug;
 };
 
-struct cs_block {
-	uint8_t on;
-	struct cs cs;
-	struct pid_filter pid;
-	struct quadramp_filter qr;
-	struct blocking_detection bd;
-};
 
-/* mechboard specific */
+/* mech specific */
 struct slavedspic {
-
-#define DO_ENCODERS  1
-#define DO_CS        2
-#define DO_BD        4
-#define DO_POWER     8
 
 	/* misc flags */
 	uint8_t flags;
 
-	/* control systems */
-  	struct cs_block angular_front;
-  	struct cs_block angular_rear;
-  	struct cs_block linear_front;
-  	struct cs_block linear_rear;
-
-	/* robot status */
-	/* add here variable related with robot */
+	/* infos */
+	uint8_t our_color;
 
 };
 
