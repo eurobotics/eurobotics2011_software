@@ -34,13 +34,11 @@
 #define I2C_GPIOS_01_ADDR 		0x20
 #define I2C_GPIOS_23_ADDR 		0x21
 
-#define I2C_COLOR_YELLOW 	0
-#define I2C_COLOR_BLUE 		1
+#define I2C_COLOR_RED 	0
+#define I2C_COLOR_BLUE	1
 
 #define I2C_LEFT_SIDE   1
 #define I2C_RIGHT_SIDE  0
-
-//#define I2C_AUTOBUILD_DEFAULT_DIST 210
 
 struct i2c_cmd_hdr {
 	uint8_t cmd;
@@ -89,59 +87,22 @@ struct i2c_cmd_led_control{
 };
 
 #define I2C_CMD_SLAVEDSPIC_SET_MODE 0x02
-
 struct i2c_cmd_slavedspic_set_mode {
 	struct i2c_cmd_hdr hdr;
 	
-#define I2C_SLAVEDSPIC_MODE_INIT             				0x01
-#define I2C_SLAVEDSPIC_MODE_WAIT										0x02
-#define I2C_SLAVEDSPIC_MODE_HIDE_ARM								0x03
-#define I2C_SLAVEDSPIC_MODE_SHOW_ARM								0x04
-#define I2C_SLAVEDSPIC_MODE_PREPARE_HARVEST_BALL		0x05
-#define I2C_SLAVEDSPIC_MODE_HARVEST_TOMATO					0x06
-
-#define I2C_SLAVEDSPIC_MODE_PUTIN_FINGER_BALL				0x07
-#define I2C_SLAVEDSPIC_MODE_ARM_PUMP_ON							0x08
-#define I2C_SLAVEDSPIC_MODE_ARM_PUMP_OFF						0x09
-#define I2C_SLAVEDSPIC_MODE_CORN_ROLLS_IN						0x0A
-#define I2C_SLAVEDSPIC_MODE_CORN_ROLLS_OUT					0x0B
-#define I2C_SLAVEDSPIC_MODE_CORN_ROLLS_STOP					0x0C
-
-#define I2C_SLAVEDSPIC_MODE_HARVEST_CORN						0x0D
-#define I2C_SLAVEDSPIC_MODE_OUT_CORNS								0x0E
-
-#define I2C_SLAVEDSPIC_MODE_HARVEST_ORANGE					0x0F
-#define I2C_SLAVEDSPIC_MODE_ARM_GOTO_AH							0x10
-
-#define I2C_SLAVEDSPIC_MODE_SET_COUNT								0x11
-
-#define I2C_SLAVEDSPIC_MODE_EXIT              			0xFF
+#define I2C_SLAVEDSPIC_MODE_INIT				0x01
+#define I2C_SLAVEDSPIC_MODE_WAIT				0x02
+#define I2C_SLAVEDSPIC_MODE_TOKEN_TAKE		0x03
+#define I2C_SLAVEDSPIC_MODE_TOKEN_EJECT	0x04
+#define I2C_SLAVEDSPIC_MODE_TOKEN_SHOW		0x05
+#define I2C_SLAVEDSPIC_MODE_EXIT				0xFF
 
 	uint8_t mode;
 	union{
 		struct{
-			int8_t angle;
-			int8_t height;	
-		}arm_goto;
-		struct{
-#define CUSTOM_POSITION 	0
-#define ORANGE_POSITION_1 1
-#define ORANGE_POSITION_2 2
-#define ORANGE_POSITION_3 3
-#define ORANGE_POSITION_4 4
-#define ORANGE_POSITION_5 5
-#define ORANGE_POSITION_6 6			
-			int8_t position;
-			int8_t angle;
-			int8_t height;	
-			int8_t vacuum_time_div10;
-		}harvest_orange;
-		struct{
-#define BALLS_COUNT 0
-#define CORNS_COUNT 1
-			int8_t type;
-			int8_t value;
-		}set_count;
+			int8_t side;
+			int8_t speed;	
+		};
 		
 		/* add more here */
 	};

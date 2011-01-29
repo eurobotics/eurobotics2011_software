@@ -109,10 +109,23 @@ void io_pins_init(void)
 {
 	/*************************************** 	*  IO portmap and config 	*/
 	
-	/* NOTE: after reset all pins are inputs */
+	/* WARNING 1: after reset all pins are inputs */
+	/* WARNING 2: after reset all ANALOG pins are analog
+				  	  and has disabled the read operation
+	*/
 	
 	/* leds */
 	_TRISC9 = 0;	// SLAVE_LED1
+
+	/* sensors */
+	AD1PCFGL = 0xFF;	// all analog pins are digital
+	_TRISB11 = 1;		// SENSOR1
+	_TRISB10 = 1;		// SENSOR2
+	_TRISB2 	= 1;		// SENSOR3
+	_TRISA8 	= 1;		// SENSOR4
+	_TRISC3 	= 1;		// SENSOR5
+	_TRISB4 	= 1;		// SENSOR6
+	_TRISC2 	= 1;		// SENSOR7
 	
 	/* dc motors */
 	_TRISB12 = 0;	// SLAVE_MOT_2_INA
@@ -165,6 +178,9 @@ void io_pins_init(void)
 
 int main(void)
 {
+	/* disable interrupts */
+	cli();
+
 	/* remapeable pins */
 	io_pins_init();
 
@@ -178,13 +194,9 @@ int main(void)
 	memset(&gen, 0, sizeof(gen));
 	memset(&slavedspic, 0, sizeof(slavedspic));
 	
-	/* cs is enabled after arm_calibrate() */
-	slavedspic.flags = DO_ENCODERS | DO_POWER | DO_BD;
-
 	/* UART */
 	uart_init();
 	uart_register_rx_event(CMDLINE_UART, emergency);
-
 
 	/* LOGS */
 	error_register_emerg(mylog);
@@ -202,6 +214,9 @@ int main(void)
 	/* TIMER */
 	timer_init();
 
+	/* DO FLAGS */
+	//slavedspic.flags |= DO_CS;
+
 	/* SCHEDULER */
 	scheduler_init();
 
@@ -213,9 +228,9 @@ int main(void)
 						8000L / SCHEDULER_UNIT, 
 						I2C_POLL_PRIO);
 
-
-	/* SENSORS */
-	sensor_init();
+	scheduler_add_periodical_event_priority(do_sensors, NULL, 
+						10000L / SCHEDULER_UNIT, 
+						SENSOR_PRIO);
 
 	/* TIME */
 	time_init(TIME_PRIO);
@@ -223,23 +238,22 @@ int main(void)
 	/* SERVOS AX12 */
 	ax12_user_init();
 
-	/* set enable interrupt */
+	/* enable interrupt */
 	sei();
 
-	/* ax12 servos init, set free running mode */	ax12_user_write_byte(&gen.ax12, AX12_BROADCAST_ID, AA_TORQUE_ENABLE, 0x00);	ax12_user_write_int(&gen.ax12, AX12_BROADCAST_ID, AA_CW_ANGLE_LIMIT_L, 0x00);	ax12_user_write_int(&gen.ax12, AX12_BROADCAST_ID, AA_CCW_ANGLE_LIMIT_L, 0x00);
-	ax12_user_write_byte(&gen.ax12, AX12_BROADCAST_ID, AA_ALARM_SHUTDOWN, 0x24);	ax12_user_write_byte(&gen.ax12, AX12_BROADCAST_ID, AA_ALARM_LED, 0x24);
+	/* wait some ms */
+	wait_ms(500);
 
-	ax12_user_write_int(&gen.ax12, AX12_FRONT_BELT_L, AA_MOVING_SPEED_L, 0x400|1023);	ax12_user_write_int(&gen.ax12, AX12_FRONT_BELT_R, AA_MOVING_SPEED_L, 1023);
-	/* DO FLAGS */
-	//slavedspic.flags |= DO_CS;
+	/* ACTUATORS */
+	actuator_init();
 
-	//actuator_init();
+	/* STATE MACHINE */
 	//state_init();
 
 	printf("\r\n");
 	printf("Siempre falta tiempo para hacer pruebas. \r\n");
 
-	/* arm management */
+	/* LOGS */
  	gen.logs[0] = E_USER_ST_MACH;
 	gen.log_level = 5;
 	

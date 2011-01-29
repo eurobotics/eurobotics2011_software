@@ -28,8 +28,15 @@ void emergency(char c);
 /* log function */
 void mylog(struct error * e, ...);
 
-/* launch cmdline */
+/* init cmdline */
+void cmdline_init(void);
+
+/* execute cmdline waiting to input commands */
 int cmdline_interact(void);
+
+/* execute cmdline without waiting, pull input commands */
+int cmdline_interact_nowait(void);
+
 
 static inline uint8_t cmdline_keypressed(void) {
 	return (uart_recv_nowait(CMDLINE_UART) != -1);

@@ -118,6 +118,8 @@ void mylog(struct error * e, ...)
 	//stdout->flags = stream_flags;
 }
 
+
+/* init cmdline */
 void cmdline_init(void)
 {
 	rdline_init(&gen.rdl, write_char, valid_buffer, complete_buffer);	
@@ -125,6 +127,7 @@ void cmdline_init(void)
 	rdline_newline(&gen.rdl, gen.prompt);
 }
 
+/* execute cmdline waiting to input commands */
 int cmdline_interact(void)
 {
 	const char *history, *buffer;
@@ -150,10 +153,11 @@ int cmdline_interact(void)
 				rdline_add_history(&gen.rdl, buffer);
 			rdline_newline(&gen.rdl, gen.prompt);
 		}
-	]
+	}
 	return 0;
 }
 
+/* execute cmdline without waiting, pull input commands */
 int cmdline_interact_nowait(void)
 {
 	const char *history, *buffer;
@@ -162,7 +166,7 @@ int cmdline_interact_nowait(void)
 	
 	c = uart_recv_nowait(CMDLINE_UART);
 	if (c == -1) 
-		continue;
+		return -1;
 	ret = rdline_char_in(&gen.rdl, c);
 	if (ret != 2 && ret != 0) {
 		buffer = rdline_get_buffer(&gen.rdl);

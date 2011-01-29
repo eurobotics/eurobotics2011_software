@@ -37,6 +37,9 @@
 #define AX12_REAR_BELT_L	3
 #define AX12_REAR_BELT_R	4
 
+#define S_FRONT_TOKEN_STOP	SENSOR6
+#define S_REAR_TOKEN_STOP	SENSOR5
+
 
 /** ERROR NUMS */
 #define E_USER_I2C_PROTO       195
