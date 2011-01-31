@@ -90,19 +90,21 @@ struct i2c_cmd_led_control{
 struct i2c_cmd_slavedspic_set_mode {
 	struct i2c_cmd_hdr hdr;
 	
-#define I2C_SLAVEDSPIC_MODE_INIT				0x01
-#define I2C_SLAVEDSPIC_MODE_WAIT				0x02
+#define I2C_SLAVEDSPIC_MODE_IDLE				0x01
+#define I2C_SLAVEDSPIC_MODE_INIT				0x02
 #define I2C_SLAVEDSPIC_MODE_TOKEN_TAKE		0x03
 #define I2C_SLAVEDSPIC_MODE_TOKEN_EJECT	0x04
-#define I2C_SLAVEDSPIC_MODE_TOKEN_SHOW		0x05
-#define I2C_SLAVEDSPIC_MODE_EXIT				0xFF
-
+#define I2C_SLAVEDSPIC_MODE_TOKEN_STOP		0x05
+#define I2C_SLAVEDSPIC_MODE_TOKEN_SHOW		0x06
 	uint8_t mode;
 	union{
 		struct{
+#define I2C_SIDE_REAR	0
+#define I2C_SIDE_FRONT 	1
+#define I2C_SIDE_MAX		2
 			int8_t side;
 			int8_t speed;	
-		};
+		}ts;
 		
 		/* add more here */
 	};

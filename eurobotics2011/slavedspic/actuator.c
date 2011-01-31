@@ -53,7 +53,7 @@
 
 
 /* put in/out a token or nice token turn right/left ;) */
-void belts_set_mode(uint8_t side, uint8_t mode, uint16_t speed)
+void belts_mode_set(uint8_t side, uint8_t mode, uint16_t speed)
 {
 	uint8_t ax12_left_id, ax12_right_id;
 
@@ -85,14 +85,11 @@ void belts_set_mode(uint8_t side, uint8_t mode, uint16_t speed)
 	}}	
 
 
-
-
 /* get average load of a pair of belts */
-uint16_t belts_get_load(uint8_t side)
+uint16_t belts_load_get(uint8_t side)
 {
 	uint8_t ax12_left_id, ax12_right_id;
 	uint16_t ax12_left_load, ax12_right_load;
-	uint16_t load_dif = 0;
 
 	/* set ax12 id */
 	if(side == BELTS_SIDE_FRONT){

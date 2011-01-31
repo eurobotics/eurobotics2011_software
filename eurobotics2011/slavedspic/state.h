@@ -19,21 +19,21 @@
  *
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  state.h,v 1.4 2009/05/27 20:04:07 zer0 Exp. */
+
 #ifndef _STATE_H_
 #define _STATE_H_
-
-void corn_push(void);
-//void state_manivelle(int16_t step_deg);
 
 /* set a new state, return 0 on success */
 int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd);
 
-/* get current state */
+/* get mode */
 uint8_t state_get_mode(void);
 
-/* launch state machine */
-void state_machine(void);
+/* run state machines */
+void state_machines(void);
 
+/* init state machines */
 void state_init(void);
 
 #endif

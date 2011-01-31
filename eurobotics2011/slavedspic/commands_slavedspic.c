@@ -185,13 +185,13 @@ static void cmd_belts_parsed(void *parsed_result, __attribute__((unused)) void *
 	
 	/* execute */
 	time_us = time_get_us2();
-	belts_set_mode(side, mode, res->arg3);
+	belts_mode_set(side, mode, res->arg3);
 
 	/* test performance */
 #if 0
 	printf("press a key for end ...\n\r");
 	do{
-		printf("load = %d\n\r", (uint16_t)belts_get_load(side));
+		printf("load = %d\n\r", (uint16_t)belts_load_get(side));
 		
 		/* stop if final carrier is reached */
 		if(sensor_get(sensor) && (mode==BELTS_MODE_IN))
@@ -213,7 +213,7 @@ static void cmd_belts_parsed(void *parsed_result, __attribute__((unused)) void *
 #endif
 
 	/* stop belts */
-	belts_set_mode(side, BELTS_MODE_OUT, 0);
+	belts_mode_set(side, BELTS_MODE_OUT, 0);
 	printf("done\r\n");
 }
 
