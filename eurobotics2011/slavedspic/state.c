@@ -53,71 +53,72 @@
 #define STMCH_ERROR(args...) ERROR(E_USER_ST_MACH, args)
 
 /* shorter aliases for this file */
-#define IDLE               I2C_SLAVEDSPIC_MODE_IDLE
 #define INIT               I2C_SLAVEDSPIC_MODE_INIT
 
 typedef struct {
-#define TOKEN_SYSTEM_STATE_IDLE
-#define TOKEN_SYSTEM_STATE_TAKE
-#define TOKEN_SYSTEM_STATE_TAKEING
-#define TOKEN_SYSTEM_STATE_EJECT
-#define TOKEN_SYSTEM_STATE_EJECTING
-#define TOKEN_SYSTEM_STATE_SHOW
+#define TS_IDLE				0
+#define TS_TAKE				1
+#define TS_WAITING_STOP		2
+#define TS_EJECT				3
+#define TS_WAITING_FREE		4
+#define TS_STOP				5
+#define TS_SHOW				6
 
 	uint8_t state;
+	uint16_t speed;
+	uint8_t state_changed;
+	uint8_t state_rqst;
+	uint8_t speed_rqst;
 
+	/* info */
 	uint8_t belts_bloqued;
 	uint8_t token_catched;
+
+	/* conf */
 	uint8_t sensor_stop;
 	uint8_t sensor_catched;
 	uint8_t side;
-	uint16_t speed;
+
 }token_system_t;
 
 static struct i2c_cmd_slavedspic_set_mode mainboard_command;
-//static struct vt100 local_vt100;
 static volatile uint8_t prev_state;
-static volatile uint8_t changed = 0;
+static volatile uint8_t mode_changed = 0;
 uint8_t state_debug = 0;
 
 static token_system_t ts[I2C_SIDE_MAX];
 
 
-/* debug state machines step to step */
-void state_debug_wait_key_pressed(void)
-{
-	if (!state_debug)
-		return;
-	printf_P(PSTR("press a key\r\n"));
-	while(!cmdline_keypressed());
-}
-
 /* set a new state, return 0 on success */
 int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 {
-	changed = 1;
 	prev_state = mainboard_command.mode;
 	memcpy(&mainboard_command, cmd, sizeof(mainboard_command));
 	STMCH_DEBUG("%s mode=%d", __FUNCTION__, mainboard_command.mode);
 
-	/* update systems state and parameters */
-	if (state_check_update(TOKEN_TAKE)){
-		ts[mainboard_command.mode.ts.side].state = TOKEN_SYSTEM_STATE_TAKE;
-		ts[mainboard_command.mode.ts.side].speed = mainboard_command.mode.ts.speed;
+	/* states machines */
+	if (mainboard_command.mode == TOKEN_TAKE){
+		ts[mainboard_command.ts.side].state_rqst = TOKEN_SYSTEM_STATE_TAKE;
+		ts[mainboard_command.ts.side].speed_rqst = mainboard_command.ts.speed;
+		ts[mainboard_command.ts.side].state_changed = 1;
 	}
-	else if (state_check_update(TOKEN_EJECT)){
-		ts[mainboard_command.mode.ts.side].state = TOKEN_SYSTEM_STATE_EJECT;
-		ts[mainboard_command.mode.ts.side].speed = mainboard_command.mode.ts.speed;
+	else if (mainboard_command.mode == TOKEN_EJECT){
+		ts[mainboard_command.ts.side].state_rqst = TOKEN_SYSTEM_STATE_EJECT;
+		ts[mainboard_command.ts.side].speed_rqst = mainboard_command.ts.speed;
+		ts[mainboard_command.ts.side].state_changed = 1;	
 	}
-	else if (state_check_update(TOKEN_STOP)){
-		ts[mainboard_command.mode.ts.side].state = TOKEN_SYSTEM_STATE_STOP;
-		ts[mainboard_command.mode.ts.side].speed = mainboard_command.mode.ts.speed;
+	else if (mainboard_command.mode == TOKEN_STOP){
+		ts[mainboard_command.ts.side].state_rqst = TOKEN_SYSTEM_STATE_STOP;
+		ts[mainboard_command.ts.side].speed_rqst = mainboard_command.ts.speed;
+		ts[mainboard_command.ts.side].state_changed = 1;	
 	}
-	else if (state_check_update(TOKEN_SHOW)){
-		ts[mainboard_command.mode.ts.side].state = TOKEN_SYSTEM_STATE_SHOW;
-		ts[mainboard_command.mode.ts.side].speed = mainboard_command.mode.ts.speed;
+	else if (mainboard_command.mode == TOKEN_SHOW){
+		ts[mainboard_command.ts.side].state_rqst = TOKEN_SYSTEM_STATE_SHOW;
+		ts[mainboard_command.ts.side].speed_rqst = mainboard_command.ts.speed;
+		ts[mainboard_command.ts.side].state_changed = 1;
 	}
-
+	else
+		mode_changed = 1;
 
 	return 0;
 }
@@ -132,14 +133,21 @@ uint8_t state_get_mode(void)
 /* check that state is the one in parameter and that state changed */
 uint8_t state_check_update(uint8_t mode)
 {
-	if ((mode == mainboard_command.mode) && changed){
-		changed = 0;
+	if ((mode == mainboard_command.mode) && mode_changed){
+		mode_changed = 0;
 		return 1;
 	}
-
 	return 0;
 }
 
+/* debug state machines step to step */
+void state_debug_wait_key_pressed(void)
+{
+	if (!state_debug)
+		return;
+	printf_P(PSTR("press a key\r\n"));
+	while(!cmdline_keypressed());
+}
 
 /* init mode */
 static void state_do_init(void)
@@ -152,15 +160,18 @@ static void state_do_init(void)
 
 /* token management init */
 void token_system_init(token_system_t *ts, uint8_t belts_side,
-								uint8_t sensor_stop, sensor_catched, uint16_t speed)
+								uint8_t sensor_stop, sensor_catched)
 {
-	ts->state = TOKEN_SYSTEM_STATE_IDLE;
+	ts->state = TS_IDLE;
+	ts->speed = 0;
+	ts->state_changed = 0;
+	ts->state_rqst;
+	ts->speed_rqst;
 	ts->token_catched = 0;
-	ts->belts_bloqued = 0;
+	ts->belts_blocked = 0;
 	ts->belts_side = side;
 	ts->sensor_stop = sensor_stop;
 	ts->sensor_catched = sensor_catched;
-	ts->speed = speed;
 
 	/* apply to belts */
 	belts_mode_set(ts->belts_side, BELTS_MODE_OUT, ts->stop_sensor, ts->speed);
@@ -169,64 +180,77 @@ void token_system_init(token_system_t *ts, uint8_t belts_side,
 
 void token_system_manage(token_sytem_t *ts)
 {
-	/* update flags */
-	ts->token_catched = sensor_get(ts->sensor_catched);
+	/* update state */
+	if(ts->state_changed){
+		ts->state = ts->state_rqst;
+		ts->speed = ts->speed_rqst;
+		STMCH_DEBUG("%s mode=%d", __FUNCTION__, state_get_mode());
+	}
 
+	/* ejecute state */
 	switch(ts->state){
-		case TOKEN_SYSTEM_STATE_IDLE:
+		case TS_IDLE:
 			break;
 
-		case TOKEN_SYSTEM_STATE_TAKE:
+		case TS_STATE_TAKE:
 			if(!sensor_get(ts->sensor_stop)){
 				belts_mode_set(ts->side, BELTS_MODE_IN, ts->speed);
-				ts->state = TOKEN_SYSTEM_STATE_TAKING;
+				ts->state = TS_STATE_WAITING_STOP;
 			}
+			else
+				ts->state = TS_IDLE;
 			break;
 
-		case TOKEN_SYSTEM_STATE_TAKING:
+		case TS_STATE_WAITING_STOP:
+			/* update info */
+			ts->token_catched = sensor_get(ts->sensor_catched);
+
+			/* XXX stop belts when sensor or blocked*/
 			if(sensor_get(ts->sensor_stop)){
 				belts_mode_set(ts->side, BELTS_MODE_OUT, 0);
-				ts->state = TOKEN_SYSTEM_IDLE;
+				ts->state = TS_IDLE;
 			}
+			break;
 
-		case TOKEN_SYSTEM_STATE_EJECT:
+		case TS_STATE_EJECT:
 			belts_mode_set(ts->side, BELTS_MODE_OUT, ts->speed);
-			ts->state = TOKEN_SYSTEM_STATE_EJECTING;
+			ts->state = TS_STATE_WAITING_FREE;
 			break;
 	
-		case TOKEN_SYSTEM_STATE_EJECTING:
+		case TS_STATE_WAITING_FREE:
+			/* update info */
+			ts->token_catched = sensor_get(ts->sensor_catched);
+
+			/* stop belts when sensor */
 			if(!sensor_get(ts->sensor_catched)){
 				belts_mode_set(ts->side, BELTS_MODE_OUT, 0);
-				ts->state = TOKEN_SYSTEM_IDLE;
+				ts->state = TS_IDLE;
 			}
 			break;
 
-		case TOKEN_SYSTEM_STATE_STOP:
+		case TS_STATE_STOP:
 			belts_mode_set(ts->side, BELTS_MODE_OUT, 0);
-			ts->state = TOKEN_SYSTEM_IDLE;
+			ts->state = TS_IDLE;
 			break;
 			
-		case TOKEN_SYSTEM_STATE_SHOW:
+		case TS_STATE_SHOW:
 			belts_mode_set(ts->side, BELTS_MODE_RIGHT, ts->speed);
-			ts->state = TOKEN_SYSTEM_IDLE;
+			ts->state = TS_IDLE;
 			break;
 
 		case default:
 			belts_mode_set(ts->side, BELTS_MODE_OUT, 0);
-			ts->state = TOKEN_SYSTEM_IDLE;
+			ts->state = TS_IDLE;
 			break;
 	}
 }
 
-
 static void state_do_token_system(void)
 {
-
 	/* manage systems */
 	token_system_manage(&ts[I2C_SIDE_FRONT]);
 	token_system_manage(&ts[I2C_SIDE_REAR]);
 }
-
 
 /* main state machine */
 void state_machine(void)
@@ -237,7 +261,6 @@ void state_machine(void)
 
 void state_init(void)
 {
-	//vt100_init(&local_vt100);
 	mainboard_command.mode = IDLE;
 	changed = 1;
 
