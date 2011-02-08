@@ -30,16 +30,7 @@
 #include <i2c_slave_lite.h>
 #include <ax12.h>
 #include <uart.h>
-#include <pwm_servo.h>
-#include <pwm_mc.h>
-#include <dac_mc.h>
 #include <time.h>
-#include <encoders_dspic.h>
-
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <blocking_detection_manager.h>
 
 #include <rdline.h>
 #include <parse.h>

@@ -33,15 +33,7 @@
 #include <rdline.h>
 #include <ax12.h>
 #include <uart.h>
-#include <pwm_mc.h>
-#include <dac_mc.h>
-#include <pwm_servo.h>
 #include <time.h>
-
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <blocking_detection_manager.h>
 
 #include "../common/i2c_commands.h"
 #include "state.h"

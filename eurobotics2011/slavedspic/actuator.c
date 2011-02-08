@@ -27,19 +27,9 @@
 
 #include <ax12.h>
 #include <uart.h>
-#include <encoders_dspic.h>
-#include <pwm_mc.h>
-#include <pwm_servo.h>
-#include <dac_mc.h>
 #include <timer.h>
 #include <scheduler.h>
 #include <time.h>
-
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <blocking_detection_manager.h>
-
 #include <rdline.h>
 
 #include "../common/i2c_commands.h"

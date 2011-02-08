@@ -71,7 +71,7 @@ void do_led_blink(__attribute__((unused)) void *dummy){
 void do_i2c_watchdog(void *dummy){
 	if(i2c_watchdog_cnt == 0){
 		i2c_init(I2C_SLAVEDSPIC_ADDR);
-		DEBUG(E_USER_I2C_PROTO,"I2C watchdog triggered, reinit i2c hw");
+		ERROR(E_USER_I2C_PROTO,"I2C watchdog triggered, reinit i2c hw");
 	}
 	
 	i2c_watchdog_cnt--;		
@@ -213,7 +213,7 @@ int main(void)
 	timer_init();
 
 	/* DO FLAGS */
-	//slavedspic.flags |= DO_CS;
+	slavedspic.flags = 0;
 
 	/* SCHEDULER */
 	scheduler_init();

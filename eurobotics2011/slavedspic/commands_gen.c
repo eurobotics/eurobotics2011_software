@@ -31,19 +31,8 @@
 
 #include <ax12.h>
 #include <uart.h>
-#include <pwm_mc.h>
-#include <dac_mc.h>
-#include <pwm_servo.h>
 #include <time.h>
-#include <encoders_dspic.h>
-//#include <adc.h>
-
 #include <scheduler.h>
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <blocking_detection_manager.h>
-
 #include <rdline.h>
 #include <parse.h>
 #include <parse_string.h>
