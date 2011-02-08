@@ -45,6 +45,7 @@
 #include "../common/i2c_commands.h"
 #include "actuator.h"
 #include "ax12_user.h"
+#include "state.h"
 #include "main.h"
 
 /* XXX ax12 management is done out of scheduler because there aren`t

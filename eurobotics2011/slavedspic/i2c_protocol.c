@@ -45,9 +45,9 @@
 #include <parse_num.h>
 
 #include "../common/i2c_commands.h"
-#include "main.h"
 #include "sensor.h"
 #include "state.h"
+#include "main.h"
 
 uint8_t i2c_watchdog_cnt = 255;
 
@@ -65,7 +65,7 @@ void i2c_led_control(uint8_t l, uint8_t state)
 
 static int8_t i2c_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 {
-	//state_set_mode(cmd);
+	state_set_mode(cmd);
 	return 0;
 }
 
@@ -99,6 +99,7 @@ void i2c_write_event(uint8_t cmd_byte, uint8_t *buf, int16_t size)
 				struct i2c_cmd_slavedspic_set_mode *cmd = void_cmd;
 				if (size != sizeof (*cmd))
 					break;
+				
 				i2c_set_mode(cmd);
 				break;
 			}
@@ -121,13 +122,18 @@ void i2c_read_event(uint8_t cmd_byte, uint8_t *buf)
 		{
 			struct i2c_slavedspic_status *cmd = void_cmd;
 			
-//			(*cmd).hdr.cmd = I2C_ANS_SLAVEDSPIC_STATUS;
-//			(*cmd).status = slavedspic.status;
-//			(*cmd).dummy = dummy;
-//			(*cmd).balls_count = slavedspic.balls_count;
-//			(*cmd).corns_count = slavedspic.corns_count;
-//			
+			(*cmd).hdr.cmd = I2C_ANS_SLAVEDSPIC_STATUS;
+	
+			(*cmd).ts[I2C_SIDE_REAR].state = slavedspic.ts[I2C_SIDE_REAR].state;
+			(*cmd).ts[I2C_SIDE_REAR].belts_blocked = slavedspic.ts[I2C_SIDE_REAR].belts_blocked;
+			(*cmd).ts[I2C_SIDE_REAR].token_catched = slavedspic.ts[I2C_SIDE_REAR].token_catched;
+
+			(*cmd).ts[I2C_SIDE_FRONT].state = slavedspic.ts[I2C_SIDE_FRONT].state;
+			(*cmd).ts[I2C_SIDE_FRONT].belts_blocked = slavedspic.ts[I2C_SIDE_FRONT].belts_blocked;
+			(*cmd).ts[I2C_SIDE_FRONT].token_catched = slavedspic.ts[I2C_SIDE_FRONT].token_catched;
 			
+
+			/* XXX watchdog time */
 			i2c_watchdog_cnt = 5;
 			
 			break;

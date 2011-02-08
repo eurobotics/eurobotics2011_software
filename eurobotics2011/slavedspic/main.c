@@ -40,15 +40,13 @@
 #include <rdline.h>
 
 #include "../common/i2c_commands.h"
-
-#include "main.h"
 #include "ax12_user.h"
 #include "cmdline.h"
 #include "sensor.h"
 #include "state.h"
 #include "actuator.h"
 #include "i2c_protocol.h"
-
+#include "main.h"
 
 struct genboard gen;
 struct slavedspic slavedspic;

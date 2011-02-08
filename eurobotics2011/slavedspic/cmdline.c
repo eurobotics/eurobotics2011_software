@@ -41,9 +41,10 @@
 #include <control_system_manager.h>
 #include <blocking_detection_manager.h>
 
-#include "main.h"
+#include "../common/i2c_commands.h"
+#include "state.h"
 #include "cmdline.h"
-
+#include "main.h"
 
 /******** See in commands.c for the list of commands. */
 extern parse_pgm_ctx_t main_ctx[];

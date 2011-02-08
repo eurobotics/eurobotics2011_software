@@ -32,9 +32,10 @@
 #include <parse.h>
 #include <rdline.h>
 
-#include "main.h"
+#include "../common/i2c_commands.h"
+#include "state.h"
 #include "sensor.h"
-
+#include "main.h"
 
 /* boolean sensors ********************************************/
 

@@ -24,6 +24,33 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
+typedef struct {
+#define TS_STATE_IDLE				0
+#define TS_STATE_TAKE				1
+#define TS_STATE_WAITING_STOP		2
+#define TS_STATE_EJECT				3
+#define TS_STATE_WAITING_FREE		4
+#define TS_STATE_STOP				5
+#define TS_STATE_SHOW				6
+
+	uint8_t state;
+
+	uint16_t speed;
+	uint8_t state_changed;
+	uint8_t state_rqst;
+	uint8_t speed_rqst;
+
+	/* info */
+	uint8_t belts_blocked;
+	uint8_t token_catched;
+
+	/* conf */
+	uint8_t sensor_stop;
+	uint8_t sensor_catched;
+	uint8_t belts_side;
+
+}token_system_t;
+
 /* set a new state, return 0 on success */
 int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd);
 

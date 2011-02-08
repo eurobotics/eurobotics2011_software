@@ -49,9 +49,11 @@
 
 //#include <diagnostic.h>
 
-#include "main.h"
+#include "../common/i2c_commands.h"
 #include "cmdline.h"
 #include "sensor.h"
+#include "state.h"
+#include "main.h"
 
 /**********************************************************/
 /* Reset */

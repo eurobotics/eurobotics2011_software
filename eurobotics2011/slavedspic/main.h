@@ -76,9 +76,11 @@ struct slavedspic {
 	/* misc flags */
 	uint8_t flags;
 
+	/* token systems */
+	token_system_t ts[2];
+
 	/* infos */
 	uint8_t our_color;
-
 };
 
 extern struct genboard gen;

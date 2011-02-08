@@ -44,8 +44,10 @@
 #include <parse_string.h>
 #include <parse_num.h>
 
-#include "main.h"
+#include "../common/i2c_commands.h"
+#include "state.h"
 #include "ax12_user.h"
+#include "main.h"
 
 uint8_t addr_from_string(const char *s)
 {

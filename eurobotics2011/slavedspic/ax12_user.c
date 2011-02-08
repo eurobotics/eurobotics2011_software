@@ -43,8 +43,10 @@
 #include <parse_string.h>
 #include <parse_num.h>
 
-#include "main.h"
+#include "../common/i2c_commands.h"
+#include "state.h"
 #include "ax12_user.h"
+#include "main.h"
 
 #define AX12_ERROR(args...) ERROR(E_USER_AX12, args)
 #define AX12_NOTICE(args...) NOTICE(E_USER_AX12, args)
