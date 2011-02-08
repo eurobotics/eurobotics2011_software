@@ -105,3 +105,4 @@ struct i2c_cmd_slavedspic_set_mode {
 	};
 };
 
+#endif

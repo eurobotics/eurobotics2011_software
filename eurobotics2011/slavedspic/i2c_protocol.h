@@ -15,8 +15,16 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  Revision : $Id: i2c_protocol.h,v 1.1 2009/03/05 22:52:35 zer0 Exp $
+ *  Revision : $Id$
  *
+ */
+
+/*  
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
+ *  Javier Baliñas Santos <javier@arc-robots.org>
+ *
+ *  Code ported to family of microcontrollers dsPIC from
+ *  i2c_protocol.h,v 1.1 2009/03/05 22:52:35 zer0 Exp 
  */
 
 #ifndef _I2C_PROTOCOL_H_

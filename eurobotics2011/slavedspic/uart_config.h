@@ -15,12 +15,21 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  Revision : $Id: uart_config.h,v 1.3.10.1 2006/11/26 21:06:02 zer0 Exp $
+ *  Revision : $Id$
  *
  */
 
 /* Droids-corp 2004 - Zer0
  * config for uart module
+ */
+
+
+/*  
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
+ *  Javier Baliñas Santos <javier@arc-robots.org>
+ *
+ *  Code ported to family of microcontrollers dsPIC from
+ *  uart_config.h,v 1.3.10.1 2006/11/26 21:06:02 zer0 Exp 
  */
 
 #ifndef UART_CONFIG_H

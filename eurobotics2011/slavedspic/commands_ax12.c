@@ -15,10 +15,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  Revision : $Id: commands_ax12.c,v 1.3 2009/04/24 19:30:42 zer0 Exp $
+ *  Revision : $Id$
  *
  *  Olivier MATZ <zer0@droids-corp.org> 
  */
+
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  commands_ax12.c,v 1.3 2009/04/24 19:30:42 zer0 Exp   */
 
 #include <stdio.h>
 #include <string.h>

@@ -261,7 +261,7 @@ int main(void)
 	/* main loop */
 	while(1)
 	{
-		//state_machine();
+		state_machines();
 		cmdline_interact_nowait();
 	}
 

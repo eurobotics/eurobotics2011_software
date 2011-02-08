@@ -15,10 +15,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  Revision : $Id: commands.c,v 1.5 2009/05/27 20:04:07 zer0 Exp $
+ *  Revision : $Id$
  *
  *  Olivier MATZ <zer0@droids-corp.org> 
  */
+
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  commands.c,v 1.5 2009/05/27 20:04:07 zer0 Exp   */
 
 #include <stdlib.h>
 #include <aversive/pgmspace.h>
@@ -47,8 +49,10 @@ extern parse_pgm_inst_t cmd_event;
 extern parse_pgm_inst_t cmd_color;
 extern parse_pgm_inst_t cmd_belts;
 extern parse_pgm_inst_t cmd_state_debug;
-extern parse_pgm_inst_t cmd_state_machine;
-extern parse_pgm_inst_t cmd_test;
+extern parse_pgm_inst_t cmd_state1;
+extern parse_pgm_inst_t cmd_state2;
+//extern parse_pgm_inst_t cmd_state_machine;
+//extern parse_pgm_inst_t cmd_test;
 
 
 /* in progmem */
@@ -77,8 +81,10 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_color,
 	(parse_pgm_inst_t *)&cmd_belts,
 	(parse_pgm_inst_t *)&cmd_state_debug,
-	(parse_pgm_inst_t *)&cmd_state_machine,
-	(parse_pgm_inst_t *)&cmd_test,
+	(parse_pgm_inst_t *)&cmd_state1,
+	(parse_pgm_inst_t *)&cmd_state2,	
+	//(parse_pgm_inst_t *)&cmd_state_machine,
+	//(parse_pgm_inst_t *)&cmd_test,
 
 	NULL,
 };

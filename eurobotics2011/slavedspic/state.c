@@ -87,8 +87,7 @@ int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 	}
 	else if (mainboard_command.mode == TOKEN_STOP){
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_STOP;
-		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
-			 (uint16_t)((mainboard_command.ts.speed_div4<<2)|0x0003);
+		slavedspic.ts[mainboard_command.ts.side].speed_rqst = 0;
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;	
 	}
 	else if (mainboard_command.mode == TOKEN_SHOW){
@@ -162,6 +161,9 @@ void token_system_init(token_system_t *ts, uint8_t belts_side,
 /* manage a token system */
 void token_system_manage(token_system_t *ts)
 {
+
+#define BELTS_LOAD_TH 900
+
 	/* update state */
 	if(ts->state_changed){
 		ts->state_changed = 0;
@@ -195,7 +197,15 @@ void token_system_manage(token_system_t *ts)
 				ts->state = TS_STATE_IDLE;
 			}
 
-			/* TODO: stop belts when blocked */
+			/* stop belts when blocked */
+			if(belts_load_get(ts->belts_side)>BELTS_LOAD_TH){
+				belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
+				
+				STMCH_ERROR("%s belts BLOCKED!!",
+				 ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
+
+				ts->state = TS_STATE_IDLE;
+			} 
 
 			break;
 
@@ -239,8 +249,8 @@ static void state_do_token_systems(void)
 	token_system_manage(&slavedspic.ts[I2C_SIDE_REAR]);
 }
 
-/* main state machine */
-void state_machine(void)
+/* state machines */
+void state_machines(void)
 {
 	state_do_init();
 	state_do_token_systems();
