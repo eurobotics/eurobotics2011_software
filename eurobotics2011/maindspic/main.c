@@ -76,145 +76,105 @@ struct mainboard mainboard;
 struct slavedspic slavedspic;
 struct beaconboard beaconboard;
 
-/***********************/
-
-//void bootloader(void)
-//{
-//#define BOOTLOADER_ADDR 0x3f000
-//	if (pgm_read_byte_far(BOOTLOADER_ADDR) == 0xff) {
-//		printf_P(PSTR("Bootloader is not present\r\n"));
-//		return;
-//	}
-//	cli();
-//	BRAKE_ON();
-//	/* ... very specific :( */
-//	TIMSK0 = 0;
-//	TIMSK1 = 0;
-//	TIMSK2 = 0;
-//	TIMSK3 = 0;
-//	TIMSK4 = 0;
-//	TIMSK5 = 0;
-//	EIMSK = 0;
-//	UCSR0B = 0;
-//	UCSR1B = 0;
-//	UCSR2B = 0;
-//	UCSR3B = 0;
-//	SPCR = 0;
-//	TWCR = 0;
-//	ACSR = 0;
-//	ADCSRA = 0;
-//
-//	EIND = 1;
-//	__asm__ __volatile__ ("ldi r31,0xf8\n");
-//	__asm__ __volatile__ ("ldi r30,0x00\n");
-//	__asm__ __volatile__ ("eijmp\n");
-//	
-//	/* never returns */
-//}
-
-void do_time_monitor(void *dummy)
-{
-	//uint16_t seconds;
-	static uint16_t seconds;
-	
-	//seconds = eeprom_read_word(EEPROM_TIME_ADDRESS);
-	seconds ++;
-	//eeprom_write_word(EEPROM_TIME_ADDRESS, seconds);
-}
+/***************************************************************/
 
 void do_led_blink(void *dummy)
 {
-#if 0	 /* loopback beacon uart */
-	char c;
-	c = uart_recv(1);
-	uart_send(1,c);
-#endif
-	
-#if 1 /* simple blink */
+	/* simple blink */
 	LED1_TOGGLE();
-#endif
 }
 
 static void main_timer_interrupt(void)
 {
-	static uint8_t cpt = 0;
-	cpt++;
+	/* scheduler tasks */
 	sei();
-	//if ((cpt & 0x3) == 0)
 	scheduler_interrupt();	
 }
 
+/* main timer */
 void timer_init(void)
 {
-	/* Init Timer1 */
-	unsigned int match_value;
-	ConfigIntTimer1(T1_INT_ON);
-	WriteTimer1(0);
-	match_value = SCHEDULER_UNIT * (unsigned long)((double)FCY / 1000000.0);
-	OpenTimer1(T1_ON & T1_GATE_OFF & T1_IDLE_STOP &
-              T1_PS_1_1 & T1_SYNC_EXT_OFF &
-              T1_SOURCE_INT, match_value);
+	/* use timer 1 */
+	T1CON = 0;              
+	IFS0bits.T1IF = 0;      
+	IEC0bits.T1IE = 1;      
+	TMR1 = 0x0000;  	
+	PR1 = SCHEDULER_UNIT * (unsigned long)((double)FCY / 1000000.0);
+	T1CONbits.TON = 1;  
 }
 
-/* Timer 1 interrupt handler */
+/* timer 1 interrupt handler */
 void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void)
 {
- 	/* Interrupt Service Routine code goes here */
   IFS0bits.T1IF=0;
-    
-  // Register scheduler interrupt
   main_timer_interrupt();
 }
 
 void io_pins_init(void)
 {
-	
+	/*************************************** 	*  IO portmap and config 	*/
+	/* XXX: after reset all pins are inputs */
+	/* XXX: after reset all ANALOG pins are analog
+	 *		  and has disabled the read operation	 */
+
+	/* analog inputs */
+	AD1PCFGL = 0xFF;	/* by default all analog pins are digital */
+
 	/* leds */
-	_TRISA4 = 0;	// MAIN_LED1
-	_TRISA8 = 0;	// MAIN_LED2
-	_TRISC2 = 0;	// MAIN_LED3
-	_TRISC8 = 0;	// MAIN_LED4
+	_TRISA4 = 0;	/* MAIN_LED1 */
+	_TRISA8 = 0;	/* MAIN_LED2 */
+	_TRISC2 = 0;	/* MAIN_LED3 */
+	_TRISC8 = 0;	/* MAIN_LED4 */
 	
 	/* brushless motors */
-	_TRISA10 = 0; // L_MOT_REV	_TRISA7  = 0; // L_MOT_BREAK
-	_LATA7 = 0;
-	
-	_TRISB10 = 0; // R_MOT_REV	_TRISB11 = 0; // R_MOT_BREAK
-	_LATB11 = 0;
+	_TRISA10 = 0; 	/* L_MOT_REV	*/	_TRISA7  = 0;  /* L_MOT_BREAK	*/
+	_LATA7 	= 0;
 
-	/* servos  */
-	_RP22R = 0b10010; // OC1 -> RP22(RC6) -> L_BALLS_LID_PWM
-	_RP23R = 0b10011; // OC2 -> RP23(RC7) -> R_BALLS_LID_PWM
+	_TRISB10 = 0; 	/* R_MOT_REV	*/	_TRISB11 = 0; 	/* R_MOT_BREAK	*/
+	_LATB11 	= 0;
 
+	/* servos */
+	/* XXX use as GPIO see lasers section below */
+	/*_RP22R = 0b10010; /* OC1 -> RP22(RC6) -> MAIN_SERVO_PWM_1 */
+	/*_RP23R = 0b10011; /* OC2 -> RP23(RC7) -> MAIN_SERVO_PWM_2 */
+	_TRISC6 	= 0;
+	_TRISC7	= 0;
 	
-	// encoders (inputs)	
-	_QEA1R 	= 21;	// QEA1 <- RP21(RC5) <- R_ENC_CHA
-	_TRISC5 = 1;	
-	_QEB1R 	= 20;	// QEB1 <- RP20(RC4) <- R_ENC_CHB
+	/* encoders */	
+	_QEA1R 	= 21;	/* QEA1 <- RP21(RC5) <- R_ENC_CHA */
+	_TRISC5 	= 1;	
+	_QEB1R 	= 20;	/* QEB1 <- RP20(RC4) <- R_ENC_CHB */
 	_TRISC4	= 1;
 
-	_QEA2R 	= 19;	// QEA2 <- RP19(RC3) <- L_ENC_CHA
-	_TRISC3 = 1;	
-	_QEB2R 	= 4;	// QEB2 <- RP4(RB4)  <- L_ENC_CHB
+	_QEA2R 	= 19;	/* QEA2 <- RP19(RC3) <- L_ENC_CHA */
+	_TRISC3 	= 1;	
+	_QEB2R 	= 4;	/* QEB2 <- RP4(RB4)  <- L_ENC_CHB */
 	_TRISB4	= 1;	
-
-
-	// analog inputs
+	
+	/* lasers */
+	AD1PCFGL&= ~(_BV(7));	/* AN7 <- MAIN_LASER_1 */
+	AD1PCFGL&= ~(_BV(6));	/* AN6 <- MAIN_LASER_2 */
+	_ODCC6 	= 1;				/* lasers enable is open collector */
+	_LATC6 	= 1;				/* lasers off */
 			
-	// i2c (in/out open collector??)
+	/* i2c */
+	/* XXX open collector */
 	_ODCB6 = 1;
 	_ODCB5 = 1;
 
-	// current sense (analog input)
+	/* uarts */
+	/* U1 is for cmdline and bootloader */
+	_U1RXR 	= 8;	/* U1RX <- RP8(RB8) <- MAIN_UART_RX	*/
+	_TRISB8 	= 1;	/* U1RX is input							*/
+  	_RP7R 	= 3;	/* U1TX -> RP7(RB7) -> MAIN_UART_TX	*/
+	_TRISB7	= 0;	/* U1TX is output							*/
 	
-	// uarts
-	_U1RXR 	= 8;	// U1RX <- RP8(RB8) <- MAIN_UART_RX
-	_TRISB8 = 1;	// U1RX is input
-  _RP7R 	= 3;	// U1TX -> RP7(RB7) -> MAIN_UART_TX
-	_TRISB7	= 0;	// U1TX is output
-	
+	/* U2 swap between BEACON and SLAVEDSPIC */
 	_U2RXR 	= 9;	// U2RX <- RP9(RB9)  <- BEACON_UART_RX
-	_TRISB9 = 1;	// U2RX is input  _RP25R 	= 5;	// U2TX -> RP25(RC9) -> BEACON_UART_TX	_TRISC9	= 0;	// U2TX is output
+	_TRISB9 	= 1;	// U2RX is input  	_RP25R 	= 5;	// U2TX -> RP25(RC9) -> BEACON_UART_TX	_TRISC9	= 0;	// U2TX is output
+
+	_U2RXR 	= 2;	// U2RX <- RP2(RB2) <- SLAVE_UART_TX
+	_TRISB2 	= 1;	// U2RX is input  	_RP3R 	= 5;	// U2TX -> RP3(RB3) -> SLAVE_UART_RX	_TRISB3	= 0;	// U2TX is output
 }
 
 
@@ -269,14 +229,7 @@ int main(void)
 {
 	uint16_t seconds;
 	
-//	//eeprom_write_byte(EEPROM_MAGIC_ADDRESS, EEPROM_MAGIC_MAINBOARD);
-//	/* check eeprom to avoid to run the bad program */
-//	if (eeprom_read_byte(EEPROM_MAGIC_ADDRESS) !=
-//	    EEPROM_MAGIC_MAINBOARD) {
-//		sei();
-//		printf_P(PSTR("Bad eeprom value\r\n"));
-//		while(1);
-//	}
+	/* TODO: eeprom magic number */
 
 	/* remapeable pins */
 	io_pins_init();

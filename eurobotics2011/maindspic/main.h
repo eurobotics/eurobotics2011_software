@@ -54,11 +54,10 @@
 /* decrease track to decrease angle */
 //#define EXT_TRACK_MM 292.0
 #define EXT_TRACK_MM 291.0275
-//#define EXT_TRACK_MM 302.0188
 #define VIRTUAL_TRACK_MM EXT_TRACK_MM
 
-#define ROBOT_LENGTH 308
-#define ROBOT_WIDTH 310
+#define ROBOT_LENGTH 354.79
+#define ROBOT_WIDTH 	313.0
 
 /* it is a 3600 imps -> 14400 because we see 1/4 period
  * and diameter: 55mm -> perimeter 173mm 
@@ -67,17 +66,9 @@
 #define IMP_ENCODERS 3600
 #define WHEEL_DIAMETER_MM 55.0
 
-///* it is a 2048 imps -> 8192 because we see 1/4 period
-// * and diameter: 55mm -> perimeter 173mm 
-// * 8192/173 -> 473 */
-///* increase it to go further */
-//#define IMP_ENCODERS 2048
-//#define WHEEL_DIAMETER_MM 55.0
-
 #define WHEEL_PERIM_MM (WHEEL_DIAMETER_MM * M_PI)
 #define IMP_COEF 10.
 #define DIST_IMP_MM (((IMP_ENCODERS*4) / WHEEL_PERIM_MM) * IMP_COEF)
-
 
 #define LEFT_ENCODER        ((void *)2)
 #define RIGHT_ENCODER       ((void *)1)
@@ -94,12 +85,11 @@
 
 #define LED_PRIO           170
 #define TIME_PRIO          160
+#define I2C_POLL_PRIO      140
+#define BEACON_POLL_PRIO   130
 #define ADC_PRIO           120
 #define CS_PRIO            100
 #define STRAT_PRIO          50
-//#define BEACON_POLL_PRIO    10
-#define I2C_POLL_PRIO       140
-#define BEACON_POLL_PRIO    130
 #define EEPROM_TIME_PRIO     5
 
 #define CS_PERIOD 5000L

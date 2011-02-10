@@ -105,11 +105,13 @@ void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void)
 
 void io_pins_init(void)
 {
-	/*************************************** 	*  IO portmap and config 	*/
+	/***************************************
+ 	*  IO portmap and config
+ 	*/
 	
-	/* WARNING 1: after reset all pins are inputs */
-	/* WARNING 2: after reset all ANALOG pins are analog
-				  	  and has disabled the read operation
+	/* XXX: after reset all pins are inputs */
+	/* XXX: after reset all ANALOG pins are analog
+		and has disabled the read operation
 	*/
 	
 	/* leds */
@@ -147,7 +149,8 @@ void io_pins_init(void)
 
 
 	/* brushless motors */
-	_TRISA10 = 0; 	// SLAVE_MOT_BRUSH_REV	_TRISA7  = 0; 	// SLAVE_MOT_BRUSH_BREAK
+	_TRISA10 = 0; 	// SLAVE_MOT_BRUSH_REV
+	_TRISA7  = 0; 	// SLAVE_MOT_BRUSH_BREAK
 	_LATA7   = 0;	// initialy breaked
 	
 	/* servos  */
@@ -171,7 +174,10 @@ void io_pins_init(void)
   	_RP7R 	= 3;	// U1TX -> RP7 -> SLAVE_UART_TX
 	_TRISB7	= 0;	// U1TX is output
 	
-	_U2RXR 	= 9;	// U2RX <- RP9 <- SERVOS_AX12_UART  	_RP9R 	= 5;	// U2TX -> RP9 -> SERVOS_AX12_UART	_TRISB9	= 0;	// U2TX is output 	_ODCB9 	= 1;	// For half-duplex mode RP9 is open collector
+	_U2RXR 	= 9;	// U2RX <- RP9 <- SERVOS_AX12_UART
+  	_RP9R 	= 5;	// U2TX -> RP9 -> SERVOS_AX12_UART
+	_TRISB9	= 0;	// U2TX is output
+ 	_ODCB9 	= 1;	// For half-duplex mode RP9 is open collector
 }
 
 int main(void)
