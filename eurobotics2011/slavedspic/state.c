@@ -76,13 +76,13 @@ int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 	if (mainboard_command.mode == TOKEN_TAKE){
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_TAKE;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
-			 (uint16_t)((mainboard_command.ts.speed_div4<<2)|0x0003);
+			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
 	}
 	else if (mainboard_command.mode == TOKEN_EJECT){
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_EJECT;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
-			 (uint16_t)((mainboard_command.ts.speed_div4<<2)|0x0003);
+			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;	
 	}
 	else if (mainboard_command.mode == TOKEN_STOP){
@@ -93,7 +93,7 @@ int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 	else if (mainboard_command.mode == TOKEN_SHOW){
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_SHOW;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
-			 (uint16_t)((mainboard_command.ts.speed_div4<<2)|0x0003);
+			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
 	}
 	/* one shoot mode */
@@ -113,7 +113,7 @@ uint8_t state_get_mode(void)
 /* check that state is the one in parameter and that state changed */
 uint8_t state_check_update(uint8_t mode)
 {
-	if ((mode == mainboard_command.mode) && mode_changed){
+	if ((mode == mainboard_command.mode) && (mode_changed == 1)){
 		mode_changed = 0;
 		return 1;
 	}
@@ -161,15 +161,16 @@ void token_system_init(token_system_t *ts, uint8_t belts_side,
 /* manage a token system */
 void token_system_manage(token_system_t *ts)
 {
+#define BELTS_LOAD_TH 1000
 
-#define BELTS_LOAD_TH 900
+	static uint8_t flag_catched = 0;
 
 	/* update state */
 	if(ts->state_changed){
 		ts->state_changed = 0;
 		ts->state = ts->state_rqst;
 		ts->speed = ts->speed_rqst;
-		STMCH_DEBUG("%s mode=%d", __FUNCTION__, state_get_mode());
+		STMCH_DEBUG("%s mode=%d", __FUNCTION__, ts->state);
 	}
 
 	/* ejecute state */
@@ -180,6 +181,10 @@ void token_system_manage(token_system_t *ts)
 		case TS_STATE_TAKE:
 			if(!sensor_get(ts->sensor_stop)){
 				belts_mode_set(ts->belts_side, BELTS_MODE_IN, ts->speed);
+
+				STMCH_ERROR("waiting %s stop...",
+								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
+
 				ts->state = TS_STATE_WAITING_STOP;
 			}
 			else
@@ -187,30 +192,49 @@ void token_system_manage(token_system_t *ts)
 			break;
 
 		case TS_STATE_WAITING_STOP:
+
 			/* update info */
 			ts->token_catched = sensor_get(ts->sensor_catched);
-			ts->belts_blocked = 0;
+
+			if(ts->token_catched && flag_catched==0){
+				flag_catched = 1;
+				STMCH_ERROR("token %s catched!",
+								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
+			}
 
 			/* stop belts when sensor */
 			if(sensor_get(ts->sensor_stop)){
 				belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
+
+				STMCH_ERROR("token %s stoped!",
+								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
+				
+				flag_catched = 0;
 				ts->state = TS_STATE_IDLE;
 			}
 
 			/* stop belts when blocked */
-			if(belts_load_get(ts->belts_side)>BELTS_LOAD_TH){
+			//STMCH_ERROR("left load %d", belts_load_get(ts->belts_side));
+			if(belts_load_get(ts->belts_side)>=BELTS_LOAD_TH){
 				belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
 				
 				STMCH_ERROR("%s belts BLOCKED!!",
-				 ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
+				 				 ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
 
+				ts->belts_blocked = 1;
 				ts->state = TS_STATE_IDLE;
 			} 
+			else
+				ts->belts_blocked = 0;
 
 			break;
 
 		case TS_STATE_EJECT:
 			belts_mode_set(ts->belts_side, BELTS_MODE_OUT, ts->speed);
+
+			STMCH_ERROR("waiting %s free...",
+							ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
+
 			ts->state = TS_STATE_WAITING_FREE;
 			break;
 	
@@ -219,8 +243,11 @@ void token_system_manage(token_system_t *ts)
 			ts->token_catched = sensor_get(ts->sensor_catched);
 
 			/* stop belts when sensor */
-			if(!sensor_get(ts->sensor_catched)){
+			if(!ts->token_catched){
 				belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
+
+				STMCH_ERROR("token %s free!",
+								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");		
 				ts->state = TS_STATE_IDLE;
 			}
 			break;
@@ -259,11 +286,11 @@ void state_machines(void)
 void state_init(void)
 {
 	mainboard_command.mode = INIT;
-	mode_changed = 1;
 
 	token_system_init(&slavedspic.ts[I2C_SIDE_FRONT], BELTS_SIDE_FRONT, 
-							S_FRONT_TOKEN_STOP, 0);
-	token_system_init(&slavedspic.ts[I2C_SIDE_REAR], BELTS_SIDE_REAR, 
-							S_REAR_TOKEN_STOP, 0);
+							S_FRONT_TOKEN_STOP, S_FRONT_TOKEN_CATCHED);
+
+	//token_system_init(&slavedspic.ts[I2C_SIDE_REAR], BELTS_SIDE_REAR, 
+	//						S_REAR_TOKEN_STOP, S_REAR_TOKEN_CATCHED);
 }
 

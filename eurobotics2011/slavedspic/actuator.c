@@ -101,7 +101,20 @@ uint16_t belts_load_get(uint8_t side)
 	ax12_right_load &= (~0xFC00);
 
 	/* return average load */
-	return (uint16_t)((ax12_left_load+ax12_right_load)/2);
+	//return (uint16_t)((ax12_left_load+ax12_right_load)/2);
+
+	/* return max load */
+	/*
+	if(ax12_left_load > ax12_right_load)
+		return (uint16_t)ax12_left_load;
+	else
+		return (uint16_t)ax12_right_load;
+	*/
+
+	/* XXX return only left load because right front 
+	 * is very hard
+	 */
+	return (uint16_t)ax12_left_load;
 }
 
 

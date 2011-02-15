@@ -338,11 +338,11 @@ static void cmd_state2_parsed(void *parsed_result,
 		command.ts.side = I2C_SIDE_FRONT;
 
 	if (!strcmp(res->arg2, "take"))
-		command.ts.side = I2C_SLAVEDSPIC_MODE_TOKEN_TAKE;
+		command.mode = I2C_SLAVEDSPIC_MODE_TOKEN_TAKE;
 	else if (!strcmp(res->arg2, "eject"))
-		command.ts.side = I2C_SLAVEDSPIC_MODE_TOKEN_EJECT;
+		command.mode = I2C_SLAVEDSPIC_MODE_TOKEN_EJECT;
 	else if (!strcmp(res->arg2, "show"))
-		command.ts.side = I2C_SLAVEDSPIC_MODE_TOKEN_SHOW;
+		command.mode = I2C_SLAVEDSPIC_MODE_TOKEN_SHOW;
 
 	command.ts.speed_div4 = res->arg3;
 	
@@ -365,6 +365,8 @@ parse_pgm_inst_t cmd_state2 = {
 	.tokens = {        /* token list, NULL terminated */
 		(prog_void *)&cmd_state2_arg0, 
 		(prog_void *)&cmd_state2_arg1, 
+		(prog_void *)&cmd_state2_arg2,
+		(prog_void *)&cmd_state2_arg3,
 		NULL,
 	},
 };

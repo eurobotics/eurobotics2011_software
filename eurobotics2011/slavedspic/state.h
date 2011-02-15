@@ -34,11 +34,11 @@ typedef struct {
 #define TS_STATE_SHOW				6
 
 	uint8_t state;
+	uint8_t state_rqst;
+	uint8_t state_changed;
 
 	uint16_t speed;
-	uint8_t state_changed;
-	uint8_t state_rqst;
-	uint8_t speed_rqst;
+	uint16_t speed_rqst;
 
 	/* info */
 	uint8_t belts_blocked;
