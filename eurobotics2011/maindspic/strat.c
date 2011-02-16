@@ -98,7 +98,7 @@ struct strat_infos strat_infos = {
 
 void strat_set_bounding_box(void)
 {
-	if (get_color() == I2C_COLOR_YELLOW) {
+	if (get_color() == I2C_COLOR_RED) {
 		strat_infos.area_bbox.x1 = 350;
 		strat_infos.area_bbox.y1 = 300;
 		strat_infos.area_bbox.x2 = 2650; /* needed for c1 */

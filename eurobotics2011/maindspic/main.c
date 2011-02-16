@@ -27,7 +27,6 @@
 #include <aversive/pgmspace.h>
 #include <aversive/wait.h>
 #include <aversive/error.h>
-//#include <avr/eeprom.h>
 
 #include <configuration_bits_config.h>
 
@@ -41,7 +40,6 @@
 #include <timer.h>
 #include <scheduler.h>
 #include <time.h>
-//#include <adc.h>
 
 #include <pid.h>
 #include <quadramp.h>
@@ -58,7 +56,6 @@
 #include <parse.h>
 #include <rdline.h>
 
-//#include "../common/eeprom_mapping.h"
 #include "../common/i2c_commands.h"
 
 #include "main.h"
@@ -103,7 +100,7 @@ void timer_init(void)
 	T1CONbits.TON = 1;  
 }
 
-/* timer 1 interrupt handler */
+/* timer 1 interrupt */
 void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void)
 {
   IFS0bits.T1IF=0;
@@ -118,7 +115,8 @@ void io_pins_init(void)
 	 *		  and has disabled the read operation	 */
 
 	/* analog inputs */
-	AD1PCFGL = 0xFF;	/* by default all analog pins are digital */
+	/* by default all analog pins are digital */
+	AD1PCFGL = 0xFF;	
 
 	/* leds */
 	_TRISA4 = 0;	/* MAIN_LED1 */
@@ -134,9 +132,9 @@ void io_pins_init(void)
 	_LATB11 	= 0;
 
 	/* servos */
-	/* XXX use as GPIO see lasers section below */
-	/*_RP22R = 0b10010; /* OC1 -> RP22(RC6) -> MAIN_SERVO_PWM_1 */
-	/*_RP23R = 0b10011; /* OC2 -> RP23(RC7) -> MAIN_SERVO_PWM_2 */
+	/* XXX use as GPO's see lasers section below */
+	/*_RP22R = 0b10010; OC1 -> RP22(RC6) -> MAIN_SERVO_PWM_1 */
+	/*_RP23R = 0b10011; OC2 -> RP23(RC7) -> MAIN_SERVO_PWM_2 */
 	_TRISC6 	= 0;
 	_TRISC7	= 0;
 	
@@ -170,71 +168,27 @@ void io_pins_init(void)
 	_TRISB7	= 0;	/* U1TX is output							*/
 	
 	/* U2 swap between BEACON and SLAVEDSPIC */
-	_U2RXR 	= 9;	// U2RX <- RP9(RB9)  <- BEACON_UART_RX
-	_TRISB9 	= 1;	// U2RX is input  	_RP25R 	= 5;	// U2TX -> RP25(RC9) -> BEACON_UART_TX	_TRISC9	= 0;	// U2TX is output
-
-	_U2RXR 	= 2;	// U2RX <- RP2(RB2) <- SLAVE_UART_TX
-	_TRISB2 	= 1;	// U2RX is input  	_RP3R 	= 5;	// U2TX -> RP3(RB3) -> SLAVE_UART_RX	_TRISB3	= 0;	// U2TX is output
-}
-
-
-#if 0
-uint8_t val[32];
-uint8_t i=0;
-uint8_t error = 0;
-void i2c_test_read_event(uint8_t *rBuff, uint16_t size)
-{
-		error = 0;
-		
-		if(size == 1 && rBuff[0]==val[0])
-			printf("%d val_rd = %d\n\r", i++, rBuff[0]);
-		else{
-			printf("%d Error lectura: leido %d\r\n", i++, rBuff[0]);
-			error = 1;
-			i2c_reset();
-		}			
-			
-		val[0]++;
-}
-
-void i2c_test_write_event(uint16_t size)
-{
-	if(size ==1)
-		printf("%d val_wr = %d\n\r", i, val[0]);
-	else{
-		printf("%d Error escritura: %d bytes escritos\n\r",i, size);
-		error = 1;
-		i2c_reset();
-	}
-}
-
-void i2c_test(void)
-{
-	uint8_t ret;
-	
-	while(1){
-		ret = i2c_write(0x21, 0x02, val, 1);	
-		wait_ms(100);
-		ret = i2c_read(0x21, 0x02, 1);
-		wait_ms(100);
-	
-	}
-}	
+#if 1
+	_U2RXR 	= 9;	/* U2RX <- RP9(RB9)  <- BEACON_UART_RX */
+	_TRISB9 	= 1;	/* U2RX is input								*/  	_RP25R 	= 5;	/* U2TX -> RP25(RC9) -> BEACON_UART_TX */	_TRISC9	= 0;	/* U2TX is output								*/
+#else
+	_U2RXR 	= 2;	/* U2RX <- RP2(RB2) <- SLAVE_UART_TX	*/
+	_TRISB2 	= 1;	/* U2RX is input								*/  	_RP3R 	= 5;	/* U2TX -> RP3(RB3) -> SLAVE_UART_RX	*/	_TRISB3	= 0;	/* U2TX is output								*/
 #endif
+}
 
-
-//uint8_t pepe = 0;
 
 int main(void)
-{
-	uint16_t seconds;
-	
+{	
+	/* disable interrupts */
+	cli();
+
 	/* TODO: eeprom magic number */
 
 	/* remapeable pins */
 	io_pins_init();
 
-	/* brake */
+	/* brake motors */
 	BRAKE_ON();
 	
 	/* oscillator */
@@ -246,10 +200,13 @@ int main(void)
 	LED3_OFF();
 	LED4_OFF();
 
+	/* reset data structures */
 	memset(&gen, 0, sizeof(gen));
 	memset(&mainboard, 0, sizeof(mainboard));
+
+	/* default flags */
 	mainboard.flags = DO_ENCODERS | DO_RS |
-		DO_POS | DO_POWER | DO_BD;
+							DO_POS | DO_POWER | DO_BD;
 	
 	beaconboard.opponent_x = I2C_OPPONENT_NOT_THERE;
 
@@ -271,28 +228,24 @@ int main(void)
 	encoders_dspic_init();
 
 	/* I2C */
-	i2c_init();
-	i2c_register_read_event(i2c_read_event);
-	i2c_register_write_event(i2c_write_event);
+	//i2c_init();
+	//i2c_register_read_event(i2c_read_event);
+	//i2c_register_write_event(i2c_write_event);
 	//i2c_register_read_event(i2c_test_read_event);
 	//i2c_register_write_event(i2c_test_write_event);
-	i2c_protocol_init();
+	//i2c_protocol_init();
 
 	/* TIMER */
 	timer_init();
 
 	/* DAC_MC */
-	dac_mc_channel_init(&gen.dac_mc_left, 1, CHANNEL_R,											DAC_MC_MODE_SIGNED,										 	&LATB, 10, NULL, 0);
-	dac_mc_set(&gen.dac_mc_left, 0);
+	dac_mc_channel_init(&gen.dac_mc_right, 1, CHANNEL_R,											DAC_MC_MODE_SIGNED|DAC_MC_MODE_SIGN_INVERTED,										 	&LATB, 10, NULL, 0);
+	
 
-	dac_mc_channel_init(&gen.dac_mc_right, 1, CHANNEL_L,											DAC_MC_MODE_SIGNED|DAC_MC_MODE_SIGN_INVERTED,										 	&LATA, 10, NULL, 0);
+	dac_mc_channel_init(&gen.dac_mc_left, 1, CHANNEL_L,											DAC_MC_MODE_SIGNED,										 	&LATA, 10, NULL, 0);
+	
 	dac_mc_set(&gen.dac_mc_right, 0);
-
-
-	/* servos */
-	pwm_servo_init(&gen.pwm_servo_oc1, 1, 800, 2400);
-	pwm_servo_init(&gen.pwm_servo_oc2, 2, 800, 2400);
-	pwm_servo_enable();
+	dac_mc_set(&gen.dac_mc_left, 0);
 
 
 	/* SCHEDULER */
@@ -313,13 +266,13 @@ int main(void)
 
 	wait_ms(500);
 
-	/* start i2c slave polling */
-	scheduler_add_periodical_event_priority(i2c_poll_slaves, NULL,
-						8000L / SCHEDULER_UNIT, I2C_POLL_PRIO);
-
-	/* start beacon send cmd polling */
-	scheduler_add_periodical_event_priority(beacon_daemon, NULL,
-					8000L / SCHEDULER_UNIT, BEACON_POLL_PRIO);
+//	/* start i2c slave polling */
+//	scheduler_add_periodical_event_priority(i2c_poll_slaves, NULL,
+//						8000L / SCHEDULER_UNIT, I2C_POLL_PRIO);
+//
+//	/* start beacon send cmd polling */
+//	scheduler_add_periodical_event_priority(beacon_daemon, NULL,
+//					8000L / SCHEDULER_UNIT, BEACON_POLL_PRIO);
 
 	/* strat */
  	gen.logs[0] = E_USER_STRAT;
@@ -327,35 +280,21 @@ int main(void)
  	//gen.logs[2] = E_USER_BEACON;
  	//gen.logs[2] = E_OA;
  	gen.log_level = 5;
-	strat_reset_infos();
+	
+	//strat_reset_infos();
 
 	/* strat-related event */
-	scheduler_add_periodical_event_priority(strat_event, NULL,
-						25000L / SCHEDULER_UNIT,
-						STRAT_PRIO);
-
-	/* eeprom time monitor */
-	//scheduler_add_periodical_event_priority(do_time_monitor, NULL,
-	//					1000000L / SCHEDULER_UNIT,
-	//					EEPROM_TIME_PRIO);
+//	scheduler_add_periodical_event_priority(strat_event, NULL,
+//						25000L / SCHEDULER_UNIT,
+//						STRAT_PRIO);
+//
 
 	sei();
 
-	//i2c_test();
-
-#if 0
-	while(1){
-		wait_ms(200);
-		pepe ^=1;
-		i2c_led_control(I2C_SLAVEDSPIC_ADDR,1,pepe);
-		printf("slavedspic led = %d\r\n", slavedspic.led);
-	}
-#endif
 	
 	printf_P(PSTR("\r\n"));
-	printf_P(PSTR("Que sepas que no pasa na ... , pero que ser, eres!!\r\n"));
-//	seconds = eeprom_read_word(EEPROM_TIME_ADDRESS);
-//	printf_P(PSTR("Running since %d mn %d\r\n"), seconds/60, seconds%60);
+	printf_P(PSTR("Siempre falta tiempo para hacer pruebas!!\r\n"));
+
 	cmdline_interact();
 
 	return 0;

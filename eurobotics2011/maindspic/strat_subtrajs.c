@@ -148,7 +148,7 @@ uint8_t strat_harvest_oranges(void)
 	
 	i2c_slavedspic_mode_harvest_orange(60, -50, 0);
 	wait_ms(100);
-	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
+//	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
 	
 	/* orange 3 */
 	trajectory_a_abs(&mainboard.traj, COLOR_A2(5));
@@ -156,7 +156,7 @@ uint8_t strat_harvest_oranges(void)
 	
 	i2c_slavedspic_mode_harvest_orange(40, -80, 0); //40
 	wait_ms(100);
-	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
+//	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
 	
 	/* orange 4 */
 	trajectory_a_abs(&mainboard.traj, COLOR_A2(-9));
@@ -164,7 +164,7 @@ uint8_t strat_harvest_oranges(void)
 	
 	i2c_slavedspic_mode_harvest_orange(70, -75, 0); //-60
 	wait_ms(100);
-	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
+//	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
 
 	/* orange 6 */
 	trajectory_a_abs(&mainboard.traj, COLOR_A2(-25));
@@ -172,7 +172,7 @@ uint8_t strat_harvest_oranges(void)
 	
 	i2c_slavedspic_mode_harvest_orange(30, -30, 0); // 50 -30?
 	wait_ms(100);
-	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
+//	WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
 	
 	/* goto rampe center in angle */
 	trajectory_a_abs(&mainboard.traj, COLOR_A2(0));
@@ -307,10 +307,10 @@ uint8_t strat_goto_basket(void)
 					ball_lids_open();
 					i2c_slavedspic_mode_out_corns();
 					wait_ms(200);
-					WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
+//					WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
 					i2c_slavedspic_mode_hide_arm();
 					wait_ms(200);
-					WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
+//					WAIT_COND_OR_TIMEOUT(((slavedspic.status==I2C_IDLE)), 5000);    
 
 					trajectory_d_rel(&mainboard.traj, 120);
 					err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);

@@ -68,67 +68,67 @@
 
 void strat_event_tomato(void)
 {
-	static uint16_t old_spdd, old_spda;
-	
-	if(strat_infos.conf.flags & STRAT_CONF_HARVEST_TOMATOES){	
-	
-		/* detect tomato */
-		if(((sensor_get(S_FAR_HI_R) && sensor_get(S_NEAR_LOW_R)) ||
-				(sensor_get(S_FAR_HI_L) && sensor_get(S_NEAR_LOW_L)) ) &&
-				(!sensor_get(S_BARRIER)))
-		{		
-				/* harvest tomato */
-				if((slavedspic.status == I2C_IDLE)){// && (strat_infos.tomato_event == OFF)){
-	
-					//DEBUG(E_USER_STRAT, "harvest tomato ON");
-					i2c_slavedspic_mode_harvest_tomato();		
-					
-					/* new speed */
-					strat_get_speed(&old_spdd, &old_spda);
-					strat_set_speed(300, old_spda);
-	
-					/* interrupt traj */									
-					trajectory_stop(&mainboard.traj);
-					interrupt_traj();				
-						
-					strat_infos.tomato_event = ON;			
-				}
-		}
-		else if((slavedspic.status == I2C_IDLE) && (strat_infos.tomato_event == ON)){
-			/* restore speed */	
-			strat_set_speed(old_spdd, old_spda);
-		
-			/* interrupt traj */
-			trajectory_stop(&mainboard.traj);
-			interrupt_traj();
-											
-			strat_infos.tomato_event = OFF;
-			
-			//DEBUG(E_USER_STRAT, "harvest tomato OFF");
-			
-		}
-	}
-	else if(strat_infos.tomato_event == ON){
-		if(slavedspic.status == I2C_IDLE){
-			/* restore speed */	
-			strat_set_speed(old_spdd, old_spda);										
-			strat_infos.tomato_event = OFF;		
-		}	
-	}
-	else
-		strat_infos.tomato_event = OFF;
-
+//	static uint16_t old_spdd, old_spda;
+//	
+//	if(strat_infos.conf.flags & STRAT_CONF_HARVEST_TOMATOES){	
+//	
+//		/* detect tomato */
+//		if(((sensor_get(S_FAR_HI_R) && sensor_get(S_NEAR_LOW_R)) ||
+//				(sensor_get(S_FAR_HI_L) && sensor_get(S_NEAR_LOW_L)) ) &&
+//				(!sensor_get(S_BARRIER)))
+//		{		
+//				/* harvest tomato */
+//				if((slavedspic.status == I2C_IDLE)){// && (strat_infos.tomato_event == OFF)){
+//	
+//					//DEBUG(E_USER_STRAT, "harvest tomato ON");
+//					i2c_slavedspic_mode_harvest_tomato();		
+//					
+//					/* new speed */
+//					strat_get_speed(&old_spdd, &old_spda);
+//					strat_set_speed(300, old_spda);
+//	
+//					/* interrupt traj */									
+//					trajectory_stop(&mainboard.traj);
+//					interrupt_traj();				
+//						
+//					strat_infos.tomato_event = ON;			
+//				}
+//		}
+//		else if((slavedspic.status == I2C_IDLE) && (strat_infos.tomato_event == ON)){
+//			/* restore speed */	
+//			strat_set_speed(old_spdd, old_spda);
+//		
+//			/* interrupt traj */
+//			trajectory_stop(&mainboard.traj);
+//			interrupt_traj();
+//											
+//			strat_infos.tomato_event = OFF;
+//			
+//			//DEBUG(E_USER_STRAT, "harvest tomato OFF");
+//			
+//		}
+//	}
+//	else if(strat_infos.tomato_event == ON){
+//		if(slavedspic.status == I2C_IDLE){
+//			/* restore speed */	
+//			strat_set_speed(old_spdd, old_spda);										
+//			strat_infos.tomato_event = OFF;		
+//		}	
+//	}
+//	else
+//		strat_infos.tomato_event = OFF;
+//
 }
 
 void strat_enable_harvest_tomatoes(void)
 {
-	WAIT_COND_OR_TIMEOUT((slavedspic.status == I2C_IDLE), 1000);
+//	WAIT_COND_OR_TIMEOUT((slavedspic.status == I2C_IDLE), 1000);
 	strat_infos.conf.flags |= STRAT_CONF_HARVEST_TOMATOES;	
 }
 
 void strat_disable_harvest_tomatoes(void)
 {
-	WAIT_COND_OR_TIMEOUT((slavedspic.status == I2C_IDLE), 1000);
+//	WAIT_COND_OR_TIMEOUT((slavedspic.status == I2C_IDLE), 1000);
 	strat_infos.conf.flags &= (~STRAT_CONF_HARVEST_TOMATOES);	
 }
 
@@ -232,25 +232,25 @@ void strat_disable_harvest_static_corns(void)
 
 void strat_event_fall_corn(void)
 {
-	if(strat_infos.conf.flags & STRAT_CONF_HARVEST_FALL_CORNS)
-	{		
-		/* detect fall corn */
-		if(((!sensor_get(S_FAR_HI_R) && sensor_get(S_NEAR_LOW_R)) ||
-				(!sensor_get(S_FAR_HI_L) && sensor_get(S_NEAR_LOW_L)) ) &&
-				(!sensor_get(S_BARRIER)))
-		{
-			
-			/* harvest corn */
-			if((slavedspic.status == I2C_IDLE) && (strat_infos.fall_corn_event == 0)){
-				//DEBUG(E_USER_STRAT, "harvest fall corn");
-				i2c_slavedspic_mode_harvest_corn();	
-				strat_infos.fall_corn_event = ON;				
-			}
-		}
-			
-	}
-	else
-			strat_infos.fall_corn_event = OFF;
+//	if(strat_infos.conf.flags & STRAT_CONF_HARVEST_FALL_CORNS)
+//	{		
+//		/* detect fall corn */
+//		if(((!sensor_get(S_FAR_HI_R) && sensor_get(S_NEAR_LOW_R)) ||
+//				(!sensor_get(S_FAR_HI_L) && sensor_get(S_NEAR_LOW_L)) ) &&
+//				(!sensor_get(S_BARRIER)))
+//		{
+//			
+//			/* harvest corn */
+//			if((slavedspic.status == I2C_IDLE) && (strat_infos.fall_corn_event == 0)){
+//				//DEBUG(E_USER_STRAT, "harvest fall corn");
+//				i2c_slavedspic_mode_harvest_corn();	
+//				strat_infos.fall_corn_event = ON;				
+//			}
+//		}
+//			
+//	}
+//	else
+//			strat_infos.fall_corn_event = OFF;
 }
 
 void strat_enable_harvest_fall_corns(void)
@@ -296,7 +296,7 @@ uint8_t strat_harvest_corn(uint8_t num)
 	d_back += 100;
 	trajectory_d_rel(&mainboard.traj, 100);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	WAIT_COND_OR_TIMEOUT((slavedspic.status == I2C_IDLE), 2000);
+//	WAIT_COND_OR_TIMEOUT((slavedspic.status == I2C_IDLE), 2000);
 	
 //	/* if corn still in entrance */
 //	if(sensor_get(S_BARRIER) && !sensor_get(S_OBSTACLE_FRONT))

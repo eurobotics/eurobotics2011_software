@@ -24,12 +24,12 @@
 #define _STRAT_H_
 
 /* convert coords according to our color */
-#define COLOR_Y(y)     ((mainboard.our_color==I2C_COLOR_YELLOW)? (y) : (AREA_Y-(y)))
-#define COLOR_X(x)     ((mainboard.our_color==I2C_COLOR_YELLOW)? (x) : (AREA_X-(x)))
-#define COLOR_A(a)     ((mainboard.our_color==I2C_COLOR_YELLOW)? (a) : (-a))
-#define COLOR_A2(a)     ((mainboard.our_color==I2C_COLOR_YELLOW)? (a) : (180-a))
-#define COLOR_SIGN(x)  ((mainboard.our_color==I2C_COLOR_YELLOW)? (x) : (-x))
-#define COLOR_INVERT(x) ((mainboard.our_color==I2C_COLOR_YELLOW)? (x) : (!x))
+#define COLOR_Y(y)     ((mainboard.our_color==I2C_COLOR_RED)? (y) : (AREA_Y-(y)))
+#define COLOR_X(x)     ((mainboard.our_color==I2C_COLOR_RED)? (x) : (AREA_X-(x)))
+#define COLOR_A(a)     ((mainboard.our_color==I2C_COLOR_RED)? (a) : (-a))
+#define COLOR_A2(a)     ((mainboard.our_color==I2C_COLOR_RED)? (a) : (180-a))
+#define COLOR_SIGN(x)  ((mainboard.our_color==I2C_COLOR_RED)? (x) : (-x))
+#define COLOR_INVERT(x) ((mainboard.our_color==I2C_COLOR_RED)? (x) : (!x))
 
 /* area */
 #define AREA_X 3000

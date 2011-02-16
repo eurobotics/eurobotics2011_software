@@ -67,8 +67,13 @@ int8_t cmd_buff[CMD_LINE_SIZE];
 uint16_t cmd_size = 0;
 int8_t i=0;
 
-/* BEACON WT11 COMMANDS */
 
+
+/*******************************************************************
+ * BEACON WT11 COMMANDS 
+ ******************************************************************/
+
+/* reset wt11 of robot (mainboard) */
 void beacon_cmd_wt11_local_reset(void)
 {
 	/* change to cmd mode */
@@ -92,82 +97,19 @@ void beacon_cmd_wt11_local_reset(void)
 	uart_send(BEACON_UART,'\n');	
 }
 
+/* call to beacon wt11 to open connection */
 void beacon_cmd_wt11_call(void)
 {
-	const char send_buf[] = "CALL 00:07:80:85:04:70 1 RFCOMM\n";	
-//	char recv_buf[LINE_BUFF_SIZE];	
-	int16_t i=0; //, j=0, k=0;
-//	microseconds time_us;
-//	int16_t c=0;
-//	int16_t ret;
+	const char send_buf[] = "CALL 00:07:80:85:04:70 1 RFCOMM\n";		
+	int16_t i=0;
 
-//	/* local reset wt11 */
-//	beacon_cmd_wt11_local_reset();
-	
-//	/* flush uart */
-//	while((c=uart_recv_nowait(BEACON_UART))!=-1);	
-	
 	/* send call cmd */
 	for(i=0; i<32; i++){
 		uart_send(BEACON_UART, send_buf[i]);
 	}	
-	
-//	/* receive response */
-//	i=0;
-//	time_us = time_get_us2();
-//	while((time_get_us2()-time_us)< 10000000){
-//		
-//		c=uart_recv_nowait(BEACON_UART);
-//		
-//		if(c == -1)
-//			continue;
-//		
-//		if(i<LINE_BUFF_SIZE){
-//			recv_buf[i] = c;
-//			i++;	
-//			uart_send_nowait(0,recv_buf[i-1]);
-//		}	
-//		
-//	}
-//
-//	/* parse response */
-//	for(k=0, j=0; k<i; k++, j++){
-//		
-//		line[j] = recv_buf[k];
-//					
-//		if(line[j] == '\n' || line[j] == '\r'){
-//
-//			if(j==0){
-//				/* skip line */
-//				j = -1;			
-//				continue;
-//			}
-//			else{
-//				/* add end of line and reset pointer */							
-//				line[j] = '\0';
-//				j = -1;			
-//			}							
-//										
-//			DEBUG(E_USER_BEACON,"parse: %s\n\r",line);
-//			
-//			/* connection pass */
-//		 	ret = sscanf(line, "CONNECT %d RFCOMM 1", &link_id);
-//			if(ret == 1){
-//				NOTICE(E_USER_BEACON, "connected %d", link_id);						
-//				return 1;	
-//			}
-//
-//			/* connection fails */
-//		 	ret = sscanf(line, "NO CARRIER %d ERROR %d RFC_CONNECTION_FAILED", &link_id, &error_id);
-//			if(ret == 2){
-//				ERROR(E_USER_BEACON, "ERROR %d connecting %d", error_id, link_id);						
-//				return -1;	
-//			}
-//		}
-//	}	
-//	return -1;
 }
 
+/* close connection with beacon wt11 */
 void beacon_cmd_wt11_close(void)
 {
 	/* change to cmd mode */
@@ -192,28 +134,37 @@ void beacon_cmd_wt11_close(void)
 }	
 
 
-/* SEND AND RECEVE DAEMONS */
+/************************************************************
+ * SEND AND RECEVE MESSAGES 
+ ***********************************************************/
 
+/* send command to beacon */
 void beacon_send_cmd(int8_t *buff, uint16_t size){
 	int16_t i;
 	
+	/* check length */
 	if(size > CMD_LINE_SIZE){
 		ERROR(E_USER_BEACON, "Command size is too large");	
 		return;
 	}
 		
+	/* fill buffer */
 	for(i=0; i<size; i++){
 		cmd_buff[i] = buff[i];	
-	}		
+	}
+
+	/* command size != 0 indicate 
+    * that there is a command to send */		
 	cmd_size = size;
 }
 
+/* send a command on queque or pull info of beacon */
 void beacon_send_daemon(void * dummy)
 {
 	int16_t i;
 	static uint8_t a=0;
 		
-
+	/* command on queque, send it */
 	if(cmd_size){
 
 		for(i=0; i<cmd_size; i++){
@@ -224,9 +175,13 @@ void beacon_send_daemon(void * dummy)
 		uart_send(BEACON_UART, '\n');
 		uart_send(BEACON_UART, '\r');		
 	}
+	/* pull info of beacon */
 	else{
 
+		/* get opponent position */
 		if(mainboard.flags & DO_OPP){
+			
+			/* led debug */
 			a++;
 			if (a & 0x4)
 				LED3_TOGGLE();
@@ -355,8 +310,8 @@ void beacon_cmd_color(void)
 	int8_t buff[20];
 	uint16_t size;
 	
-	if(mainboard.our_color == I2C_COLOR_YELLOW)
-		size = sprintf((char *)buff,"\n\rcolor yellow");
+	if(mainboard.our_color == I2C_COLOR_RED)
+		size = sprintf((char *)buff,"\n\rcolor red");
 	else
 		size = sprintf((char *)buff,"\n\rcolor blue");
 	

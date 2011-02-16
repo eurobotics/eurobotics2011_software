@@ -123,7 +123,7 @@ static void do_cs(void *dummy)
 		}
 	}
 	
-	/* brakes */
+	/* motors brakes */
 	if (mainboard.flags & DO_POWER)
 		BRAKE_OFF();
 	else
@@ -169,9 +169,9 @@ void microb_cs_init(void)
 
 	/* increase gain to decrease dist, increase left and it will turn more left */
 	rs_set_left_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				LEFT_ENCODER, IMP_COEF *  -1.014);
+				LEFT_ENCODER, IMP_COEF *  1.014);
 	rs_set_right_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				 RIGHT_ENCODER, IMP_COEF * 1.002);
+				 RIGHT_ENCODER, IMP_COEF * -1.002);
 
 //	rs_set_left_ext_encoder(&mainboard.rs, encoders_spi_get_value, 
 //				LEFT_ENCODER, IMP_COEF * 1.0015);

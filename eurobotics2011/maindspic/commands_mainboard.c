@@ -345,8 +345,8 @@ static void cmd_start_parsed(void *parsed_result, void *data)
 		mainboard.our_color = I2C_COLOR_BLUE;
 		beacon_cmd_color();
 	}
-	else if (!strcmp_P(res->color, PSTR("yellow"))) {
-		mainboard.our_color = I2C_COLOR_YELLOW;
+	else if (!strcmp_P(res->color, PSTR("red"))) {
+		mainboard.our_color = I2C_COLOR_RED;
 		beacon_cmd_color();
 	}
 
@@ -358,7 +358,7 @@ static void cmd_start_parsed(void *parsed_result, void *data)
 
 prog_char str_start_arg0[] = "start";
 parse_pgm_token_string_t cmd_start_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_start_result, arg0, str_start_arg0);
-prog_char str_start_color[] = "blue#yellow";
+prog_char str_start_color[] = "blue#red";
 parse_pgm_token_string_t cmd_start_color = TOKEN_STRING_INITIALIZER(struct cmd_start_result, color, str_start_color);
 prog_char str_start_debug[] = "debug#match";
 parse_pgm_token_string_t cmd_start_debug = TOKEN_STRING_INITIALIZER(struct cmd_start_result, debug, str_start_debug);

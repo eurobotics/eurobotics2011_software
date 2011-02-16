@@ -206,7 +206,7 @@ uint8_t y_is_more_than(int16_t y)
 	int16_t posy;
 	
 	posy = position_get_y_s16(&mainboard.pos);
-	if (mainboard.our_color == I2C_COLOR_YELLOW) {
+	if (mainboard.our_color == I2C_COLOR_RED) {
 		if (posy > y)
 			return 1;
 		else
@@ -285,10 +285,10 @@ uint8_t get_color(void)
 /* get the color of the opponent robot */
 uint8_t get_opponent_color(void)
 {
-	if (mainboard.our_color == I2C_COLOR_YELLOW)
+	if (mainboard.our_color == I2C_COLOR_RED)
 		return I2C_COLOR_BLUE;
 	else
-		return I2C_COLOR_YELLOW;
+		return I2C_COLOR_RED;
 }
 
 /* get the xy pos of the opponent robot */
