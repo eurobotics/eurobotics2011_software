@@ -57,7 +57,7 @@ void beacon_reset_pos(void);
 void beacon_set_consign(int32_t val);
 
 int32_t encoders_spi_get_beacon_speed(void *dummy);
-int32_t encoders_spi_update_beacon_speed(void *number);
+int32_t encoders_update_beacon_speed(void *number);
 int32_t encoders_spi_get_value_beacon(void *number);
 
 

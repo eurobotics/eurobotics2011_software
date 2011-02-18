@@ -20,19 +20,19 @@
  *
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  cs.c,v 1.4 2009/05/27 20:04:07 zer0 Exp. */
+
 #include <stdio.h>
 #include <string.h>
 
 #include <aversive.h>
 #include <aversive\error.h>
 
-
 #include <encoders_dspic.h>
 #include <pwm_mc.h>
 #include <timer.h>
 #include <scheduler.h>
 #include <time.h>
-//#include <adc.h>
 
 #include <pid.h>
 #include <quadramp.h>
@@ -45,28 +45,28 @@
 #include "main.h"
 #include "beacon.h"
 
-/* called every 5 ms */
+/* cs processing called periodically */
 static void do_cs(void *dummy) 
 {
 	/* read encoders */
-	if (sensorboard.flags & DO_ENCODERS) {
-		//encoders_spi_manage(NULL);
+	if (beaconboard.flags & DO_ENCODERS) {
 		encoders_dspic_manage(NULL);
 	}
+
 	/* control system */
-	if (sensorboard.flags & DO_CS) {
-		if (sensorboard.beacon.on)
-			cs_manage(&sensorboard.beacon.cs);
+	if (beaconboard.flags & DO_CS) {
+		if (beaconboard.speed.on)
+			cs_manage(&beaconboard.speed.cs);
 	}
-	if (sensorboard.flags & DO_BD) {
-		bd_manage_from_cs(&sensorboard.beacon.bd, &sensorboard.beacon.cs);
-	}
-	if (sensorboard.flags & DO_POWER)
+
+	/* power enable */
+	if (beaconboard.flags & DO_POWER)
 		BRAKE_OFF();
 	else
 		BRAKE_ON();
 }
 
+/* dump check points of cs */
 void dump_cs(const char *name, struct cs *cs)
 {
 	printf_P(PSTR("%s cons=% .5ld fcons=% .5ld err=% .5ld "
@@ -76,6 +76,7 @@ void dump_cs(const char *name, struct cs *cs)
 		 cs_get_out(cs));
 }
 
+/* dump processing PID results */
 void dump_pid(const char *name, struct pid_filter *pid)
 {
 	printf_P(PSTR("%s P=% .8ld I=% .8ld D=% .8ld out=% .8ld\r\n"),
@@ -86,28 +87,27 @@ void dump_pid(const char *name, struct pid_filter *pid)
 		 pid_get_value_out(pid));
 }
 
-void microb_cs_init(void)
+/* init beacon cs */
+void beacon_cs_init(void)
 {
-	/* ---- CS beacon */
 	/* PID */
-	pid_init(&sensorboard.beacon.pid);
-	pid_set_gains(&sensorboard.beacon.pid, 80, 80, 250);
-	pid_set_maximums(&sensorboard.beacon.pid, 0, 10000, 2600);
-	pid_set_out_shift(&sensorboard.beacon.pid, 6);
-	pid_set_derivate_filter(&sensorboard.beacon.pid, 6);
+	pid_init(&beaconboard.speed.pid);
+	pid_set_gains(&beaconboard.speed.pid, 80, 80, 250);
+	pid_set_maximums(&beaconboard.speed.pid, 0, 10000, 2600);
+	pid_set_out_shift(&beaconboard.speed.pid, 6);
+	pid_set_derivate_filter(&beaconboard.speed.pid, 6);
 
 	/* CS */
-	cs_init(&sensorboard.beacon.cs);
-	cs_set_correct_filter(&sensorboard.beacon.cs, pid_do_filter, &sensorboard.beacon.pid);
-	cs_set_process_in(&sensorboard.beacon.cs, pwm_mc_set, BEACON_PWM);
-	cs_set_process_out(&sensorboard.beacon.cs, encoders_spi_update_beacon_speed, BEACON_ENCODER);
-	cs_set_consign(&sensorboard.beacon.cs, 0);
+	cs_init(&beaconboard.speed.cs);
+	cs_set_correct_filter(&beaconboard.speed.cs, pid_do_filter, &beaconboard.speed.pid);
+	cs_set_process_in(&beaconboard.speed.cs, pwm_mc_set, BEACON_PWM);
+	cs_set_process_out(&beaconboard.speed.cs, encoders_update_beacon_speed, BEACON_ENCODER);
+	cs_set_consign(&beaconboard.speed.cs, 0);
 
-	/* Blocking detection */
+	/* set it on !! */
+	beaconboard.speed.on = 0;
 
-	/* set them on !! */
-	sensorboard.beacon.on = 0;
-
+	/* CS EVENT */
 	scheduler_add_periodical_event_priority(do_cs, NULL, 
-						5000L / SCHEDULER_UNIT, CS_PRIO);
+						EVENT_PERIOD_CS / SCHEDULER_UNIT, EVENT_PRIO_CS);
 }

@@ -20,12 +20,7 @@
  *
  */
 
-/* synchronize with sensor.c */
-#define ADC_CSENSE1   0
-#define ADC_CSENSE2   1
-#define ADC_CSENSE3   2
-#define ADC_CSENSE4   3
-#define ADC_MAX       4
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  sensor.h,v 1.1 2009/03/29 18:44:54 zer0 Exp. */
 
 /* synchronize with sensor.c */
 #define S_CAP1         0
@@ -33,23 +28,10 @@
 #define S_CAP3         2
 #define S_CAP4         3
 #define S_CAP5         4
-#define S_CAP6         5
-#define S_CAP7         6
-#define S_CAP8         7
-#define S_RESERVED1    8
-#define S_RESERVED2    9
-#define S_RESERVED3   10
-#define S_RESERVED4   11
-#define S_RESERVED5   12
-#define S_RESERVED6   13
-#define S_RESERVED7   14
-#define S_RESERVED8   15
-#define SENSOR_MAX    16
+#define SENSOR_MAX     5
 
+/* init sensors */
 void sensor_init(void);
-
-/* get filtered values for adc */
-int16_t sensor_get_adc(uint8_t i);
 
 /* get filtered values of boolean sensors */
 uint16_t sensor_get_all(void);

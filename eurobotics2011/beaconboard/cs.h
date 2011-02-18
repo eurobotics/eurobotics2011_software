@@ -20,6 +20,6 @@
  *
  */
 
-void microb_cs_init(void);
+void beacon_cs_init(void);
 void dump_cs(const char *name, struct cs *cs);
 void dump_pid(const char *name, struct pid_filter *pid);

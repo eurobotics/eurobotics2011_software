@@ -20,6 +20,8 @@
  *  Olivier MATZ <zer0@droids-corp.org> 
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  commands_sensorboard.c,v 1.2 2009/04/24 19:30:42 zer0 Exp. */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -44,7 +46,6 @@
 #include "main.h"
 #include "cmdline.h"
 #include "../common/i2c_commands.h"
-//#include "i2c_protocol.h"
 #include "beacon.h"
 
 struct cmd_event_result {
@@ -64,18 +65,18 @@ static void cmd_event_parsed(void *parsed_result, void *data)
 	if (!strcmp_P(res->arg1, PSTR("all"))) {
 		bit = DO_ENCODERS | DO_CS | DO_BD | DO_POWER;
 		if (!strcmp_P(res->arg2, PSTR("on")))
-			sensorboard.flags |= bit;
+			beaconboard.flags |= bit;
 		else if (!strcmp_P(res->arg2, PSTR("off")))
-			sensorboard.flags &= bit;
+			beaconboard.flags &= bit;
 		else { /* show */
 			printf_P(PSTR("encoders is %s\r\n"), 
-				 (DO_ENCODERS & sensorboard.flags) ? "on":"off");
+				 (DO_ENCODERS & beaconboard.flags) ? "on":"off");
 			printf_P(PSTR("cs is %s\r\n"), 
-				 (DO_CS & sensorboard.flags) ? "on":"off");
+				 (DO_CS & beaconboard.flags) ? "on":"off");
 			printf_P(PSTR("bd is %s\r\n"), 
-				 (DO_BD & sensorboard.flags) ? "on":"off");
+				 (DO_BD & beaconboard.flags) ? "on":"off");
 			printf_P(PSTR("power is %s\r\n"), 
-				 (DO_POWER & sensorboard.flags) ? "on":"off");
+				 (DO_POWER & beaconboard.flags) ? "on":"off");
 		}
 		return;
 	}
@@ -93,17 +94,15 @@ static void cmd_event_parsed(void *parsed_result, void *data)
 
 
 	if (!strcmp_P(res->arg2, PSTR("on")))
-		sensorboard.flags |= bit;
+		beaconboard.flags |= bit;
 	else if (!strcmp_P(res->arg2, PSTR("off"))) {
 		if (!strcmp_P(res->arg1, PSTR("cs"))) {
 			pwm_mc_set(BEACON_PWM, 0);
-			//pwm_ng_set(BEACON_PWM, 0);
-			//pwm_ng_set(SCANNER_PWM, 0);
 		}
-		sensorboard.flags &= (~bit);
+		beaconboard.flags &= (~bit);
 	}
 	printf_P(PSTR("%s is %s\r\n"), res->arg1, 
-		      (bit & sensorboard.flags) ? "on":"off");
+		      (bit & beaconboard.flags) ? "on":"off");
 }
 
 prog_char str_event_arg0[] = "event";
@@ -141,15 +140,15 @@ struct cmd_color_result {
 static void cmd_color_parsed(void *parsed_result, void *data)
 {
 	struct cmd_color_result *res = (struct cmd_color_result *) parsed_result;
-	if (!strcmp_P(res->color, PSTR("yellow"))) {
-		sensorboard.our_color = I2C_COLOR_YELLOW;
+	if (!strcmp_P(res->color, PSTR("red"))) {
+		beaconboard.our_color = I2C_COLOR_RED;
 	}
 	else if (!strcmp_P(res->color, PSTR("blue"))) {
-		sensorboard.our_color = I2C_COLOR_BLUE;
+		beaconboard.our_color = I2C_COLOR_BLUE;
 	}
 	else if (!strcmp_P(res->color, PSTR("show"))) {
-		if(sensorboard.our_color == I2C_COLOR_YELLOW)
-			printf("color is YELLOW\n\r");
+		if(beaconboard.our_color == I2C_COLOR_RED)
+			printf("color is RED\n\r");
 		else
 			printf("color is BLUE\n\r");
 		
@@ -159,7 +158,7 @@ static void cmd_color_parsed(void *parsed_result, void *data)
 
 prog_char str_color_arg0[] = "color";
 parse_pgm_token_string_t cmd_color_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_color_result, arg0, str_color_arg0);
-prog_char str_color_color[] = "yellow#blue#show";
+prog_char str_color_color[] = "red#blue#show";
 parse_pgm_token_string_t cmd_color_color = TOKEN_STRING_INITIALIZER(struct cmd_color_result, color, str_color_color);
 
 prog_char help_color[] = "Set our color";

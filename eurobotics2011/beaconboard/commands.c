@@ -20,29 +20,21 @@
  *  Olivier MATZ <zer0@droids-corp.org> 
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  commands.c,v 1.2 2009/05/27 20:04:07 zer0 Exp. */
+
 #include <stdlib.h>
 #include <aversive\pgmspace.h>
 #include <parse.h>
 
 /* commands_gen.c */
 extern parse_pgm_inst_t cmd_reset;
-//extern parse_pgm_inst_t cmd_bootloader;
 extern parse_pgm_inst_t cmd_encoders;
 extern parse_pgm_inst_t cmd_pwm;
-//extern parse_pgm_inst_t cmd_adc;
 extern parse_pgm_inst_t cmd_sensor;
 extern parse_pgm_inst_t cmd_log;
 extern parse_pgm_inst_t cmd_log_show;
 extern parse_pgm_inst_t cmd_log_type;
-//extern parse_pgm_inst_t cmd_stack_space;
 extern parse_pgm_inst_t cmd_scheduler;
-
-///* commands_ax12.c */
-//extern parse_pgm_inst_t cmd_baudrate;
-//extern parse_pgm_inst_t cmd_uint16_read;
-//extern parse_pgm_inst_t cmd_uint16_write;
-//extern parse_pgm_inst_t cmd_uint8_read;
-//extern parse_pgm_inst_t cmd_uint8_write;
 
 /* commands_cs.c */
 extern parse_pgm_inst_t cmd_gain;
@@ -60,7 +52,7 @@ extern parse_pgm_inst_t cmd_cs_status;
 extern parse_pgm_inst_t cmd_blocking_i;
 extern parse_pgm_inst_t cmd_blocking_i_show;
 
-/* commands_sensorboard.c */
+/* commands_beaconboard.c */
 extern parse_pgm_inst_t cmd_event;
 extern parse_pgm_inst_t cmd_test;
 extern parse_pgm_inst_t cmd_beacon;
@@ -73,15 +65,12 @@ parse_pgm_ctx_t main_ctx[] = {
 
 	/* commands_gen.c */
 	(parse_pgm_inst_t *)&cmd_reset,
-//	(parse_pgm_inst_t *)&cmd_bootloader,
 	(parse_pgm_inst_t *)&cmd_encoders,
 	(parse_pgm_inst_t *)&cmd_pwm,
-//	(parse_pgm_inst_t *)&cmd_adc,
 	(parse_pgm_inst_t *)&cmd_sensor,
 	(parse_pgm_inst_t *)&cmd_log,
 	(parse_pgm_inst_t *)&cmd_log_show,
 	(parse_pgm_inst_t *)&cmd_log_type,
-//	(parse_pgm_inst_t *)&cmd_stack_space,
 	(parse_pgm_inst_t *)&cmd_scheduler,
 
 	/* commands_cs.c */

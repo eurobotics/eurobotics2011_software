@@ -20,6 +20,8 @@
  *
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  cmdline.c,v 1.2 2009/04/07 20:03:48 zer0 Exp. */
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -42,7 +44,7 @@
 #include "cmdline.h"
 
 
-/******** See in commands.c for the list of commands. */
+/* See in commands.c for the list of commands. */
 extern parse_pgm_ctx_t main_ctx[];
 
 static void write_char(char c) 
@@ -50,8 +52,8 @@ static void write_char(char c)
 	uart_send(CMDLINE_UART, c);
 }
 
-static void 
-valid_buffer(const char *buf, uint8_t size) 
+/* rdline execute this function when has a line valid */
+static void valid_buffer(const char *buf, uint8_t size) 
 {
 	int8_t ret;
 	ret = parse(main_ctx, buf);
@@ -63,15 +65,15 @@ valid_buffer(const char *buf, uint8_t size)
 		printf_P(PSTR("Bad arguments\r\n"));
 }
 
-static int8_t 
-complete_buffer(const char *buf, char *dstbuf, uint8_t dstsize,
+/* rdline execute this function when autocompleted is demanded (TAB key) */
+static int8_t complete_buffer(const char *buf, char *dstbuf, uint8_t dstsize,
 		int16_t *state)
 {
 	return complete(main_ctx, buf, state, dstbuf, dstsize);
 }
 
 
-/* sending "pop" on cmdline uart resets the robot */
+/* sending "pop" on cmdline uart resets the beacon */
 void emergency(char c)
 {
 	static uint8_t i = 0;
@@ -83,12 +85,10 @@ void emergency(char c)
 	else if ( !(i == 1 && c == 'p') )
 		i = 0;
 	if (i == 3)
-	//	reset();
 		asm("Reset");
 }
 
-/* log function, add a command to configure
- * it dynamically */
+/* log function, add a command to configure it dynamically */
 void mylog(struct error * e, ...) 
 {
 	va_list ap;
@@ -97,11 +97,11 @@ void mylog(struct error * e, ...)
 	time_h tv;
 
 	if (e->severity > ERROR_SEVERITY_ERROR) {
-		if (gen.log_level < e->severity)
+		if (beaconboard.log_level < e->severity)
 			return;
 		
 		for (i=0; i<NB_LOGS+1; i++)
-			if (gen.logs[i] == e->err_num)
+			if (beaconboard.logs[i] == e->err_num)
 				break;
 		if (i == NB_LOGS+1)
 			return;
@@ -113,28 +113,27 @@ void mylog(struct error * e, ...)
 	vfprintf_P(stdout, e->text, ap);
 	printf_P(PSTR("\r\n"));
 	va_end(ap);
-	//stdout->flags = stream_flags;
 }
 
+/* init rdline and loop waiting for commands, never returns */
 int cmdline_interact(void)
 {
 	const char *history, *buffer;
 	int8_t ret, same = 0;
 	int16_t c;
 	
-	rdline_init(&gen.rdl, write_char, valid_buffer, complete_buffer);
-	//snprintf(gen.prompt, sizeof(gen.prompt), "beaconboard > ");	
-	sprintf(gen.prompt, "beaconboard > ");
-	rdline_newline(&gen.rdl, gen.prompt);
+	rdline_init(&beaconboard.rdl, write_char, valid_buffer, complete_buffer);
+	sprintf(beaconboard.prompt, "beaconboard > ");
+	rdline_newline(&beaconboard.rdl, beaconboard.prompt);
 
 	while (1) {
 		c = uart_recv_nowait(CMDLINE_UART);
 		if (c == -1) 
 			continue;
-		ret = rdline_char_in(&gen.rdl, c);
+		ret = rdline_char_in(&beaconboard.rdl, c);
 		if (ret != 2 && ret != 0) {
-			buffer = rdline_get_buffer(&gen.rdl);
-			history = rdline_get_history_item(&gen.rdl, 0);
+			buffer = rdline_get_buffer(&beaconboard.rdl);
+			history = rdline_get_history_item(&beaconboard.rdl, 0);
 			if (history) {
 				same = !memcmp(buffer, history, strlen(history)) &&
 					buffer[strlen(history)] == '\n';
@@ -142,8 +141,8 @@ int cmdline_interact(void)
 			else
 				same = 0;
 			if (strlen(buffer) > 1 && !same)
-				rdline_add_history(&gen.rdl, buffer);
-			rdline_newline(&gen.rdl, gen.prompt);
+				rdline_add_history(&beaconboard.rdl, buffer);
+			rdline_newline(&beaconboard.rdl, beaconboard.prompt);
 		}
 	}
 

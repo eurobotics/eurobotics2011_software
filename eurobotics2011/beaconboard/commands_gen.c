@@ -15,10 +15,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  Revision : $Id: commands_gen.c,v 1.4 2009/05/27 20:04:07 zer0 Exp $
+ *  Revision : $Id: commands_beacon.c,v 1.4 2009/05/27 20:04:07 zer0 Exp $
  *
  *  Olivier MATZ <zer0@droids-corp.org> 
  */
+
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  commands_beacon.c,v 1.4 2009/05/27 20:04:07 zer0 Exp. */
 
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +33,6 @@
 #include <pwm_mc.h>
 #include <time.h>
 #include <encoders_dspic.h>
-//#include <adc.h>
 
 #include <scheduler.h>
 #include <pid.h>
@@ -43,8 +44,6 @@
 #include <parse.h>
 #include <parse_string.h>
 #include <parse_num.h>
-
-//#include <diagnostic.h>
 
 #include "main.h"
 #include "cmdline.h"
@@ -62,7 +61,6 @@ struct cmd_reset_result {
 static void cmd_reset_parsed(void * parsed_result, void * data)
 {
 	asm("Reset");
-	//reset();
 }
 
 prog_char str_reset_arg0[] = "reset";
@@ -79,33 +77,6 @@ parse_pgm_inst_t cmd_reset = {
 	},
 };
 
-///**********************************************************/
-///* Bootloader */
-//
-///* this structure is filled when cmd_bootloader is parsed successfully */
-//struct cmd_bootloader_result {
-//	fixed_string_t arg0;
-//};
-//
-///* function called when cmd_bootloader is parsed successfully */
-//static void cmd_bootloader_parsed(void *parsed_result, void *data)
-//{
-//	bootloader();
-//}
-//
-//prog_char str_bootloader_arg0[] = "bootloader";
-//parse_pgm_token_string_t cmd_bootloader_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_bootloader_result, arg0, str_bootloader_arg0);
-//
-//prog_char help_bootloader[] = "Launch the bootloader";
-//parse_pgm_inst_t cmd_bootloader = {
-//	.f = cmd_bootloader_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_bootloader,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_bootloader_arg0, 
-//		NULL,
-//	},
-//};
 
 /**********************************************************/
 /* Encoders tests */
@@ -121,12 +92,8 @@ static void cmd_encoders_parsed(void *parsed_result, void *data)
 {
 	struct cmd_encoders_result *res = parsed_result;
 
-	if (!strcmp_P(res->arg1, PSTR("reset"))) {
-		//encoders_spi_set_value((void *)0, 0);
-		//encoders_spi_set_value((void *)1, 0);
-		//encoders_spi_set_value((void *)2, 0);
-		//encoders_spi_set_value((void *)3, 0);
-		
+	if (!strcmp_P(res->arg1, PSTR("reset"))) {	
+	
 		encoders_dspic_set_value((void *)1, 0);
 		
 		return;
@@ -135,12 +102,6 @@ static void cmd_encoders_parsed(void *parsed_result, void *data)
 	/* show */
 	while(!cmdline_keypressed()) {
 		printf_P(PSTR("% .8ld\r\n"), encoders_dspic_get_value((void *)1));
-			 
-//		printf_P(PSTR("% .8ld % .8ld % .8ld % .8ld\r\n"), 
-//			 encoders_spi_get_value((void *)0),
-//			 encoders_spi_get_value((void *)1),
-//			 encoders_spi_get_value((void *)2),
-//			 encoders_spi_get_value((void *)3));
 		
 		wait_ms(100);
 	}
@@ -212,11 +173,10 @@ static void cmd_pwm_parsed(void * parsed_result, void * data)
 	struct cmd_pwm_result * res = parsed_result;
 
 	if (!strcmp_P(res->arg1, PSTR("2(1)")))
-		pwm_ptr = &gen.pwm_mc_mod2_ch1;
+		pwm_ptr = &beaconboard.pwm_mc_mod2_ch1;
 	
 	if (pwm_ptr)
 		pwm_mc_set(pwm_ptr, res->arg2);
-		//pwm_ng_set(pwm_ptr, res->arg2);
 
 	printf_P(PSTR("done\r\n"));
 }
@@ -224,7 +184,6 @@ static void cmd_pwm_parsed(void * parsed_result, void * data)
 prog_char str_pwm_arg0[] = "pwm";
 parse_pgm_token_string_t cmd_pwm_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_pwm_result, arg0, str_pwm_arg0);
 prog_char str_pwm_arg1[] = "2(1)";
-//prog_char str_pwm_arg1[] = "1(4A)#2(4B)#3(1A)#4(1B)#s1(3C)#s2(5A)#s3(5B)#s4(5C)";
 parse_pgm_token_string_t cmd_pwm_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_pwm_result, arg1, str_pwm_arg1);
 parse_pgm_token_num_t cmd_pwm_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_pwm_result, arg2, INT16);
 
@@ -241,51 +200,7 @@ parse_pgm_inst_t cmd_pwm = {
 	},
 };
 
-///**********************************************************/
-///* Adcs tests */
-//
-///* this structure is filled when cmd_adc is parsed successfully */
-//struct cmd_adc_result {
-//	fixed_string_t arg0;
-//	fixed_string_t arg1;
-//};
-//
-///* function called when cmd_adc is parsed successfully */
-//static void cmd_adc_parsed(void *parsed_result, void *data)
-//{
-//	struct cmd_adc_result *res = parsed_result;
-//	uint8_t i, loop = 0;
-//
-//	if (!strcmp_P(res->arg1, PSTR("loop_show")))
-//		loop = 1;
-//	
-//	do {
-//		printf_P(PSTR("ADC values: "));
-//		for (i=0; i<ADC_MAX; i++) {
-//			printf_P(PSTR("%.4d "), sensor_get_adc(i));
-//		}
-//		printf_P(PSTR("\r\n"));
-//		wait_ms(100);
-//	} while (loop && !cmdline_keypressed());
-//}
-//
-//prog_char str_adc_arg0[] = "adc";
-//parse_pgm_token_string_t cmd_adc_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg0, str_adc_arg0);
-//prog_char str_adc_arg1[] = "show#loop_show";
-//parse_pgm_token_string_t cmd_adc_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg1, str_adc_arg1);
-//
-//prog_char help_adc[] = "Show adc values";
-//parse_pgm_inst_t cmd_adc = {
-//	.f = cmd_adc_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_adc,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_adc_arg0, 
-//		(prog_void *)&cmd_adc_arg1, 
-//		NULL,
-//	},
-//};
-//
+
 
 /**********************************************************/
 /* Sensors tests */
@@ -346,13 +261,8 @@ struct cmd_log_result {
 
 /* keep it sync with string choice */
 static const prog_char uart_log[] = "uart";
-//static const prog_char i2c_log[] = "i2c";
-//static const prog_char i2cproto_log[] = "i2cproto";
 static const prog_char sensor_log[] = "sensor";
-//static const prog_char block_log[] = "bd";
 static const prog_char beacon_log[] = "beacon";
-//static const prog_char scanner_log[] = "scanner";
-//static const prog_char imgprocess_log[] = "imgprocess";
 
 struct log_name_and_num {
 	const prog_char * name;
@@ -361,13 +271,8 @@ struct log_name_and_num {
 
 static const struct log_name_and_num log_name_and_num[] = {
 	{ uart_log, E_UART },
-	//{ i2c_log, E_I2C },
-	//{ i2cproto_log, E_USER_I2C_PROTO },
 	{ sensor_log, E_USER_SENSOR },
-	//{ block_log, E_BLOCKING_DETECTION_MANAGER },
 	{ beacon_log, E_USER_BEACON },
-	//{ scanner_log, E_USER_SCANNER },
-	//{ imgprocess_log, E_USER_IMGPROCESS },
 };
 
 static uint8_t
@@ -401,11 +306,10 @@ static void cmd_log_do_show(void)
 {
 	uint8_t i, empty=1;
 	const prog_char * name;
-	//const prog_char * name;
 
-	printf_P(PSTR("log level is %d\r\n"), gen.log_level);
+	printf_P(PSTR("log level is %d\r\n"), beaconboard.log_level);
 	for (i=0; i<NB_LOGS; i++) {
-		name = log_num2name(gen.logs[i]);
+		name = log_num2name(beaconboard.logs[i]);
 		if (name) {
 			printf_P(PSTR("log type %s is on\r\n"), name);
 			empty = 0;
@@ -413,7 +317,6 @@ static void cmd_log_do_show(void)
 	}
 	if (empty)
 		printf_P(PSTR("no log configured\r\n"));
-		//printf_P(PSTR("no log configured\r\n"), gen.logs[i]);
 }
 
 /* function called when cmd_log is parsed successfully */
@@ -422,7 +325,7 @@ static void cmd_log_parsed(void * parsed_result, void * data)
 	struct cmd_log_result *res = (struct cmd_log_result *) parsed_result;
 
 	if (!strcmp_P(res->arg1, PSTR("level"))) {
-		gen.log_level = res->arg2;
+		beaconboard.log_level = res->arg2;
 	}
 
 	/* else it is a show */
@@ -486,14 +389,14 @@ static void cmd_log_type_parsed(void * parsed_result, void * data)
 
 	if (!strcmp_P(res->arg3, PSTR("on"))) {
 		for (i=0; i<NB_LOGS; i++) {
-			if (gen.logs[i] == lognum) {
+			if (beaconboard.logs[i] == lognum) {
 				printf_P(PSTR("Already on\r\n"));
 				return;
 			}
 		}
 		for (i=0; i<NB_LOGS; i++) {
-			if (gen.logs[i] == 0) {
-				gen.logs[i] = lognum;
+			if (beaconboard.logs[i] == 0) {
+				beaconboard.logs[i] = lognum;
 				break;
 			}
 		}
@@ -503,8 +406,8 @@ static void cmd_log_type_parsed(void * parsed_result, void * data)
 	}
 	else if (!strcmp_P(res->arg3, PSTR("off"))) {
 		for (i=0; i<NB_LOGS; i++) {
-			if (gen.logs[i] == lognum) {
-				gen.logs[i] = 0;
+			if (beaconboard.logs[i] == lognum) {
+				beaconboard.logs[i] = 0;
 				break;
 			}
 		}
@@ -517,9 +420,9 @@ static void cmd_log_type_parsed(void * parsed_result, void * data)
 
 prog_char str_log_arg1_type[] = "type";
 parse_pgm_token_string_t cmd_log_arg1_type = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg1, str_log_arg1_type);
+
 /* keep it sync with log_name_and_num above */
 prog_char str_log_arg2_type[] = "uart#sensor#beacon";
-//prog_char str_log_arg2_type[] = "uart#i2c#i2cproto#sensor#bd#beacon#scanner#imgprocess";
 parse_pgm_token_string_t cmd_log_arg2_type = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg2, str_log_arg2_type);
 prog_char str_log_arg3[] = "on#off";
 parse_pgm_token_string_t cmd_log_arg3 = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg3, str_log_arg3);
@@ -539,31 +442,4 @@ parse_pgm_inst_t cmd_log_type = {
 };
 
 
-///**********************************************************/
-///* Stack_Space */
-//
-///* this structure is filled when cmd_stack_space is parsed successfully */
-//struct cmd_stack_space_result {
-//	fixed_string_t arg0;
-//};
-//
-///* function called when cmd_stack_space is parsed successfully */
-//static void cmd_stack_space_parsed(void *parsed_result, void *data)
-//{
-//	printf("res stack: %d\r\n", min_stack_space_available());
-//	
-//}
-//
-//prog_char str_stack_space_arg0[] = "stack_space";
-//parse_pgm_token_string_t cmd_stack_space_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_stack_space_result, arg0, str_stack_space_arg0);
-//
-//prog_char help_stack_space[] = "Display remaining stack space";
-//parse_pgm_inst_t cmd_stack_space = {
-//	.f = cmd_stack_space_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_stack_space,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_stack_space_arg0, 
-//		NULL,
-//	},
-//};
+

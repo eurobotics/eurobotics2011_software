@@ -20,12 +20,13 @@
  *
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  sensor.c,v 1.3 2009/05/27 20:04:07 zer0 Exp. */
+
 #include <stdlib.h>
 
 #include <aversive.h>
 #include <aversive/error.h>
 
-//#include <adc.h>
 #include <scheduler.h>
 #include <pwm_mc.h>
 
@@ -40,95 +41,15 @@
 #include "main.h"
 #include "sensor.h"
 
-///************ ADC */
-//
-//struct adc_infos {
-//	uint16_t config;
-//	int16_t value;
-//	int16_t prev_val;
-//        int16_t (*filter)(struct adc_infos *, int16_t);
-//};
-//
-///* reach 90% of the value in 4 samples */
-//int16_t rii_light(struct adc_infos *adc, int16_t val)
-//{
-//	adc->prev_val = val + (int32_t)adc->prev_val / 2;
-//	return adc->prev_val / 2;
-//}
-//
-///* reach 90% of the value in 8 samples */
-//int16_t rii_medium(struct adc_infos *adc, int16_t val)
-//{
-//	adc->prev_val = val + ((int32_t)adc->prev_val * 3) / 4;
-//	return adc->prev_val / 4;
-//}
-//
-///* reach 90% of the value in 16 samples */
-//int16_t rii_strong(struct adc_infos *adc, int16_t val)
-//{
-//	adc->prev_val = val + ((int32_t)adc->prev_val * 7) / 8;
-//	return adc->prev_val / 8;
-//}
-//
-//
-//#define ADC_CONF(x) ( ADC_REF_AVCC | ADC_MODE_INT | MUX_ADC##x )
-//
-///* define which ADC to poll, see in sensor.h */
-//static struct adc_infos adc_infos[ADC_MAX] = { 
-//  
-//	[ADC_CSENSE1] = { .config = ADC_CONF(0), .filter = rii_medium },
-//	[ADC_CSENSE2] = { .config = ADC_CONF(1), .filter = rii_medium },
-//	[ADC_CSENSE3] = { .config = ADC_CONF(2), .filter = rii_medium },
-//	[ADC_CSENSE4] = { .config = ADC_CONF(3), .filter = rii_medium },
-// 
-//	/* add adc on "cap" pins if needed */
-///* 	[ADC_CAP1] = { .config = ADC_CONF(10) }, */
-///* 	[ADC_CAP2] = { .config = ADC_CONF(11) }, */
-///* 	[ADC_CAP3] = { .config = ADC_CONF(12) }, */
-///* 	[ADC_CAP4] = { .config = ADC_CONF(13) }, */
-//};
-//
-//static void adc_event(int16_t result);
-//
-///* called every 10 ms, see init below */
-//static void do_adc(void *dummy) 
-//{
-//	/* launch first conversion */
-//	adc_launch(adc_infos[0].config);
-//}
-//
-//static void adc_event(int16_t result)
-//{
-//	static uint8_t i = 0;
-//
-//	/* filter value if needed */
-//	if (adc_infos[i].filter)
-//		adc_infos[i].value = adc_infos[i].filter(&adc_infos[i],
-//							 result);
-//	else
-//		adc_infos[i].value = result;
-//
-//	i ++;
-//	if (i >= ADC_MAX)
-//		i = 0;
-//	else
-//		adc_launch(adc_infos[i].config);
-//}
-//
-//int16_t sensor_get_adc(uint8_t i)
-//{
-//	int16_t tmp;
-//	uint8_t flags;
-//
-//	IRQ_LOCK(flags);
-//	tmp = adc_infos[i].value;
-//	IRQ_UNLOCK(flags);
-//	return tmp;
-//}
 
-/************ boolean sensors */
+/***********************************************************
+ * boolean sensors 
+ ***********************************************************/
 
+/* value of filtered sensors */
+static uint16_t sensor_filtered = 0;
 
+/* sensor filter data structure */
 struct sensor_filter {
 	uint8_t filter;
 	uint8_t prev;
@@ -138,28 +59,15 @@ struct sensor_filter {
 	uint8_t invert;
 };
 
-
+/* setup of sensor adquisition */
 static struct sensor_filter sensor_filter[SENSOR_MAX] = {
 	[S_CAP1] = { 1, 0, 0, 1, 0, 1 }, /* 0 */
 	[S_CAP2] = { 1, 0, 0, 1, 0, 1 }, /* 1 */
 	[S_CAP3] = { 1, 0, 0, 1, 0, 1 }, /* 2 */
 	[S_CAP4] = { 1, 0, 0, 1, 0, 1 }, /* 3 */
 	[S_CAP5] = { 1, 0, 0, 1, 0, 1 }, /* 4 */
-	[S_CAP6] = { 1, 0, 0, 1, 0, 0 }, /* 5 */
-	[S_CAP7] = { 1, 0, 0, 1, 0, 0 }, /* 6 */
-	[S_CAP8] = { 1, 0, 0, 1, 0, 0 }, /* 7 */
-	[S_RESERVED1] = { 10, 0, 3, 7, 0, 0 }, /* 8 */
-	[S_RESERVED2] = { 10, 0, 3, 7, 0, 0 }, /* 9 */
-	[S_RESERVED3] = { 1, 0, 0, 1, 0, 0 }, /* 10 */
-	[S_RESERVED4] = { 1, 0, 0, 1, 0, 0 }, /* 11 */
-	[S_RESERVED5] = { 1, 0, 0, 1, 0, 0 }, /* 12 */
-	[S_RESERVED6] = { 1, 0, 0, 1, 0, 0 }, /* 13 */
-	[S_RESERVED7] = { 1, 0, 0, 1, 0, 0 }, /* 14 */
-	[S_RESERVED8] = { 1, 0, 0, 1, 0, 0 }, /* 15 */
 };
 
-/* value of filtered sensors */
-static uint16_t sensor_filtered = 0;
 
 /* sensor mapping : 
  * 0  :  PORTB 9 (cap1: BUMPER)
@@ -168,22 +76,6 @@ static uint16_t sensor_filtered = 0;
  * 5-15: reserved
  */
 
-uint16_t sensor_get_all(void)
-{
-	uint16_t tmp;
-	uint8_t flags;
-	IRQ_LOCK(flags);
-	tmp = sensor_filtered;
-	IRQ_UNLOCK(flags);
-	return tmp;
-}
-
-uint8_t sensor_get(uint8_t i)
-{
-	uint16_t tmp = sensor_get_all();
-	return (tmp & _BV(i));
-}
-
 /* get the physical value of pins */
 static uint16_t sensor_read(void)
 {
@@ -191,12 +83,12 @@ static uint16_t sensor_read(void)
 	tmp |= (uint16_t) ((PORTB & _BV(9)) >> 9) << 0;
 	tmp |= (uint16_t) ((PORTC & (_BV(4)|_BV(5))) >> 4) << 1;
 	tmp |= (uint16_t) ((PORTC & (_BV(8)|_BV(9))) >> 8) << 3;
-	/* add reserved sensors here */
 	
+	/* add reserved sensors here */
 	return tmp;
 }
 
-/* called every 10 ms, see init below */
+/* boolean sensors processing, called periodically, see init below */
 static void do_boolean_sensors(void *dummy)
 {
 	uint8_t i;
@@ -227,28 +119,43 @@ static void do_boolean_sensors(void *dummy)
 	IRQ_UNLOCK(flags);
 }
 
-
-
-/************ global sensor init */
-//#define BACKGROUND_ADC  0
-
-/* called every 10 ms, see init below */
-static void do_sensors(void *dummy)
+/* get filtered value of boolean sensors */
+uint16_t sensor_get_all(void)
 {
-//	if (BACKGROUND_ADC)
-//	  do_adc(NULL);
-	do_boolean_sensors(NULL);
+	uint16_t tmp;
+	uint8_t flags;
+	IRQ_LOCK(flags);
+	tmp = sensor_filtered;
+	IRQ_UNLOCK(flags);
+	return tmp;
 }
 
+/* get filtered value of one sensor */
+uint8_t sensor_get(uint8_t i)
+{
+	uint16_t tmp = sensor_get_all();
+	return (tmp & _BV(i));
+}
+
+/***************************************************************
+ * common sensors functions 
+ ***************************************************************/
+
+/* all sensors processing, called periodically, see init below */
+static void do_sensors(void *dummy)
+{
+	do_boolean_sensors(NULL);
+
+	/* add other kind of sensors here */
+}
+
+/* initilize all sensors */
 void sensor_init(void)
 {
-//	adc_init();
-//	if (BACKGROUND_ADC)
-//	  adc_register_event(adc_event);
+	/* add inits here */
 
 	/* CS EVENT */
 	scheduler_add_periodical_event_priority(do_sensors, NULL, 
-						10000L / SCHEDULER_UNIT, ADC_PRIO);
-
+						EVENT_PERIOD_SENSOR / SCHEDULER_UNIT, EVENT_PRIO_SENSOR);
 }
 

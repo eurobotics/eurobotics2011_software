@@ -1,5 +1,5 @@
 /*  
- *  Copyright Droids Corporation (2009)
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,62 +15,49 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *  Revision : $Id: main.h,v 1.4 2009/05/27 20:04:07 zer0 Exp $
+ *  Revision : $Id$
  *
+ *  Javier Baliñas Santos <javier@arc-robots.org>
  */
 
-/*
-#define LED_TOGGLE(port, bit) do {		\
-		if (port & _BV(bit))		\
-			port &= ~_BV(bit);	\
-		else				\
-			port |= _BV(bit);	\
-	} while(0)
 
-#define LED1_ON() 	sbi(PORTJ, 2)
-#define LED1_OFF() 	cbi(PORTJ, 2)
-#define LED1_TOGGLE() 	LED_TOGGLE(PORTJ, 2)
-
-#define LED2_ON() 	sbi(PORTL, 7)
-#define LED2_OFF() 	cbi(PORTL, 7)
-#define LED2_TOGGLE() 	LED_TOGGLE(PORTL, 7)
-
-#define LED3_ON() 	sbi(PORTJ, 3)
-#define LED3_OFF() 	cbi(PORTJ, 3)
-#define LED3_TOGGLE() 	LED_TOGGLE(PORTJ, 3)
-
-#define LED4_ON() 	sbi(PORTL, 6)
-#define LED4_OFF() 	cbi(PORTL, 6)
-#define LED4_TOGGLE() 	LED_TOGGLE(PORTL, 6)
-*/
-
-#define BRAKE_ON()      do { Nop(); } while(0)
+#define BRAKE_ON()      do { _LATC6 = 0; _LATC7	= 0; } while(0)
 #define BRAKE_OFF()     do { Nop(); } while(0)
 
-#define BEACON_ENCODER     ((void *)1)
-#define BEACON_PWM         ((void *)&gen.pwm_mc_mod2_ch1)
-
-#define BEACON_POS_SENSOR_1  4
-#define BEACON_POS_SENSOR_2  3
+#define BEACON_ENCODER  ((void *)1)
+#define BEACON_PWM      ((void *)&beaconboard.pwm_mc_mod2_ch1)
 
 /** ERROR NUMS */
-#define E_USER_I2C_PROTO   195
-#define E_USER_SENSOR      196
-#define E_USER_BEACON      197
+#define E_USER_SENSOR	196
+#define E_USER_BEACON   197
 
-#define LED_PRIO        	 170
-#define TIME_PRIO          160
-#define ADC_PRIO           120
-#define CS_PRIO            100
-#define BEACON_PRIO	    		80
-#define I2C_POLL_PRIO       20
+/* EVENTS PRIORITY */
+#define EVENT_PRIO_TIME 		160
+#define EVENT_PRIO_SENSOR     120
+#define EVENT_PRIO_CS         100
+#define EVENT_PRIO_BEACON	    80
 
-#define CS_PERIOD 5000L
+/* EVENTS PERIODS */
+#define EVENT_PERIOD_BEACON 	20000L
+#define EVENT_PERIOD_SENSOR   10000L
+#define EVENT_PERIOD_CS        5000L
 
+/* NUMBER OF DINAMIC LOGS */
 #define NB_LOGS 4
 
-/* generic to all boards */
-struct genboard {
+/* structure of beacon control system */
+struct cs_block 
+{
+	uint8_t on;
+  	struct cs cs;
+  	struct pid_filter pid;
+	struct quadramp_filter qr;
+	struct blocking_detection bd;
+};
+
+/* main data structure of beacon */
+struct beaconboard 
+{
 	/* command line interface */
 	struct rdline rdl;
 	char prompt[RDLINE_PROMPT_SIZE];
@@ -78,46 +65,29 @@ struct genboard {
 	/* motors */
 	struct pwm_mc pwm_mc_mod2_ch1;
 
-	/* log */
-	uint8_t logs[NB_LOGS+1];
-	uint8_t log_level;
-	uint8_t debug;
-};
+	/* control systems */
+ 	struct cs_block speed;
 
-struct cs_block {
-	uint8_t on;
-  struct cs cs;
-  struct pid_filter pid;
-	struct quadramp_filter qr;
-	struct blocking_detection bd;
-};
-
-/* sensorboard specific */
-struct sensorboard {
-	
+	/* events flags */
+	uint8_t flags;  
 #define DO_ENCODERS  1
 #define DO_CS        2
 #define DO_BD        4
 #define DO_POWER     8
 
-	/* misc flags */
-	uint8_t flags;                
+	/* log */
+	uint8_t logs[NB_LOGS+1];
+	uint8_t log_level;
+	uint8_t debug;
 
-	/* control systems */
-  struct cs_block beacon;
-
-	/* robot status */
+	/* robot play color */
 	uint8_t our_color;
-
 };
 
-extern struct genboard gen;
-extern struct sensorboard sensorboard;
-
-///* start the bootloader */
-//void bootloader(void);
+extern struct beaconboard beaconboard;
 
 
+/* usefull macro */
 #define wait_cond_or_timeout(cond, timeout)                   \
 ({                                                            \
         microseconds __us = time_get_us2();                   \

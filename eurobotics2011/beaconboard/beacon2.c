@@ -40,8 +40,8 @@
 #define AREA_Y 2100
 
 /* convert coords according to our color */
-#define COLOR_X(x)     ((sensorboard.our_color==I2C_COLOR_YELLOW)? (x) : (AREA_X-(x)))
-#define COLOR_Y(y)     ((sensorboard.our_color==I2C_COLOR_YELLOW)? (y) : (AREA_Y-(y)))
+#define COLOR_X(x)     ((beaconboard.our_color==I2C_COLOR_RED)? (x) : (AREA_X-(x)))
+#define COLOR_Y(y)     ((beaconboard.our_color==I2C_COLOR_RED)? (y) : (AREA_Y-(y)))
 /* fixed beacon coordenates */
 #define BEACON_X_OFFSET	(-62)				// beacon calibration includes the offset of 6.2cm
 #define BEACON_Y_OFFSET	(AREA_Y/2)
@@ -99,7 +99,7 @@ static volatile int8_t valid_pulse[N_CAPS] = {0, 0};
 static volatile int8_t valid_period = 0;
 
 
-int32_t encoders_spi_update_beacon_speed(void * number)
+int32_t encoders_update_beacon_speed(void * number)
 {
 	int32_t ret;
 	uint8_t flags;
@@ -132,7 +132,7 @@ void beacon_init(void)
 			
 	beacon_speed = 0;
 	
-	sensorboard.our_color = I2C_COLOR_YELLOW;
+	beaconboard.our_color = I2C_COLOR_RED;
 
 	/*for(i=0;i<BEACON_MAX_SAMPLE;i++)
 		beacon_sample_size[i] = 0;*/
@@ -182,43 +182,48 @@ void beacon_init(void)
 	T2CONbits.TCKPS = 0b10;	// Timer 2 prescaler = 256, T_timer2 = 1.6us (0b11 for 6.4 us)
 	T2CONbits.TON		= 1;		// enable Timer 2
 
+
+	/* CS EVENT */
+	scheduler_add_periodical_event_priority(beacon_calc, NULL, 
+						EVENT_PERIOD_BEACON / SCHEDULER_UNIT, EVENT_PRIO_BEACON);
+
 }
 
-void beacon_calibre_pos(void)
-{
-	sensorboard.flags &= ~DO_CS;
-
-	/* init beacon pos */
-	pwm_mc_set(BEACON_PWM, 250);
-
-	/* find rising edge of the mirror*/
-//	wait_ms(100);
-//	while (sensor_get(BEACON_POS_SENSOR_1));
-//	wait_ms(100);
-//	while (!sensor_get(BEACON_POS_SENSOR_1));
+//void beacon_calibre_pos(void)
+//{
+//	beacon.flags &= ~DO_CS;
 //
-	pwm_mc_set(BEACON_PWM, 0);
-
-	beacon_reset_pos();
-	pid_reset(&sensorboard.beacon.pid);
-	encoders_dspic_set_value(BEACON_ENCODER, BEACON_OFFSET_CALIBRE);
-
-	cs_set_consign(&sensorboard.beacon.cs, 0);
-
-	sensorboard.flags |= DO_CS;
-	
-}
+//	/* init beacon pos */
+//	pwm_mc_set(BEACON_PWM, 250);
+//
+//	/* find rising edge of the mirror*/
+////	wait_ms(100);
+////	while (sensor_get(BEACON_POS_SENSOR_1));
+////	wait_ms(100);
+////	while (!sensor_get(BEACON_POS_SENSOR_1));
+////
+//	pwm_mc_set(BEACON_PWM, 0);
+//
+//	beacon_reset_pos();
+//	pid_reset(&beacon.speed.pid);
+//	encoders_dspic_set_value(BEACON_ENCODER, BEACON_OFFSET_CALIBRE);
+//
+//	cs_set_consign(&beacon.speed.cs, 0);
+//
+//	beacon.flags |= DO_CS;
+//	
+//}
 
 void beacon_start(void)
 {
 	beacon_reset_pos();
-	sensorboard.beacon.on = 1;
-	cs_set_consign(&sensorboard.beacon.cs, 80/4);
+	beaconboard.speed.on = 1;
+	cs_set_consign(&beaconboard.speed.cs, 80/4);
 }
 
 void beacon_stop(void)
 {
-	sensorboard.beacon.on = 0;
+	beaconboard.speed.on = 0;
 	pwm_mc_set(BEACON_PWM, 0);
 }
 
