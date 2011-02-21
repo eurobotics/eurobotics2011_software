@@ -20,7 +20,13 @@
  *
  */
 
-/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  cs.c,v 1.4 2009/05/27 20:04:07 zer0 Exp. */
+/*  
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
+ *  Javier Baliñas Santos <javier@arc-robots.org>
+ *
+ *  Code ported to family of microcontrollers dsPIC from
+ *  cs.c,v 1.4 2009/05/27 20:04:07 zer0 Exp.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -44,6 +50,40 @@
 
 #include "main.h"
 #include "beacon.h"
+
+
+/* beacon speed calculation based on encoder position, used by cs as feedback */
+int32_t encoders_update_beacon_speed(void * number)
+{
+	int32_t ret;
+	uint8_t flags;
+
+	/* critical section */
+	IRQ_LOCK(flags);
+	
+	/* get encoder position */
+	ret = encoders_dspic_get_value(number);
+
+	/* calulate speed */
+	beacon_speed = ret - beacon_pos;
+	beacon_pos = ret;
+
+	IRQ_UNLOCK(flags);
+	
+	return beacon_speed;
+}
+
+/* read actual beacon speed */
+int32_t encoders_spi_get_beacon_speed(void * dummy)
+{
+	return beacon_speed;
+}
+
+/* reset of position of beacon */
+void beacon_reset_pos(void)
+{
+	encoders_dspic_set_value(BEACON_ENCODER, 0);
+}
 
 /* cs processing called periodically */
 static void do_cs(void *dummy) 

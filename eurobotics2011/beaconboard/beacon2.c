@@ -61,22 +61,33 @@
 
 /* convert coords according to our color */
 #define COLOR_X(x)     ((beaconboard.our_color==I2C_COLOR_RED)? (x) : (AREA_X-(x)))
-#define COLOR_Y(y)     ((beaconboard.our_color==I2C_COLOR_RED)? (y) : (AREA_Y-(y)))
+#define COLOR_Y(y)     ((beaconboard.our_color==I2C_COLOR_RED)? (y) : (AREA_Y-(y)))
+
 /* fixed beacon coordenates */
 #define BEACON_X_OFFSET	(-62)				// beacon calibration includes the offset of 6.2cm
 #define BEACON_Y_OFFSET	(AREA_Y/2)
 #define BEACON_A_OFFSET	(0)
 
+/* IR sensors pin read value */
+#define IR_SENSOR_0_DEG_PIN() 	(!(_RC4))
+#define IR_SENSOR_180_DEG_PIN() 	(!(_RC5))
 
-#define IR_SENSOR_0() (!(_RC4))
-#define IR_SENSOR_1() (!(_RC5))
+/* IR sensor management */
+#define IR_SENSOR_0_DEG		0
+#define IR_SENSOR_180_DEG	1
+#define IR_SENSOR_MAX		2
+
+#define EDGE_RISING		0
+#define EDGE_FALLING 	1
+#define EDGE_MAX 			2
+
+/* modulo of timer base */
 #define MODULO_TIMER (65535L)
+
+/* to work in units of mili degrees */
 #define MULT_ANGLE (1000L)
-#define BEACON_MAX_SAMPLE (3)
 
-#define OPPONENT_POS_X (11)
-#define OPPONENT_POS_Y (22)
-
+/* debug macros */
 #define BEACON_DEBUG(args...) DEBUG(E_USER_BEACON, args)
 #define BEACON_NOTICE(args...) NOTICE(E_USER_BEACON, args)
 #define BEACON_ERROR(args...) ERROR(E_USER_BEACON, args)
@@ -85,67 +96,45 @@
 static int32_t get_dist(int32_t size, int32_t period);
 static int32_t get_angle(int32_t middle, int32_t period, int32_t offset);
 
-/* beacon data structure */
+/* data structure to store beacon results */
 struct beacon beacon;
 
-/* some local variables related with calculations */
-static volatile int32_t rising = -1;
-static volatile int32_t falling = -1;
-
-static int32_t invalid_count = 0;
-
+/* actual beacon position and speed */
 static volatile int32_t beacon_pos;
 static volatile int32_t beacon_speed;
 
-#define RISING	0
-#define FALLING 1
-#define N_CAPS	2
+/* turn period measure */
+static volatile int32_t count_period = 0;		/* counts of timer asociated */
+static volatile int32_t count_period_ov = 0;	/* overflow flag of timer    */
+static volatile int8_t valid_period = 0;		/* new valid measure is available */
 
-static volatile int32_t count_period = 0;
-static volatile int32_t count_period_ov = 0;
-static volatile int32_t count_edge[N_CAPS][2] = {{0, 0}, {0 ,0}};
-static volatile int32_t count_edge_ov[N_CAPS][2] = {{0, 0}, {0 ,0}};
-static volatile int8_t valid_pulse[N_CAPS] = {0, 0};
-static volatile int8_t valid_period = 0;
-
-
-/* speed calculation based on encoder position, used by cs as feedback */
-int32_t encoders_update_beacon_speed(void * number)
-{
-	int32_t ret;
-	uint8_t flags;
-
-	/* critical section */
-	IRQ_LOCK(flags);
-	
-	/* get encoder position */
-	ret = encoders_dspic_get_value(number);
-
-	/* calulate speed */
-	beacon_speed = ret - beacon_pos;
-	beacon_pos = ret;
-
-	IRQ_UNLOCK(flags);
-	
-	return beacon_speed;
-}
-
+/* IR sensors pulse measure */
+static volatile int32_t 
+count_edge[IR_SENSOR_MAX][EDGE_MAX] = {{0, 0}, {0 ,0}}; 		/* counts of timer */		
+static volatile int32_t 
+count_edge_ov[IR_SENSOR_MAX][EDGE_MAX] = {{0, 0}, {0 ,0}};	/* overflow flag   */
+static volatile int8_t 
+valid_pulse[IR_SENSOR_MAX] = {0, 0};	/* new valid measures available */								
+static int32_t invalid_count = 0;		/* timeout of pulse measure */
 
 
 /* initialize beacon */
 void beacon_init(void)
 {
+	/* clear data structures */
 	memset(&beacon, 0, sizeof(struct beacon));
 	beacon.opponent_x = I2C_OPPONENT_NOT_THERE;
-			
-	beacon_speed = 0;
 	
+	/* default values */		
+	beacon_speed = 0;
 	beaconboard.our_color = I2C_COLOR_RED;
 
-	/*for(i=0;i<BEACON_MAX_SAMPLE;i++)
-		beacon_sample_size[i] = 0;*/
 
-	/* initialize input capture (IC) 1 and 2 for keyences events */
+	/* HARDWARE INIT */
+
+	/* XXX: all measures are syncronized with then Timer 2 */
+
+	/* initialize input capture (IC) 1 and 2 for IR sensors events */
 	IC1CONbits.ICM =0b000;		// disable Input Capture module
 	IC1CONbits.ICTMR = 1; 		// select Timer2 as the IC time base
 	IC1CONbits.ICI = 0b00; 		// interrupt on every capture event
@@ -154,9 +143,9 @@ void beacon_init(void)
 	IC2CONbits.ICM =0b00; 		// disable Input Capture module
 	IC2CONbits.ICTMR = 1; 		// select Timer2 as the IC time base
 	IC2CONbits.ICI = 0b00; 		// interrupt on every capture event
-	IC2CONbits.ICM = 0b001; 	// generate capture event on rising edge
+	IC2CONbits.ICM = 0b001; 	// generate capture event on every edge
 
-	/* initialize input capture 7 and 8 for ee-xs671a */
+	/* initialize input capture 7 and 8 for turn sensors */
 	IC7CONbits.ICM =0b000;		// disable Input Capture module
 	IC7CONbits.ICTMR = 1; 		// select Timer2 as the IC1 time base
 	IC7CONbits.ICI = 0b00; 		// interrupt on every capture event
@@ -167,7 +156,7 @@ void beacon_init(void)
 	IC8CONbits.ICI = 0b00; 		// interrupt on every capture event
 	IC8CONbits.ICM = 0b011; 	// generate capture event on every rising edge
 
-	/* enable capture interrupts and Timer 2 */
+	/* enable all inputs capture interrupts and Timer 2 */
 	IPC0bits.IC1IP = 5; 	// setup IC1 interrupt priority level XXX, higher than scheduler!
 	IFS0bits.IC1IF = 0; 	// clear IC1 Interrupt Status Flag
 	IEC0bits.IC1IE = 1; 	// enable IC1 interrupt
@@ -180,12 +169,16 @@ void beacon_init(void)
 	IFS1bits.IC7IF = 0; 	// clear IC1 Interrupt Status Flag
 	IEC1bits.IC7IE = 1; 	// enable IC1 interrupt
 
-//	IPC5bits.IC8IP = 5; 	// setup IC1 interrupt priority level XXX, higher than scheduler!
-//	IFS1bits.IC8IF = 0; 	// clear IC1 Interrupt Status Flag
-//	IEC1bits.IC8IE = 1; 	// enable IC1 interrupt
+	/* TODO: for the moment beacon only uses one turn sensor */
+/*	IPC5bits.IC8IP = 5; 	// setup IC1 interrupt priority level XXX, higher than scheduler!
+	IFS1bits.IC8IF = 0; 	// clear IC1 Interrupt Status Flag
+	IEC1bits.IC8IE = 1; 	// enable IC1 interrupt
+*/
 
+	/* config and enable Timer 2 */
 	PR2 = 65535;
 	IFS0bits.T2IF 	 = 0; 	// clear T2 Interrupt Status Flag
+
 	T2CONbits.TCKPS = 0b10;	// Timer 2 prescaler = 256, T_timer2 = 1.6us (0b11 for 6.4 us)
 	T2CONbits.TON	 = 1;		// enable Timer 2
 
@@ -196,116 +189,158 @@ void beacon_init(void)
 
 }
 
-
-void beacon_reset_pos(void)
+/* input compare 1 interrupt connected to IR_SENSOR_0_DEG */
+void __attribute__((__interrupt__, no_auto_psv)) _IC1Interrupt(void)
 {
-	pwm_mc_set(BEACON_PWM, 0);
-	encoders_dspic_set_value(BEACON_ENCODER, 0);
+	uint8_t flags;
+	
+	/* reset flag */
+	_IC1IF=0;
+	
+	/* Capture of Timer 2 counts on falling and risign edge of IR sensor.
+    * After falling edge set valid_pulse.
+	 */
+
+	/* NOTE: Timer 2 count is hardware buffered by Input capture so,
+	 *       we don't lose counts.
+	 */
+
+	/* rising edge */
+	if ( IR_SENSOR_0_DEG_PIN()) {
+		IRQ_LOCK(flags);
+		count_edge[IR_SENSOR_0_DEG][EDGE_RISING] = (int32_t)IC1BUF;
+		count_edge_ov[IR_SENSOR_0_DEG][EDGE_RISING] = _T2IF;
+		valid_pulse[IR_SENSOR_0_DEG] = 0;
+		IRQ_UNLOCK(flags);
+
+	}
+	/* falling edge */
+	else {
+		IRQ_LOCK(flags);
+		count_edge[IR_SENSOR_0_DEG][EDGE_FALLING] = (int32_t)IC1BUF;
+		count_edge_ov[IR_SENSOR_0_DEG][EDGE_FALLING] = _T2IF;
+		valid_pulse[IR_SENSOR_0_DEG] = 1;
+		IRQ_UNLOCK(flags);
+	}
+	
 }
 
+/* input compare 2 interrupt connected to IR_SENSOR_0_DEG */
+void __attribute__((__interrupt__, no_auto_psv)) _IC2Interrupt(void)
+{
+	uint8_t flags;
+	
+	/* reset flag */
+	_IC2IF=0;
+
+
+	/* Capture of Timer 2 counts on falling and risign edge of IR sensor.
+    * After falling edge set valid_pulse.
+	 */
+
+	/* NOTE: Timer 2 count is hardware buffered by Input capture so,
+	 *       we don't lose counts.
+	 */
+
+	/* rising edge */
+	if ( IR_SENSOR_180_DEG_PIN()) {
+		IRQ_LOCK(flags);
+		count_edge[IR_SENSOR_180_DEG][EDGE_RISING] = (int32_t)IC2BUF;
+		count_edge_ov[IR_SENSOR_180_DEG][EDGE_RISING] = _T2IF;
+		valid_pulse[IR_SENSOR_180_DEG] = 0;
+		IRQ_UNLOCK(flags);
+
+	}
+	/* falling edge */
+	else {
+		IRQ_LOCK(flags);
+		count_edge[IR_SENSOR_180_DEG][EDGE_FALLING] = (int32_t)IC2BUF;
+		count_edge_ov[IR_SENSOR_180_DEG][EDGE_FALLING] = _T2IF;
+		valid_pulse[IR_SENSOR_180_DEG] = 1;
+		IRQ_UNLOCK(flags);
+	}
+}
+
+/* input compare 7 interrupt connected to turn sensor aligned with IR_SENSOR_0_DEG */
+void __attribute__((__interrupt__, no_auto_psv)) _IC7Interrupt(void)
+{
+	uint8_t flags;
+	
+	/* reset flag */
+	_IC7IF=0;
+	
+	
+	/* Capture of Timer 2 counts on risign edge of turn sensor.
+	 */
+
+	/* block interrupt */
+	IRQ_LOCK(flags);
+	
+	/* reset timer */
+	TMR2 = 0;
+
+	/* XXX: there is a delay between the instant of capture
+    * and timer reset, this involve an offset error on angle measure.
+    */
+
+	/* save bufferd counts and overflow flag */
+	count_period = (int32_t)IC7BUF;
+	count_period_ov = _T2IF;
+
+	/* reset overflow flag */
+	_T2IF = 0;	
+	
+	/* set valid_period */
+	valid_period = 1;
+
+	/* unblock interrupt */
+	IRQ_UNLOCK(flags);
+}
+
+/* TODO: input compare 7 interrupt connected to turn sensor aligned with IR_SENSOR_0_DEG */
+/*
+void __attribute__((__interrupt__, no_auto_psv)) _IC8Interrupt(void)
+{
+	uint8_t flags;
+	
+	IFS1bits.IC8IF=0;
+	
+	IRQ_LOCK(flags);
+	TMR2 = 0;
+	count_period[1] = (int32_t)IC8BUF;
+	valid_period[1] = 1;
+	IRQ_UNLOCK(flags);
+
+}
+*/
+
+/* start turn and measures */
 void beacon_start(void)
 {
+	/* enable event flag */
+	/* TODO */
+
+	/* enable cs */
 	beacon_reset_pos();
 	beaconboard.speed.on = 1;
 	cs_set_consign(&beaconboard.speed.cs, 80/4);
 }
 
+/* stop turn and measures */
 void beacon_stop(void)
 {
+	/* enable event flag */
+	/* TODO */
+	
+	/* disable cs */
 	beaconboard.speed.on = 0;
+	cs_set_consign(&beaconboard.speed.cs, 0);
 	pwm_mc_set(BEACON_PWM, 0);
 }
 
-
-
-
-int32_t encoders_spi_get_beacon_speed(void * dummy)
-{
-	return beacon_speed;
-}
-
-void __attribute__((__interrupt__, no_auto_psv)) _IC1Interrupt(void)
-{
-	uint8_t flags;
-	
-	IFS0bits.IC1IF=0;
-	
-	/* rising edge */
-	if ( IR_SENSOR_0()) {
-		IRQ_LOCK(flags);
-		count_edge[0][RISING] = (int32_t)IC1BUF;
-		count_edge_ov[0][RISING] = _T2IF;
-		valid_pulse[0] = 0;
-		IRQ_UNLOCK(flags);
-
-	}
-	/* falling edge */
-	else {
-		IRQ_LOCK(flags);
-		count_edge[0][FALLING] = (int32_t)IC1BUF;
-		count_edge_ov[0][FALLING] = _T2IF;
-		valid_pulse[0] = 1;
-		IRQ_UNLOCK(flags);
-	}
-	
-}
-
-void __attribute__((__interrupt__, no_auto_psv)) _IC2Interrupt(void)
-{
-	uint8_t flags;
-	
-	IFS0bits.IC2IF=0;
-
-	/* rising edge */
-	if ( IR_SENSOR_1()) {
-		IRQ_LOCK(flags);
-		count_edge[1][RISING] = (int32_t)IC2BUF;
-		count_edge_ov[1][RISING] = _T2IF;
-		valid_pulse[1] = 0;
-		IRQ_UNLOCK(flags);
-
-	}
-	/* falling edge */
-	else {
-		IRQ_LOCK(flags);
-		count_edge[1][FALLING] = (int32_t)IC2BUF;
-		count_edge_ov[1][FALLING] = _T2IF;
-		valid_pulse[1] = 1;
-		IRQ_UNLOCK(flags);
-	}
-}
-
-void __attribute__((__interrupt__, no_auto_psv)) _IC7Interrupt(void)
-{
-	uint8_t flags;
-	
-	IFS1bits.IC7IF=0;
-	
-	IRQ_LOCK(flags);
-	
-	TMR2 = 0;
-	count_period = (int32_t)IC7BUF;
-	count_period_ov = _T2IF;
-	_T2IF = 0;	
-	
-	valid_period = 1;
-	IRQ_UNLOCK(flags);
-}
-
-//void __attribute__((__interrupt__, no_auto_psv)) _IC8Interrupt(void)
-//{
-//	uint8_t flags;
-//	
-//	IFS1bits.IC8IF=0;
-//	
-//	IRQ_LOCK(flags);
-//	TMR2 = 0;
-//	count_period[1] = (int32_t)IC8BUF;
-//	valid_period[1] = 1;
-//	IRQ_UNLOCK(flags);
-//
-//}
-
+/**********************************************************************
+ * HELPERS FOR BEACON CALCULUS
+ *********************************************************************/
 
 /* return the distance between two points */
 int16_t distance_between(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
@@ -318,19 +353,23 @@ int16_t distance_between(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 	return sqrt(x+y);
 }
 
+/* return the normal of a vector with origin (0,0) */
 double norm(double x, double y)
 {
 	return sqrt(x*x + y*y);
 }
 
-/* return an angle between -180 and 180 */
+/* return the distance and angle (between -180 and 180) of a beacon
+ * opponent coordenates relative to robot coordinates 
+ */
 void abs_xy_to_rel_da(double x_robot, double y_robot, double a_robot, 
-											double x_abs, double y_abs,
-		      						int32_t *d_rel, int32_t *a_rel_deg)
+							 double x_abs, double y_abs,
+		      			 int32_t *d_rel, int32_t *a_rel_deg)
 {
 	double a_rel_rad;
 
 	a_rel_rad = atan2(y_abs - y_robot, x_abs - x_robot) - RAD(a_robot);
+
 	if (a_rel_rad < -M_PI) {
 		a_rel_rad += M_2PI;
 	}
@@ -343,7 +382,7 @@ void abs_xy_to_rel_da(double x_robot, double y_robot, double a_robot,
 }
 
 
-/* return true if the point is in area */
+/* return true if the point (x,y) is in area defined by margin */
 uint8_t is_in_margin(int16_t dx, int16_t dy, int16_t margin)
 {
 	if ((ABS(dx) < margin) && (ABS(dy) < margin))
@@ -352,6 +391,74 @@ uint8_t is_in_margin(int16_t dx, int16_t dy, int16_t margin)
 }
 
 
+/* return distance from size of a pulse width and turn period */
+static int32_t get_dist(int32_t size, int32_t period)
+{
+	int32_t dist=0;
+	double size_rel;
+	
+	/* calcule relative angle */
+	size_rel = size*1.0/period;
+
+	/* dist = offset + (a0 + a1*x + a2*x² + a3x³) */	
+	dist =  (int32_t)((0.0062 + (-0.1546*size_rel) + (1.1832*size_rel*size_rel) + (-2.4025*size_rel*size_rel*size_rel))*100000);
+	dist += 16;       
+	return dist;
+}
+
+/* return angle from middle of pulse width, turn period and angle offset */
+static int32_t get_angle(int32_t middle, int32_t period, int32_t offset)
+{
+	int32_t ret_angle;
+	
+	ret_angle = (int32_t)(middle * 360.0 * MULT_ANGLE / period);
+	ret_angle = (ret_angle + offset*MULT_ANGLE)%(360*MULT_ANGLE);
+	
+	return ret_angle;
+}
+
+/* return absolute (x,y) coordinates of from angle and distance measures */
+void beacon_angle_dist_to_x_y(int32_t angle, int32_t dist, int32_t *x, int32_t *y)
+{
+//	uint8_t flags;
+
+	int32_t local_x = 0;
+	int32_t local_y = 0;
+	int32_t x_opponent;
+	int32_t y_opponent;
+	int32_t local_robot_angle = 0;
+
+//	IRQ_LOCK(flags);
+//	local_x           = beacon.robot_x;
+//	local_y           = beacon.robot_y;
+//	local_robot_angle = beacon.robot_angle;
+//	IRQ_UNLOCK(flags);
+
+	if (local_robot_angle < 0)
+		local_robot_angle += 360;
+
+	x_opponent = cos((local_robot_angle + angle)* 2 * M_PI / 360)* dist;
+	y_opponent = sin((local_robot_angle + angle)* 2 * M_PI / 360)* dist;
+
+//	BEACON_DEBUG("x_op= %ld\t",x_opponent);
+//	BEACON_DEBUG("y_op= %ld\r\n",y_opponent);
+//	BEACON_NOTICE("robot_x= %ld\t",local_x);
+//	BEACON_NOTICE("robot_y= %ld\t",local_y);
+//	BEACON_NOTICE("robot_angle= %ld\r\n",local_robot_angle);
+
+	*x = local_x + x_opponent;
+	*y = local_y + y_opponent;
+
+}
+
+
+/**********************************************************************
+ * BEACON CALCULUS
+ *********************************************************************/
+
+/* calculate distance (d) and angle (a) and (x,y) position of a beacon 
+ * relative to the robot coordinates.
+ */
 void sensor_calc(uint8_t num)
 {
 	static int32_t local_count_period, local_count_period_total=0;
@@ -379,10 +486,10 @@ void sensor_calc(uint8_t num)
 	IRQ_LOCK(flags);
 	local_count_period = count_period;
 	local_count_period_ov = count_period_ov;
-	local_count_edge[RISING] = count_edge[num][RISING];
-	local_count_edge[FALLING] = count_edge[num][FALLING];
-	local_count_edge_ov[RISING] = count_edge_ov[num][RISING];
-	local_count_edge_ov[FALLING] = count_edge_ov[num][FALLING];
+	local_count_edge[EDGE_RISING] = count_edge[num][EDGE_RISING];
+	local_count_edge[EDGE_FALLING] = count_edge[num][EDGE_FALLING];
+	local_count_edge_ov[EDGE_RISING] = count_edge_ov[num][EDGE_RISING];
+	local_count_edge_ov[EDGE_FALLING] = count_edge_ov[num][EDGE_FALLING];
 	local_valid_pulse = valid_pulse[num];
 	local_valid_period = valid_period;
 	
@@ -416,17 +523,17 @@ void sensor_calc(uint8_t num)
 		IRQ_UNLOCK(flags);		
 
 		/* add offset to edges counts */
-		local_count_edge[RISING] = local_count_edge[RISING] + (MODULO_TIMER + 1)*local_count_edge_ov[RISING];
-		local_count_edge[FALLING] = local_count_edge[FALLING] + (MODULO_TIMER + 1)*local_count_edge_ov[FALLING];
+		local_count_edge[EDGE_RISING] = local_count_edge[EDGE_RISING] + (MODULO_TIMER + 1)*local_count_edge_ov[EDGE_RISING];
+		local_count_edge[EDGE_FALLING] = local_count_edge[EDGE_FALLING] + (MODULO_TIMER + 1)*local_count_edge_ov[EDGE_FALLING];
 
 		/* calcule pulse size and the middle */	
-		if(local_count_edge[RISING]> local_count_edge[FALLING]){
-			count_size = local_count_period_total - local_count_edge[RISING] + local_count_edge[FALLING];
-			count_middle = (local_count_edge[RISING] + (int32_t)(count_size/2) + local_count_period_total) % local_count_period_total;			
+		if(local_count_edge[EDGE_RISING]> local_count_edge[EDGE_FALLING]){
+			count_size = local_count_period_total - local_count_edge[EDGE_RISING] + local_count_edge[EDGE_FALLING];
+			count_middle = (local_count_edge[EDGE_RISING] + (int32_t)(count_size/2) + local_count_period_total) % local_count_period_total;			
 		}
 		else{
-			count_size = local_count_edge[FALLING] - local_count_edge[RISING];
-			count_middle = local_count_edge[RISING] + (int32_t)(count_size/2);
+			count_size = local_count_edge[EDGE_FALLING] - local_count_edge[EDGE_RISING];
+			count_middle = local_count_edge[EDGE_RISING] + (int32_t)(count_size/2);
 		}
 		
 //		/* filter pulses by size */
@@ -461,8 +568,8 @@ void sensor_calc(uint8_t num)
 
 		//BEACON_DEBUG(" ");
 		//BEACON_DEBUG("count_period = %ld", local_count_period_total);
-		//BEACON_DEBUG("count_edge[RISING]  = %ld", local_count_edge[RISING]);
-		//BEACON_DEBUG("count_edge[FALLING] = %ld", local_count_edge[FALLING]);
+		//BEACON_DEBUG("count_edge[EDGE_RISING]  = %ld", local_count_edge[EDGE_RISING]);
+		//BEACON_DEBUG("count_edge[EDGE_FALLING] = %ld", local_count_edge[EDGE_FALLING]);
 		//BEACON_DEBUG("count_size = %ld", count_size_total);
 		//BEACON_DEBUG("count_middle = %ld\r\n", count_middle_total);
 
@@ -531,201 +638,15 @@ void sensor_calc(uint8_t num)
 		}	
 }
 
+/* beacon calculus even */
 void beacon_calc(void *dummy)
 {
-	//sensor_calc(0);
-	sensor_calc(1);	
+	//sensor_calc(IR_SENSOR_0_DEG);
+	sensor_calc(IR_SENSOR_180_DEG);	
 }
 
 
 
-static int32_t get_dist(int32_t size, int32_t period)
-{
-	int32_t dist=0;
-	double size_rel;
-	
-	/* calcule relative angle */
-	size_rel = size*1.0/period;
-
-	/* dist = offset + (a0 + a1*x + a2*x² + a3x³) */	
-	//dist =  (int32_t)((0.0002 + (-0.0041*size_rel) + (0.0507*size_rel*size_rel) + (-1.0814*size_rel*size_rel*size_rel))*10000000);
-	//dist += 250;
-
-	/* dist = offset + (a0 + a1*x + a2*x² + a3x³ + a4x^4 + a5x^5) */	
-	//dist =  (int32_t)((0.0 + (-0.0002*size_rel) + (0.0083*size_rel*size_rel) + (-0.1468*size_rel*size_rel*size_rel))*1000000000);
-	//dist += (int32_t)(((-1.2645*size_rel*size_rel*size_rel*size_rel)+ (-4.2230*size_rel*size_rel*size_rel*size_rel*size_rel))*1000000000);
-	//dist += 0;
-
-	/* dist = offset + (a0 + a1*x + a2*x² + a3x³) */	
-	dist =  (int32_t)((0.0062 + (-0.1546*size_rel) + (1.1832*size_rel*size_rel) + (-2.4025*size_rel*size_rel*size_rel))*100000);
-	dist += 16;       
-	return dist;
-}
-
-static int32_t get_angle(int32_t middle, int32_t period, int32_t offset)
-{
-	int32_t ret_angle;
-	
-	ret_angle = (int32_t)(middle * 360.0 * MULT_ANGLE / period);
-	ret_angle = (ret_angle + offset*MULT_ANGLE)%(360*MULT_ANGLE);
-	
-	return ret_angle;
-}
-
-void beacon_angle_dist_to_x_y(int32_t angle, int32_t dist, int32_t *x, int32_t *y)
-{
-//	uint8_t flags;
-
-	int32_t local_x = 0;
-	int32_t local_y = 0;
-	int32_t x_opponent;
-	int32_t y_opponent;
-	int32_t local_robot_angle = 0;
-
-//	IRQ_LOCK(flags);
-//	local_x           = beacon.robot_x;
-//	local_y           = beacon.robot_y;
-//	local_robot_angle = beacon.robot_angle;
-//	IRQ_UNLOCK(flags);
-
-	if (local_robot_angle < 0)
-		local_robot_angle += 360;
-
-	x_opponent = cos((local_robot_angle + angle)* 2 * M_PI / 360)* dist;
-	y_opponent = sin((local_robot_angle + angle)* 2 * M_PI / 360)* dist;
-
-//	BEACON_DEBUG("x_op= %ld\t",x_opponent);
-//	BEACON_DEBUG("y_op= %ld\r\n",y_opponent);
-//	BEACON_NOTICE("robot_x= %ld\t",local_x);
-//	BEACON_NOTICE("robot_y= %ld\t",local_y);
-//	BEACON_NOTICE("robot_angle= %ld\r\n",local_robot_angle);
-
-	*x = local_x + x_opponent;
-	*y = local_y + y_opponent;
-
-}
 
 
-//void beacon_calc(void *dummy)
-//{
-//	static int32_t local_rising, local_falling;
-//	static int32_t middle;
-//	static float size = 0;
-//	int32_t local_angle;
-//	int32_t local_dist;
-//
-//	int32_t local_count_diff_rising ;
-//	int32_t local_count_diff_falling ;
-//	int32_t local_beacon_coeff;
-//
-//	int32_t result_x=0;
-//	int32_t result_y=0;
-//	int32_t temp=0;
-//	int32_t edge=0;
-//	//int32_t total_size=0;
-//	
-//	uint8_t flags;
-//	//uint8_t i;
-//	int8_t local_valid;
-//
-//
-//	if (falling == -1){
-//		/* 0.5 second timeout */
-//		if (invalid_count < 25)
-//			invalid_count++;
-//		else {
-//			IRQ_LOCK(flags);
-//			beacon.opponent_x = I2C_OPPONENT_NOT_THERE;
-//			IRQ_UNLOCK(flags);
-//		}	
-//		return;
-//	}
-//
-//	invalid_count = 0;
-//	IRQ_LOCK(flags);
-//	local_valid = valid_beacon;
-//	local_count_diff_rising  = count_diff_rising;
-//	local_count_diff_falling = count_diff_falling ;
-//	local_rising = rising;
-//	local_falling = falling;	
-//	local_beacon_coeff = beacon_coeff;	
-//	IRQ_UNLOCK(flags);
-//	
-//
-//	if (local_valid){
-//		invalid_count = 0;
-//	
-//		BEACON_DEBUG("local_beacon_coeff = %ld", local_beacon_coeff);
-//				
-//		BEACON_DEBUG("rising= %ld\t",local_rising);
-//		BEACON_DEBUG("falling= %ld\r\n",local_falling);
-//		BEACON_DEBUG("count diff rising= %ld\t",local_count_diff_rising);
-//		BEACON_DEBUG("count diff falling= %ld\r\n",local_count_diff_falling);
-//
-//		/* recalculate number of pulse by adding the value of the counter, then put value back into motor's round range */
-//		
-//		local_rising  = ((local_rising + (local_count_diff_rising * local_beacon_coeff) / COEFF_MULT)) %(BEACON_STEP_TOUR);
-//		local_falling = ((local_falling + (local_count_diff_falling * local_beacon_coeff) / COEFF_MULT)) %(BEACON_STEP_TOUR);
-//
-//		BEACON_DEBUG("rising total= %ld\t",local_rising);
-//		BEACON_DEBUG("falling total= %ld\r\n",local_falling);
-//
-//
-//		/* if around 360 deg, rising > falling, so invert both and recalculate size and middle */			
-//		if(local_falling < local_rising){
-//			temp          = local_rising;
-//			local_rising  = local_falling;
-//			local_falling = temp;
-//			size          = BEACON_STEP_TOUR - local_falling + local_rising;
-//			middle        = (local_falling + ((int32_t)(size)/2) + BEACON_STEP_TOUR) %(BEACON_STEP_TOUR);
-//			edge = local_falling;
-//		}
-//		/* else rising > falling */
-//		else{
-//			size   = local_falling - local_rising;		
-//			middle = local_rising + (size / 2);
-//			edge   = local_rising;
-//		}
-//
-//		//for(i=BEACON_MAX_SAMPLE-1;i>0;i--){
-//		//	beacon_sample_size[i] = beacon_sample_size[i-1];		
-//		//	total_size += beacon_sample_size[i];
-//		//}
-//		//beacon_sample_size[0] = size;
-//		//total_size += size;
-//		//total_size /= BEACON_MAX_SAMPLE;
-//
-//		//BEACON_DEBUG("rising2= %ld\t",local_rising);
-//		//BEACON_DEBUG("falling2= %ld\r\n",local_falling);
-//		/* 			BEACON_DEBUG("size= %ld %ld\t",size, total_size); */
-//		
-//		BEACON_DEBUG("size= %f\r\n",size);
-//		BEACON_DEBUG("middle= %ld\r\n",middle);
-//
-//		local_angle = get_angle(middle,0);
-//		//BEACON_NOTICE("opponent angle= %ld\t",local_angle);
-//		
-//		local_dist = get_dist(size);
-//		//BEACON_NOTICE("opponent dist= %ld\r\n",local_dist);
-//
-//		beacon_angle_dist_to_x_y(local_angle, local_dist, &result_x, &result_y);
-//
-//		IRQ_LOCK(flags);			
-//		beacon.opponent_x = result_x;
-//		beacon.opponent_y = result_y;
-//		beacon.opponent_angle = local_angle;
-//		beacon.opponent_dist = local_dist;
-//		/* for I2C test */
-//		//beacon.opponent_x = OPPONENT_POS_X;
-//		//beacon.opponent_y = OPPONENT_POS_Y;
-//		IRQ_UNLOCK(flags);
-//
-//		//BEACON_NOTICE("opponent x= %ld\t",beacon.opponent_x);
-//		//BEACON_NOTICE("opponent y= %ld\r\n\n",beacon.opponent_y);
-//	}
-//	else {
-////		BEACON_NOTICE("non valid\r\n\n");
-//	}
-//
-//	falling = -1;
-//}
+
