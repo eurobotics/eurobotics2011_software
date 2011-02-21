@@ -51,8 +51,13 @@
 #include "main.h"
 #include "beacon.h"
 
+/* actual beacon position and speed */
+static volatile int32_t beacon_pos;
+static volatile int32_t beacon_speed = 0;
 
-/* beacon speed calculation based on encoder position, used by cs as feedback */
+
+/* beacon speed calculation based on encoder position,
+ * used by cs as feedback. Must be compatible format with cs */
 int32_t encoders_update_beacon_speed(void * number)
 {
 	int32_t ret;
@@ -74,7 +79,7 @@ int32_t encoders_update_beacon_speed(void * number)
 }
 
 /* read actual beacon speed */
-int32_t encoders_spi_get_beacon_speed(void * dummy)
+int32_t encoders_get_beacon_speed(void * dummy)
 {
 	return beacon_speed;
 }
@@ -151,3 +156,7 @@ void beacon_cs_init(void)
 	scheduler_add_periodical_event_priority(do_cs, NULL, 
 						EVENT_PERIOD_CS / SCHEDULER_UNIT, EVENT_PRIO_CS);
 }
+
+
+
+

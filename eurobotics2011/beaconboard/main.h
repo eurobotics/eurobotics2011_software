@@ -74,6 +74,7 @@ struct beaconboard
 #define DO_CS        2
 #define DO_BD        4
 #define DO_POWER     8
+#define DO_BEACON	  	16
 
 	/* log */
 	uint8_t logs[NB_LOGS+1];
