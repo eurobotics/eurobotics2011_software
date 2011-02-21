@@ -84,11 +84,7 @@ int32_t encoders_get_beacon_speed(void * dummy)
 	return beacon_speed;
 }
 
-/* reset of position of beacon */
-void beacon_reset_pos(void)
-{
-	encoders_dspic_set_value(BEACON_ENCODER, 0);
-}
+
 
 /* cs processing called periodically */
 static void do_cs(void *dummy) 

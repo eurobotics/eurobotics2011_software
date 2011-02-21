@@ -23,6 +23,8 @@
  * config for uart module
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  uart_config.h,v 1.3.10.1 2006/11/26 21:06:02 zer0 Exp  */
+
 #ifndef UART_CONFIG_H
 #define UART_CONFIG_H
 

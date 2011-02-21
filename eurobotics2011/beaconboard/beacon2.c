@@ -310,6 +310,12 @@ void __attribute__((__interrupt__, no_auto_psv)) _IC8Interrupt(void)
 }
 */
 
+/* reset of position of beacon */
+void beacon_reset_pos(void)
+{
+	encoders_dspic_set_value(BEACON_ENCODER, 0);
+}
+
 /* start turn and measures */
 void beacon_start(void)
 {

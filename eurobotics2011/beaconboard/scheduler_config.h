@@ -19,6 +19,8 @@
  *
  */
 
+/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  scheduler_config.h,v 1.1.10.8 2007/11/27 23:16:15 zer0 Exp  */
+
 #ifndef _SCHEDULER_CONFIG_H_
 #define _SCHEDULER_CONFIG_H_
 
