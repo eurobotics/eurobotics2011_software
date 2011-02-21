@@ -38,10 +38,6 @@ struct beacon {
 #define BEACON_STEP_TOUR (640L)
 #define BEACON_OFFSET_CALIBRE 0
 
-///* real encoder value: 3531.75 so, multiple by 4 to have round
-// * value */
-//#define BEACON_STEP_TOUR (14127L)
-//#define BEACON_OFFSET_CALIBRE 40
 
 extern struct beacon beacon;
 
@@ -56,8 +52,8 @@ void beacon_angle_dist_to_x_y(int32_t angle, int32_t dist, int32_t *x, int32_t *
 void beacon_reset_pos(void);
 void beacon_set_consign(int32_t val);
 
-int32_t encoders_spi_get_beacon_speed(void *dummy);
+int32_t encoders_get_beacon_speed(void *dummy);
 int32_t encoders_update_beacon_speed(void *number);
-int32_t encoders_spi_get_value_beacon(void *number);
+int32_t encoders_get_value_beacon(void *number);
 
 

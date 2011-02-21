@@ -1,3 +1,24 @@
+/*  
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *  Revision : $Id$
+ *
+ *  Javier Baliñas Santos <javier@arc-robots.org>
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -20,7 +41,6 @@
 #include <time.h>
 #include <quadramp.h>
 #include <control_system_manager.h>
-//#include <adc.h>
 
 #include <blocking_detection_manager.h>
 
@@ -35,7 +55,7 @@
 #define RAD(x) (((double)(x)) * (M_PI / 180.0))
 #define M_2PI (2*M_PI)
 
-/* area */
+/* field area */
 #define AREA_X 3000
 #define AREA_Y 2100
 
@@ -47,17 +67,11 @@
 #define BEACON_Y_OFFSET	(AREA_Y/2)
 #define BEACON_A_OFFSET	(0)
 
-struct beacon beacon;
 
-//#define BEACON_PWM_VALUE 1000
 #define IR_SENSOR_0() (!(_RC4))
 #define IR_SENSOR_1() (!(_RC5))
 #define MODULO_TIMER (65535L)
 #define MULT_ANGLE (1000L)
-//#define COEFF_TIMER (2)
-//#define COEFF_MULT (100000)
-//#define COEFF_MULT2 (1000L)
-//#define BEACON_SIZE (9)
 #define BEACON_MAX_SAMPLE (3)
 
 #define OPPONENT_POS_X (11)
@@ -67,30 +81,26 @@ struct beacon beacon;
 #define BEACON_NOTICE(args...) NOTICE(E_USER_BEACON, args)
 #define BEACON_ERROR(args...) ERROR(E_USER_BEACON, args)
 
-static volatile int32_t rising = -1;
-static volatile int32_t falling = -1;
-
+/* beacon calculations funcions */
 static int32_t get_dist(int32_t size, int32_t period);
 static int32_t get_angle(int32_t middle, int32_t period, int32_t offset);
 
-static int32_t pos_ref = 0;
+/* beacon data structure */
+struct beacon beacon;
+
+/* some local variables related with calculations */
+static volatile int32_t rising = -1;
+static volatile int32_t falling = -1;
+
 static int32_t invalid_count = 0;
 
-//static volatile int32_t beacon_save_count = 0;
-//static volatile int32_t beacon_prev_save_count = 0;
-//static volatile int32_t count = 0;
-//static volatile int32_t count_diff_rising  = 0;
-//static volatile int32_t count_diff_falling = 0;
-//static int32_t beacon_coeff = 0;
-
 static volatile int32_t beacon_pos;
-//static int32_t beacon_sample_size[BEACON_MAX_SAMPLE];
-
 static volatile int32_t beacon_speed;
 
 #define RISING	0
 #define FALLING 1
 #define N_CAPS	2
+
 static volatile int32_t count_period = 0;
 static volatile int32_t count_period_ov = 0;
 static volatile int32_t count_edge[N_CAPS][2] = {{0, 0}, {0 ,0}};
@@ -99,34 +109,32 @@ static volatile int8_t valid_pulse[N_CAPS] = {0, 0};
 static volatile int8_t valid_period = 0;
 
 
+/* speed calculation based on encoder position, used by cs as feedback */
 int32_t encoders_update_beacon_speed(void * number)
 {
 	int32_t ret;
 	uint8_t flags;
 
+	/* critical section */
 	IRQ_LOCK(flags);
+	
+	/* get encoder position */
 	ret = encoders_dspic_get_value(number);
+
+	/* calulate speed */
 	beacon_speed = ret - beacon_pos;
 	beacon_pos = ret;
-//	beacon_prev_save_count = beacon_save_count;
-//	beacon_save_count = TMR2;
+
 	IRQ_UNLOCK(flags);
 	
-//  beacon_coeff = COEFF_TIMER  * COEFF_MULT;
-//	beacon_coeff = beacon_speed * COEFF_MULT / ((beacon_prev_save_count - beacon_save_count + MODULO_TIMER + 1)&MODULO_TIMER);
-
 	return beacon_speed;
 }
 
 
+
+/* initialize beacon */
 void beacon_init(void)
 {
-	//int8_t i;
-
-	/* beacon stuff */	
-	beacon_reset_pos();
-	pos_ref = encoders_dspic_get_value(BEACON_ENCODER);
-
 	memset(&beacon, 0, sizeof(struct beacon));
 	beacon.opponent_x = I2C_OPPONENT_NOT_THERE;
 			
@@ -137,7 +145,7 @@ void beacon_init(void)
 	/*for(i=0;i<BEACON_MAX_SAMPLE;i++)
 		beacon_sample_size[i] = 0;*/
 
-	/* initialize input capture 1 and 2 for keyences */
+	/* initialize input capture (IC) 1 and 2 for keyences events */
 	IC1CONbits.ICM =0b000;		// disable Input Capture module
 	IC1CONbits.ICTMR = 1; 		// select Timer2 as the IC time base
 	IC1CONbits.ICI = 0b00; 		// interrupt on every capture event
@@ -147,7 +155,6 @@ void beacon_init(void)
 	IC2CONbits.ICTMR = 1; 		// select Timer2 as the IC time base
 	IC2CONbits.ICI = 0b00; 		// interrupt on every capture event
 	IC2CONbits.ICM = 0b001; 	// generate capture event on rising edge
-
 
 	/* initialize input capture 7 and 8 for ee-xs671a */
 	IC7CONbits.ICM =0b000;		// disable Input Capture module
@@ -178,9 +185,9 @@ void beacon_init(void)
 //	IEC1bits.IC8IE = 1; 	// enable IC1 interrupt
 
 	PR2 = 65535;
-	IFS0bits.T2IF = 0; 			// clear T2 Interrupt Status Flag
+	IFS0bits.T2IF 	 = 0; 	// clear T2 Interrupt Status Flag
 	T2CONbits.TCKPS = 0b10;	// Timer 2 prescaler = 256, T_timer2 = 1.6us (0b11 for 6.4 us)
-	T2CONbits.TON		= 1;		// enable Timer 2
+	T2CONbits.TON	 = 1;		// enable Timer 2
 
 
 	/* CS EVENT */
@@ -189,30 +196,12 @@ void beacon_init(void)
 
 }
 
-//void beacon_calibre_pos(void)
-//{
-//	beacon.flags &= ~DO_CS;
-//
-//	/* init beacon pos */
-//	pwm_mc_set(BEACON_PWM, 250);
-//
-//	/* find rising edge of the mirror*/
-////	wait_ms(100);
-////	while (sensor_get(BEACON_POS_SENSOR_1));
-////	wait_ms(100);
-////	while (!sensor_get(BEACON_POS_SENSOR_1));
-////
-//	pwm_mc_set(BEACON_PWM, 0);
-//
-//	beacon_reset_pos();
-//	pid_reset(&beacon.speed.pid);
-//	encoders_dspic_set_value(BEACON_ENCODER, BEACON_OFFSET_CALIBRE);
-//
-//	cs_set_consign(&beacon.speed.cs, 0);
-//
-//	beacon.flags |= DO_CS;
-//	
-//}
+
+void beacon_reset_pos(void)
+{
+	pwm_mc_set(BEACON_PWM, 0);
+	encoders_dspic_set_value(BEACON_ENCODER, 0);
+}
 
 void beacon_start(void)
 {
@@ -227,11 +216,7 @@ void beacon_stop(void)
 	pwm_mc_set(BEACON_PWM, 0);
 }
 
-void beacon_reset_pos(void)
-{
-	pwm_mc_set(BEACON_PWM, 0);
-	encoders_dspic_set_value(BEACON_ENCODER, 0);
-}
+
 
 
 int32_t encoders_spi_get_beacon_speed(void * dummy)
