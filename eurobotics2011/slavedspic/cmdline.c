@@ -89,7 +89,6 @@ void emergency(char c)
 void mylog(struct error * e, ...) 
 {
 	va_list ap;
-	//u16 stream_flags = stdout->flags;
 	uint8_t i;
 	time_h tv;
 
@@ -110,7 +109,6 @@ void mylog(struct error * e, ...)
 	vfprintf_P(stdout, e->text, ap);
 	printf_P(PSTR("\r\n"));
 	va_end(ap);
-	//stdout->flags = stream_flags;
 }
 
 

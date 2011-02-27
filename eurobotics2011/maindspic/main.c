@@ -89,7 +89,7 @@ static void main_timer_interrupt(void)
 }
 
 /* main timer */
-void timer_init(void)
+void main_timer_init(void)
 {
 	/* use timer 1 */
 	T1CON = 0;              
@@ -152,8 +152,8 @@ void io_pins_init(void)
 	/* lasers */
 	AD1PCFGL&= ~(_BV(7));	/* AN7 <- MAIN_LASER_1 */
 	AD1PCFGL&= ~(_BV(6));	/* AN6 <- MAIN_LASER_2 */
-	_ODCC6 	= 1;				/* lasers enable is open collector */
-	_LATC6 	= 1;				/* lasers off */
+	_ODCC7 	= 1;				/* lasers enable is open collector */
+	_LATC7 	= 1;				/* lasers off */
 			
 	/* i2c */
 	/* XXX open collector */
@@ -204,18 +204,15 @@ int main(void)
 	memset(&gen, 0, sizeof(gen));
 	memset(&mainboard, 0, sizeof(mainboard));
 
-	/* default flags */
-	mainboard.flags = DO_ENCODERS | DO_RS |
-							DO_POS | DO_POWER | DO_BD;
+	/* init flags */
+	mainboard.flags = DO_ENCODERS | DO_RS 
+							| DO_POS | DO_POWER | DO_BD;
 	
 	beaconboard.opponent_x = I2C_OPPONENT_NOT_THERE;
 
 	/* UART */
 	uart_init();
 	uart_register_rx_event(CMDLINE_UART, emergency);
-
-	/* Beacon */
-	beacon_init();
 
 	/* LOGS */
 	error_register_emerg(mylog);
@@ -228,15 +225,10 @@ int main(void)
 	encoders_dspic_init();
 
 	/* I2C */
-	//i2c_init();
-	//i2c_register_read_event(i2c_read_event);
-	//i2c_register_write_event(i2c_write_event);
-	//i2c_register_read_event(i2c_test_read_event);
-	//i2c_register_write_event(i2c_test_write_event);
-	//i2c_protocol_init();
-
-	/* TIMER */
-	timer_init();
+	i2c_init();
+	i2c_register_read_event(i2c_read_event);
+	i2c_register_write_event(i2c_write_event);
+	i2c_protocol_init();
 
 	/* DAC_MC */
 	dac_mc_channel_init(&gen.dac_mc_right, 1, CHANNEL_R,											DAC_MC_MODE_SIGNED|DAC_MC_MODE_SIGN_INVERTED,										 	&LATB, 10, NULL, 0);
@@ -248,53 +240,61 @@ int main(void)
 	dac_mc_set(&gen.dac_mc_left, 0);
 
 
+	/* MAIN TIMER */
+	main_timer_init();
+
 	/* SCHEDULER */
 	scheduler_init();
 
+	/* EVENTS OR INIT MODULES THAT INCLUDE EVENTS */
+
 	scheduler_add_periodical_event_priority(do_led_blink, NULL, 
-						1000000L / SCHEDULER_UNIT, 
-						LED_PRIO);
+						EVENT_PERIOD_LED / SCHEDULER_UNIT, EVENT_PRIORITY_LED);
+
+	/* time */
+	time_init(EVENT_PRIORITY_TIME);
 
 	/* all cs management */
-	microb_cs_init();
+	maindspic_cs_init();
 
 	/* sensors, will also init hardware adc */
 	sensor_init();
 
-	/* TIME */
-	time_init(TIME_PRIO);
-
-	wait_ms(500);
-
-//	/* start i2c slave polling */
+	/* i2c slaves polling (gpios and slavedspic) */
 //	scheduler_add_periodical_event_priority(i2c_poll_slaves, NULL,
-//						8000L / SCHEDULER_UNIT, I2C_POLL_PRIO);
-//
-//	/* start beacon send cmd polling */
-//	scheduler_add_periodical_event_priority(beacon_daemon, NULL,
-//					8000L / SCHEDULER_UNIT, BEACON_POLL_PRIO);
+//						EVENT_PERIOD_I2C_POLL / SCHEDULER_UNIT, EVENT_PRIORITY_I2C_POLL);
 
-	/* strat */
+//	/* beacon polling */
+//	scheduler_add_periodical_event_priority(beacon_daemon, NULL,
+//					EVENT_PERIOD_BEACON_PULL / SCHEDULER_UNIT, EVENT_PRIORITY_BEACON_POLL);
+
+
+	/* strat-related event */
+//	scheduler_add_periodical_event_priority(strat_event, NULL,
+//						EVENT_PERIOD_STRAT / SCHEDULER_UNIT, EVENT_PRIORITY_STRAT);
+//
+
+	/* log setup */
  	gen.logs[0] = E_USER_STRAT;
  	gen.logs[1] = E_USER_I2C_PROTO;
  	//gen.logs[2] = E_USER_BEACON;
  	//gen.logs[2] = E_OA;
  	gen.log_level = 5;
 	
+	/* reset strat infos */
 	//strat_reset_infos();
 
-	/* strat-related event */
-//	scheduler_add_periodical_event_priority(strat_event, NULL,
-//						25000L / SCHEDULER_UNIT,
-//						STRAT_PRIO);
-//
-
+	/* enable interrupts */
 	sei();
 
+	/* wait a bit */
+	wait_ms(500);
 	
-	printf_P(PSTR("\r\n"));
-	printf_P(PSTR("Siempre falta tiempo para hacer pruebas!!\r\n"));
+	/* say hello */
+	printf("\r\n");
+	printf("Siempre falta tiempo para hacer pruebas!!\r\n");
 
+	/* process commands, never returns */
 	cmdline_interact();
 
 	return 0;

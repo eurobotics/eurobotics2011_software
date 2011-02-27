@@ -161,7 +161,7 @@ void token_system_init(token_system_t *ts, uint8_t belts_side,
 /* manage a token system */
 void token_system_manage(token_system_t *ts)
 {
-#define BELTS_LOAD_TH 1000
+#define BELTS_LOAD_TH 1020
 
 	static uint8_t flag_catched = 0;
 
@@ -182,7 +182,7 @@ void token_system_manage(token_system_t *ts)
 			if(!sensor_get(ts->sensor_stop)){
 				belts_mode_set(ts->belts_side, BELTS_MODE_IN, ts->speed);
 
-				STMCH_ERROR("waiting %s stop...",
+				STMCH_DEBUG("waiting %s stop...",
 								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
 
 				ts->state = TS_STATE_WAITING_STOP;
@@ -198,7 +198,7 @@ void token_system_manage(token_system_t *ts)
 
 			if(ts->token_catched && flag_catched==0){
 				flag_catched = 1;
-				STMCH_ERROR("token %s catched!",
+				STMCH_DEBUG("token %s catched!",
 								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
 			}
 
@@ -206,7 +206,7 @@ void token_system_manage(token_system_t *ts)
 			if(sensor_get(ts->sensor_stop)){
 				belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
 
-				STMCH_ERROR("token %s stoped!",
+				STMCH_DEBUG("token %s stoped!",
 								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
 				
 				flag_catched = 0;
@@ -232,7 +232,7 @@ void token_system_manage(token_system_t *ts)
 		case TS_STATE_EJECT:
 			belts_mode_set(ts->belts_side, BELTS_MODE_OUT, ts->speed);
 
-			STMCH_ERROR("waiting %s free...",
+			STMCH_DEBUG("waiting %s free...",
 							ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
 
 			ts->state = TS_STATE_WAITING_FREE;
@@ -246,7 +246,7 @@ void token_system_manage(token_system_t *ts)
 			if(!ts->token_catched){
 				belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
 
-				STMCH_ERROR("token %s free!",
+				STMCH_DEBUG("token %s free!",
 								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");		
 				ts->state = TS_STATE_IDLE;
 			}
@@ -290,7 +290,7 @@ void state_init(void)
 	token_system_init(&slavedspic.ts[I2C_SIDE_FRONT], BELTS_SIDE_FRONT, 
 							S_FRONT_TOKEN_STOP, S_FRONT_TOKEN_CATCHED);
 
-	//token_system_init(&slavedspic.ts[I2C_SIDE_REAR], BELTS_SIDE_REAR, 
-	//						S_REAR_TOKEN_STOP, S_REAR_TOKEN_CATCHED);
+	token_system_init(&slavedspic.ts[I2C_SIDE_REAR], BELTS_SIDE_REAR, 
+							S_REAR_TOKEN_STOP, S_REAR_TOKEN_CATCHED);
 }
 

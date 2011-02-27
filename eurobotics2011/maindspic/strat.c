@@ -214,8 +214,8 @@ void strat_exit(void)
 	wait_ms(1000);
 	IRQ_LOCK(flags);
 	mainboard.flags &= ~(DO_CS);
-	dac_mc_set(LEFT_DAC, 0);
-	dac_mc_set(RIGHT_DAC, 0);
+	dac_mc_set(LEFT_MOTOR, 0);
+	dac_mc_set(RIGHT_MOTOR, 0);
 	IRQ_UNLOCK(flags);
 	beacon_cmd_beacon_off();
 }

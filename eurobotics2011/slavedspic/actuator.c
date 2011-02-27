@@ -114,7 +114,10 @@ uint16_t belts_load_get(uint8_t side)
 	/* XXX return only left load because right front 
 	 * is very hard
 	 */
-	return (uint16_t)ax12_left_load;
+	if(side == BELTS_SIDE_FRONT)
+		return (uint16_t)ax12_left_load;
+	else
+		return (uint16_t)ax12_left_load;
 }
 
 

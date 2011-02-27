@@ -351,7 +351,6 @@ void sensor_init(void)
 	
 	/* CS EVENT */
 	scheduler_add_periodical_event_priority(do_sensors, NULL, 
-						10000L / SCHEDULER_UNIT, 
-						ADC_PRIO);
+						EVENT_PERIOD_SENSORS / SCHEDULER_UNIT, EVENT_PRIORITY_SENSORS);
 }
 

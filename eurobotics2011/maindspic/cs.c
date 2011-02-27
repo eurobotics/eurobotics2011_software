@@ -40,7 +40,6 @@
 #include <timer.h>
 #include <scheduler.h>
 #include <time.h>
-//#include <adc.h>
 
 #include <pid.h>
 #include <quadramp.h>
@@ -64,7 +63,7 @@
 
 void dump_cs(const char *name, struct cs *cs);
 
-/* called every 5 ms */
+/* called periodically */
 static void do_cs(void *dummy) 
 {
 	static uint16_t cpt = 0;
@@ -75,50 +74,79 @@ static void do_cs(void *dummy)
 		encoders_dspic_manage(NULL);
 	}
 
-	/* XXX there is an issue which is probably related to avr-libc
-	 * 1.6.2 (debian): this code using fixed_point lib does not
-	 * work with it */
-	/* robot system, conversion to angle,distance */
+	/* robot system, conversion to angle, distance */
 	if (mainboard.flags & DO_RS) {
 		int16_t a,d;
-		rs_update(&mainboard.rs); /* takes about 0.5 ms */
+
+		/* Read the encoders, and update internal virtual counters. */
+		
+		/* takes about 0.5 ms on AVR@16MHz */
+		rs_update(&mainboard.rs); 
+
 		/* process and store current speed */
 		a = rs_get_angle(&mainboard.rs);
 		d = rs_get_distance(&mainboard.rs);
+
 		mainboard.speed_a = a - old_a;
 		mainboard.speed_d = d - old_d;
+
 		old_a = a;
 		old_d = d;
 	}
 
 	/* control system */
 	if (mainboard.flags & DO_CS) {
+
 		if (mainboard.angle.on)
 			cs_manage(&mainboard.angle.cs);
+
 		if (mainboard.distance.on)
 			cs_manage(&mainboard.distance.cs);
 	}
+
+	/* position calculus */
 	if ((cpt & 1) && (mainboard.flags & DO_POS)) {
-		/* about 1.5ms (worst case without centrifugal force
-		 * compensation) */
+
+		/* about 1.5ms 
+       *(worst case without centrifugal force compensation) */
 		position_manage(&mainboard.pos);
 	}
+
+	/* blocking detection */
 	if (mainboard.flags & DO_BD) {
 		bd_manage_from_cs(&mainboard.angle.bd, &mainboard.angle.cs);
 		bd_manage_from_cs(&mainboard.distance.bd, &mainboard.distance.cs);
 	}
+
+	/* take a look to match time */
 	if (mainboard.flags & DO_TIMER) {
 		uint8_t second;
+
 		/* the robot should stop correctly in the strat, but
 		 * in some cases, we must force the stop from an
 		 * interrupt */
+
 		second = time_get_s();
+
 		if ((second >= MATCH_TIME + 2)) {
-			dac_mc_set(LEFT_DAC, 0);
-			dac_mc_set(RIGHT_DAC, 0);		
+
+			/* stop motors */
+			dac_mc_set(LEFT_MOTOR, 0);
+			dac_mc_set(RIGHT_MOTOR, 0);
+
+			/* TODO: disable lasers */
+
+			/* stop slavedspic actuators */		
 			i2c_slavedspic_mode_wait();
+
+			/* TODO: stop beacon */
+
+			/* kill strat */
 			strat_exit();
+
 			printf_P(PSTR("END OF TIME\r\n"));
+	
+			/* never returns */
 			while(1);
 		}
 	}
@@ -132,6 +160,8 @@ static void do_cs(void *dummy)
 	cpt++;
 }
 
+
+/* debug functions, see commands_cs.c */
 void dump_cs_debug(const char *name, struct cs *cs)
 {
 	DEBUG(E_USER_CS, "%s cons=% .5ld fcons=% .5ld err=% .5ld "
@@ -160,23 +190,19 @@ void dump_pid(const char *name, struct pid_filter *pid)
 		 pid_get_value_out(pid));
 }
 
-void microb_cs_init(void)
+/* cs init */
+void maindspic_cs_init(void)
 {
 	/* ROBOT_SYSTEM */
 	rs_init(&mainboard.rs);
-	rs_set_left_pwm(&mainboard.rs, dac_set_and_save, LEFT_DAC);
-	rs_set_right_pwm(&mainboard.rs,  dac_set_and_save, RIGHT_DAC);
+	rs_set_left_pwm(&mainboard.rs, dac_set_and_save, LEFT_MOTOR);
+	rs_set_right_pwm(&mainboard.rs,  dac_set_and_save, RIGHT_MOTOR);
 
 	/* increase gain to decrease dist, increase left and it will turn more left */
 	rs_set_left_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
 				LEFT_ENCODER, IMP_COEF *  1.014);
 	rs_set_right_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
 				 RIGHT_ENCODER, IMP_COEF * -1.002);
-
-//	rs_set_left_ext_encoder(&mainboard.rs, encoders_spi_get_value, 
-//				LEFT_ENCODER, IMP_COEF * 1.0015);
-//	rs_set_right_ext_encoder(&mainboard.rs, encoders_spi_get_value, 
-//				 RIGHT_ENCODER, IMP_COEF * -1.006);
 
 	/* rs will use external encoders */
 	rs_set_flags(&mainboard.rs, RS_USE_EXT);
@@ -193,22 +219,22 @@ void microb_cs_init(void)
 	trajectory_set_cs(&mainboard.traj, &mainboard.distance.cs,
 			  &mainboard.angle.cs);
 	trajectory_set_robot_params(&mainboard.traj, &mainboard.rs, &mainboard.pos);
-	trajectory_set_speed(&mainboard.traj, SPEED_DIST_FAST, SPEED_ANGLE_FAST); /* d, a */
+	trajectory_set_speed(&mainboard.traj, SPEED_DIST_FAST, SPEED_ANGLE_FAST); 		/* d, a */
 	/* distance window, angle window, angle start */
 	trajectory_set_windows(&mainboard.traj, 200., 5.0, 30.);
 
 	/* ---- CS angle */
 	/* PID */
 	pid_init(&mainboard.angle.pid);
-	pid_set_gains(&mainboard.angle.pid, 140, 3, 5000); //50, 3, 800);
-	pid_set_maximums(&mainboard.angle.pid, 0, 250000, 60000); //0, 20000, 4095);
-	pid_set_out_shift(&mainboard.angle.pid, 6); //10	
-	pid_set_derivate_filter(&mainboard.angle.pid, 4); //1
+	pid_set_gains(&mainboard.angle.pid, 140, 3, 5000);
+	pid_set_maximums(&mainboard.angle.pid, 0, 250000, 60000);
+	pid_set_out_shift(&mainboard.angle.pid, 6);	
+	pid_set_derivate_filter(&mainboard.angle.pid, 4);
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.angle.qr);
-	quadramp_set_1st_order_vars(&mainboard.angle.qr, 2000, 2000); /* set speed */
-	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 10, 10); /* set accel */
+	quadramp_set_1st_order_vars(&mainboard.angle.qr, 2000, 2000); 	/* set speed */
+	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 10, 10); 		/* set accel */
 
 
 	/* CS */
@@ -223,21 +249,19 @@ void microb_cs_init(void)
 	bd_init(&mainboard.angle.bd);
 	bd_set_speed_threshold(&mainboard.angle.bd, 140);
 	bd_set_current_thresholds(&mainboard.angle.bd, 30, 4500, 1000000, 50);
-//	bd_set_speed_threshold(&mainboard.angle.bd, 80);
-//	bd_set_current_thresholds(&mainboard.angle.bd, 500, 8000, 1000000, 50);
 
 	/* ---- CS distance */
 	/* PID */
 	pid_init(&mainboard.distance.pid);
-	pid_set_gains(&mainboard.distance.pid, 140, 3, 5000); // 50, 3, 800);
-	pid_set_maximums(&mainboard.distance.pid, 0, 250000, 60000); //0, 20000, 4095);
-	pid_set_out_shift(&mainboard.distance.pid, 6); //10
-	pid_set_derivate_filter(&mainboard.distance.pid, 6); //1
+	pid_set_gains(&mainboard.distance.pid, 140, 3, 5000);
+	pid_set_maximums(&mainboard.distance.pid, 0, 250000, 60000);
+	pid_set_out_shift(&mainboard.distance.pid, 6);
+	pid_set_derivate_filter(&mainboard.distance.pid, 6);
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.distance.qr);
-	quadramp_set_1st_order_vars(&mainboard.distance.qr, 2500, 2500); /* set speed */
-	quadramp_set_2nd_order_vars(&mainboard.distance.qr, 10, 10); /* set accel */
+	quadramp_set_1st_order_vars(&mainboard.distance.qr, 2500, 2500); 	/* set speed */
+	quadramp_set_2nd_order_vars(&mainboard.distance.qr, 10, 10); 		/* set accel */
 
 	/* CS */
 	cs_init(&mainboard.distance.cs);
@@ -251,16 +275,13 @@ void microb_cs_init(void)
 	bd_init(&mainboard.distance.bd);
 	bd_set_speed_threshold(&mainboard.distance.bd, 100);
 	bd_set_current_thresholds(&mainboard.distance.bd, 30, 4500, 1000000, 50);
-	//bd_set_speed_threshold(&mainboard.distance.bd, 60);
-	//bd_set_current_thresholds(&mainboard.distance.bd, 500, 8000, 1000000, 50);
 
 	/* set them on !! */
 	mainboard.angle.on = 1;
 	mainboard.distance.on = 1;
 
-
+	/* EVENT CS */
 	scheduler_add_periodical_event_priority(do_cs, NULL,
-						5000L / SCHEDULER_UNIT,
-						CS_PRIO);
+						EVENT_PERIOD_CS / SCHEDULER_UNIT, EVENT_PRIORITY_CS);
 }
 

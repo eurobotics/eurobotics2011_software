@@ -28,7 +28,7 @@
  *  cs.h,v 1.3 2009/03/29 18:42:41 zer0 Exp.
  */
 
-void microb_cs_init(void);
+void maindspic_cs_init(void);
 void dump_cs(const char *name, struct cs *cs);
 void dump_cs_debug(const char *name, struct cs *cs);
 void dump_pid(const char *name, struct pid_filter *pid);

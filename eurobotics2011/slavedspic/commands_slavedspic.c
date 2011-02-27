@@ -295,7 +295,7 @@ static void cmd_state1_parsed(void *parsed_result,
 
 }
 
-prog_char str_state1_arg0[] = "slavedspic";
+prog_char str_state1_arg0[] = "state";
 parse_pgm_token_string_t cmd_state1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state1_result, arg0, str_state1_arg0);
 prog_char str_state1_arg1[] = "status#init#rear_stop#front_stop";
 parse_pgm_token_string_t cmd_state1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state1_result, arg1, str_state1_arg1);
@@ -349,7 +349,7 @@ static void cmd_state2_parsed(void *parsed_result,
 	state_set_mode(&command);
 }
 
-prog_char str_state2_arg0[] = "slavedspic";
+prog_char str_state2_arg0[] = "state";
 parse_pgm_token_string_t cmd_state2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg0, str_state2_arg0);
 prog_char str_state2_arg1[] = "rear#front";
 parse_pgm_token_string_t cmd_state2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg1, str_state2_arg1);

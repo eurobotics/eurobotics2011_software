@@ -258,8 +258,8 @@ int main(void)
 	printf("Siempre falta tiempo para hacer pruebas. \r\n");
 
 	/* LOGS */
- 	gen.logs[0] = E_USER_ST_MACH;
-	gen.log_level = 5;
+ 	//gen.logs[0] = E_USER_ST_MACH;
+	//gen.log_level = 5;
 	
 	/* init cmdline */
 	cmdline_init();

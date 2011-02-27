@@ -58,22 +58,17 @@ void dac_set_and_save(void *dac, int32_t val)
 	if (val < -65535)
 		val = -65535;
 	
+	/* save value */
 	/* XXX DAC CHANNEL R has an offset of -2000 points */
-	if (dac == LEFT_DAC)
-		mainboard.dac_l = (val + 2000);
-	else if (dac == RIGHT_DAC)
+	if (dac == LEFT_MOTOR)
+		mainboard.dac_l = val;
+	else if (dac == RIGHT_MOTOR){
+		val += 2000;
 		mainboard.dac_r = val;
+	}
+
+	/* set value */
 	dac_mc_set(dac, val);
 }
 
-void ball_lids_close()
-{
-	pwm_servo_set(&gen.pwm_servo_oc2, PWM_BALL_LID_R_CLOSE);
-	pwm_servo_set(&gen.pwm_servo_oc1, PWM_BALL_LID_L_CLOSE);
-}
-
-void ball_lids_open()
-{
-	pwm_servo_set(&gen.pwm_servo_oc2, PWM_BALL_LID_R_OPEN);
-	pwm_servo_set(&gen.pwm_servo_oc1, PWM_BALL_LID_L_OPEN);
-}
+/* TODO: enable lasers */

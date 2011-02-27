@@ -62,16 +62,17 @@
 #include "strat_base.h"
 
 
-/******** See in commands.c for the list of commands. */
+/* see in commands.c for the list of commands. */
 extern parse_pgm_ctx_t main_ctx[];
 
+/* generic write char function */
 static void write_char(char c) 
 {
 	uart_send(CMDLINE_UART, c);
 }
 
-static void 
-valid_buffer(const char *buf, uint8_t size) 
+/* process commands */
+static void valid_buffer(const char *buf, uint8_t size) 
 {
 	int8_t ret;
 
@@ -88,8 +89,8 @@ valid_buffer(const char *buf, uint8_t size)
 		printf_P(PSTR("Bad arguments\r\n"));
 }
 
-static int8_t 
-complete_buffer(const char *buf, char *dstbuf, uint8_t dstsize,
+/* complete commands */
+static int8_t complete_buffer(const char *buf, char *dstbuf, uint8_t dstsize,
 		int16_t *state)
 {
 	return complete(main_ctx, buf, state, dstbuf, dstsize);
@@ -120,7 +121,6 @@ void emergency(char c)
 void mylog(struct error * e, ...) 
 {
 	va_list ap;
-	//u16 stream_flags = stdout->flags;
 	uint8_t i;
 	time_h tv;
 
@@ -144,12 +144,14 @@ void mylog(struct error * e, ...)
 		 position_get_y_s16(&mainboard.pos),
 		 position_get_a_deg_s16(&mainboard.pos));
 	
-	vfprintf_P(stdout, e->text, ap);
+	/* XXX not secure vfprintf */
+	vfprintf(stdout, e->text, ap);
+
 	printf_P(PSTR("\r\n"));
 	va_end(ap);
-	//stdout->flags = stream_flags;
 }
 
+/* user interact */
 int cmdline_interact(void)
 {
 	const char *history, *buffer;
@@ -158,16 +160,20 @@ int cmdline_interact(void)
 	
 	rdline_init(&gen.rdl, write_char, valid_buffer, complete_buffer);
 	sprintf(gen.prompt, "maindspic > ");	
-//	snprintf(gen.prompt, sizeof(gen.prompt), "mainboard > ");	
 	rdline_newline(&gen.rdl, gen.prompt);
 
-	while (1) {
+	while (1){
+
+		/* get character */
 		c = uart_recv_nowait(CMDLINE_UART);
-		//beacon_recv_daemon();
 		
 		if (c == -1) 
 			continue;
+
+		/* process character in */
 		ret = rdline_char_in(&gen.rdl, c);
+
+		/* if command executes save in history and print prompt */
 		if (ret != 2 && ret != 0) {
 			buffer = rdline_get_buffer(&gen.rdl);
 			history = rdline_get_history_item(&gen.rdl, 0);

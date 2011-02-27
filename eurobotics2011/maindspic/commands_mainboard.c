@@ -141,8 +141,8 @@ static void cmd_event_parsed(void *parsed_result, void *data)
 		mainboard.flags |= bit;
 	else if (!strcmp_P(res->arg2, PSTR("off"))) {
 		if (!strcmp_P(res->arg1, PSTR("cs"))) {
-		 	dac_mc_set(LEFT_DAC, 0);
-			dac_mc_set(RIGHT_DAC, 0);
+		 	dac_mc_set(LEFT_MOTOR, 0);
+			dac_mc_set(RIGHT_MOTOR, 0);
 		}
 		mainboard.flags &= (~bit);
 	}
@@ -475,8 +475,8 @@ parse_pgm_inst_t cmd_start = {
 //
 //	/* stop motors */
 //	mainboard.flags &= (~DO_CS);
-//	dac_set_and_save(LEFT_DAC, 0);
-//	dac_set_and_save(RIGHT_DAC, 0);
+//	dac_set_and_save(LEFT_MOTOR, 0);
+//	dac_set_and_save(RIGHT_MOTOR, 0);
 //
 //	while(1) {
 //		if (print & PRINT_POS) {
@@ -528,12 +528,12 @@ parse_pgm_inst_t cmd_start = {
 //			case 'q': 
 //				if (mainboard.flags & DO_CS)
 //					strat_hardstop();
-//				dac_set_and_save(LEFT_DAC, 0);
-//				dac_set_and_save(RIGHT_DAC, 0);
+//				dac_set_and_save(LEFT_MOTOR, 0);
+//				dac_set_and_save(RIGHT_MOTOR, 0);
 //				return;
 //			case ' ':
-//				dac_set_and_save(LEFT_DAC, 0);
-//				dac_set_and_save(RIGHT_DAC, 0);
+//				dac_set_and_save(LEFT_MOTOR, 0);
+//				dac_set_and_save(RIGHT_MOTOR, 0);
 //				break;
 //			default: 
 //				break;
@@ -542,20 +542,20 @@ parse_pgm_inst_t cmd_start = {
 //		else {
 //			switch(cmd) {
 //			case KEY_UP_ARR: 
-//				dac_set_and_save(LEFT_DAC, 6000);
-//				dac_set_and_save(RIGHT_DAC, 6000);
+//				dac_set_and_save(LEFT_MOTOR, 6000);
+//				dac_set_and_save(RIGHT_MOTOR, 6000);
 //				break;
 //			case KEY_LEFT_ARR: 
-//				dac_set_and_save(LEFT_DAC, -6000);
-//				dac_set_and_save(RIGHT_DAC, 6000);
+//				dac_set_and_save(LEFT_MOTOR, -6000);
+//				dac_set_and_save(RIGHT_MOTOR, 6000);
 //				break;
 //			case KEY_DOWN_ARR: 
-//				dac_set_and_save(LEFT_DAC, -6000);
-//				dac_set_and_save(RIGHT_DAC, -6000);
+//				dac_set_and_save(LEFT_MOTOR, -6000);
+//				dac_set_and_save(RIGHT_MOTOR, -6000);
 //				break;
 //			case KEY_RIGHT_ARR:
-//				dac_set_and_save(LEFT_DAC, 6000);
-//				dac_set_and_save(RIGHT_DAC, -6000);
+//				dac_set_and_save(LEFT_MOTOR, 6000);
+//				dac_set_and_save(RIGHT_MOTOR, -6000);
 //				break;
 //			}
 //		}

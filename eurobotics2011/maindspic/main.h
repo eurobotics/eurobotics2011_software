@@ -21,6 +21,7 @@
  */
 
 
+/* generic led toggle macro */
 #define LED_TOGGLE(port, bit) do {		\
 		if (port & _BV(bit))		\
 			port &= ~_BV(bit);	\
@@ -28,7 +29,7 @@
 			port |= _BV(bit);	\
 	} while(0)
 
-
+/* leds manage */
 #define LED1_ON() 	cbi(LATA, 4)
 #define LED1_OFF() 	sbi(LATA, 4)
 #define LED1_TOGGLE() 	LED_TOGGLE(LATA, 4)
@@ -45,36 +46,47 @@
 #define LED4_OFF() 	sbi(LATC, 8)
 #define LED4_TOGGLE() 	LED_TOGGLE(LATC, 8)
 
+
+/* brake motors */
 #define BRAKE_ON()      do {_LATA7 = 0; _LATB11 = 0;} while(0)
 #define BRAKE_OFF()     do {_LATA7 = 1; _LATB11 = 1;} while(0)
 
 /* only 90 seconds, don't forget it :) */
 #define MATCH_TIME 89
 
-/* decrease track to decrease angle */
+
+/* PHYSICS DIMENSIONS */
+
+/* distance between encoders weels,
+ * decrease track to decrease angle */
 //#define EXT_TRACK_MM 292.0
 #define EXT_TRACK_MM 291.0275
 #define VIRTUAL_TRACK_MM EXT_TRACK_MM
 
+/* robot dimensions */
 #define ROBOT_LENGTH 354.79
 #define ROBOT_WIDTH 	313.0
 
-/* it is a 3600 imps -> 14400 because we see 1/4 period
+/* Some calculus:
+ * it is a 3600 imps -> 14400 because we see 1/4 period
  * and diameter: 55mm -> perimeter 173mm 
  * 14400/173 -> 832 imps/10 mm */
+
 /* increase it to go further */
-#define IMP_ENCODERS 3600
-#define WHEEL_DIAMETER_MM 55.0
+#define IMP_ENCODERS 		3600
+#define WHEEL_DIAMETER_MM 	55.0
 
-#define WHEEL_PERIM_MM (WHEEL_DIAMETER_MM * M_PI)
-#define IMP_COEF 10.
-#define DIST_IMP_MM (((IMP_ENCODERS*4) / WHEEL_PERIM_MM) * IMP_COEF)
+#define WHEEL_PERIM_MM 	(WHEEL_DIAMETER_MM * M_PI)
+#define IMP_COEF 			10.
+#define DIST_IMP_MM 		(((IMP_ENCODERS*4) / WHEEL_PERIM_MM) * IMP_COEF)
 
+/* encoders handlers */
 #define LEFT_ENCODER        ((void *)2)
 #define RIGHT_ENCODER       ((void *)1)
 
-#define LEFT_DAC            ((void *)&gen.dac_mc_left)
-#define RIGHT_DAC           ((void *)&gen.dac_mc_right)
+/* motor handles */
+#define LEFT_MOTOR          ((void *)&gen.dac_mc_left)
+#define RIGHT_MOTOR         ((void *)&gen.dac_mc_right)
 
 /** ERROR NUMS */
 #define E_USER_STRAT           194
@@ -83,17 +95,24 @@
 #define E_USER_CS              197
 #define E_USER_BEACON          198
 
-#define LED_PRIO           170
-#define TIME_PRIO          160
-#define I2C_POLL_PRIO      140
-#define BEACON_POLL_PRIO   130
-#define ADC_PRIO           120
-#define CS_PRIO            100
-#define STRAT_PRIO          50
-#define EEPROM_TIME_PRIO     5
+/* EVENTS PRIORITIES */
+#define EVENT_PRIORITY_LED 			  170
+#define EVENT_PRIORITY_TIME           160
+#define EVENT_PRIORITY_I2C_POLL       140
+#define EVENT_PRIORITY_BEACON_POLL    130
+#define EVENT_PRIORITY_SENSORS        120
+#define EVENT_PRIORITY_CS             100
+#define EVENT_PRIORITY_STRAT         	50
 
-#define CS_PERIOD 5000L
+/* EVENTS PERIODS */
+#define EVENT_PERIOD_LED 			1000000L
+#define EVENT_PERIOD_STRAT			  25000L
+#define EVENT_PERIOD_SENSORS		  10000L
+#define EVENT_PERIOD_I2C_POLL		   8000L
+#define EVENT_PERIOD_BEACON_PULL	   8000L
+#define EVENT_PERIOD_CS 			   5000L
 
+/* dynamic logs */
 #define NB_LOGS 10
 
 /* generic to all boards */
@@ -152,7 +171,7 @@ struct mainboard {
 	/* x,y positionning */
 	struct robot_system rs;
 	struct robot_position pos;
-  struct trajectory traj;
+   struct trajectory traj;
 
 	/* robot status */
 	uint8_t our_color;
