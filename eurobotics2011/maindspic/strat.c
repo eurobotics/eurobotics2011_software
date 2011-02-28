@@ -228,13 +228,13 @@ void strat_event(void *dummy)
 	
 	//if(strat_infos.event_elements_enable){
 		/* dectect tomatos */
-		strat_event_tomato();
+		//strat_event_tomato();
 		
 		/* detect corns */
 		//strat_event_static_corn();
 		
 		/* detect fall corns */
-		strat_event_fall_corn();
+		//strat_event_fall_corn();
 	//}	
 
 //	/* dectct opponent with sensor */
@@ -263,54 +263,54 @@ uint8_t strat_homologation(void)
 	uint8_t err;
 	uint16_t old_spdd, old_spda;
 
-	/* set new speed */
-	strat_get_speed(&old_spdd, &old_spda);
-	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
-
-	/* show arm */ 
-	i2c_slavedspic_mode_show_arm();
-	//i2c_slavedspic_mode_prepare_harvest_ball();
-	
-	/* close balls lids */
-	ball_lids_close();
-
-	/* go in area */
-//	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(350), 350);
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-			
-	/* main diagonal */
-	err = strat_goto_and_avoid_harvesting(COLOR_X(X(10)), Y(9),
-		 STRAT_CONF_HARVEST_TOMATOES);	
- 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-		
-	/* second diagonal inverse from tomato 9 to 13*/
-	err = strat_goto_and_avoid_harvesting(COLOR_X(X(8)), Y(7),
-		 STRAT_CONF_HARVEST_TOMATOES);	
- 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-	err = strat_goto_and_avoid_harvesting(COLOR_X(X(11)), Y(4),
-		 STRAT_CONF_HARVEST_TOMATOES);	
- 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-	/* go to basket */
-	err = goto_and_avoid(COLOR_X(X(10)), Y(5), 
-		TRAJ_FLAGS_STD, TRAJ_FLAGS_NO_NEAR);
- 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-	err = goto_and_avoid(COLOR_X(X(11)), Y(9), 
-		TRAJ_FLAGS_STD, TRAJ_FLAGS_NO_NEAR);
- 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-		
-	/* out balls */
-	ball_lids_open();
-	
- 	strat_set_speed(old_spdd, old_spda);
- 	beacon_cmd_beacon_off();
+//	/* set new speed */
+//	strat_get_speed(&old_spdd, &old_spda);
+//	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+//
+//	/* show arm */ 
+//	i2c_slavedspic_mode_show_arm();
+//	//i2c_slavedspic_mode_prepare_harvest_ball();
+//	
+//	/* close balls lids */
+//	ball_lids_close();
+//
+//	/* go in area */
+////	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(350), 350);
+////	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//			
+//	/* main diagonal */
+//	err = strat_goto_and_avoid_harvesting(COLOR_X(X(10)), Y(9),
+//		 STRAT_CONF_HARVEST_TOMATOES);	
+// 	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//		
+//	/* second diagonal inverse from tomato 9 to 13*/
+//	err = strat_goto_and_avoid_harvesting(COLOR_X(X(8)), Y(7),
+//		 STRAT_CONF_HARVEST_TOMATOES);	
+// 	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	err = strat_goto_and_avoid_harvesting(COLOR_X(X(11)), Y(4),
+//		 STRAT_CONF_HARVEST_TOMATOES);	
+// 	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	/* go to basket */
+//	err = goto_and_avoid(COLOR_X(X(10)), Y(5), 
+//		TRAJ_FLAGS_STD, TRAJ_FLAGS_NO_NEAR);
+// 	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	err = goto_and_avoid(COLOR_X(X(11)), Y(9), 
+//		TRAJ_FLAGS_STD, TRAJ_FLAGS_NO_NEAR);
+// 	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//		
+//	/* out balls */
+//	ball_lids_open();
+//	
+// 	strat_set_speed(old_spdd, old_spda);
+// 	beacon_cmd_beacon_off();
 		return err;	
 		
 }
@@ -318,45 +318,45 @@ uint8_t strat_homologation(void)
 static uint8_t strat_beginning(void)
 {
 	uint8_t err;
-	uint16_t old_spdd, old_spda;
-
-	/* set new speed */
-	strat_get_speed(&old_spdd, &old_spda);
-	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
-
-	/* show arm */ 
-	i2c_slavedspic_mode_show_arm();
-
-	/* goto near corn 5 */
-	trajectory_goto_xy_abs(&mainboard.traj, 478, 653);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-
-	/* go to tomato 1 */
-	trajectory_goto_xy_abs(&mainboard.traj, 342, 789);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	
-	/* when tomato cached go fordward a bit */
-	trajectory_d_rel(&mainboard.traj, 10);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		
-	/* go to read corn 1 */
-	trajectory_goto_xy_abs(&mainboard.traj, 353, 1010);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	
-	/* go in angle grid */
-	trajectory_a_abs(&mainboard.traj, COLOR_A(31));
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-
-	/* go backward to read corn 5 */
-	trajectory_d_rel(&mainboard.traj, -100);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-
-	/* go fordward to get tomato 3 */
-	trajectory_d_rel(&mainboard.traj, 200);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);	
-	
-	/* restore speeds */
-	strat_set_speed(old_spdd, old_spda);
+//	uint16_t old_spdd, old_spda;
+//
+//	/* set new speed */
+//	strat_get_speed(&old_spdd, &old_spda);
+//	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+//
+//	/* show arm */ 
+//	i2c_slavedspic_mode_show_arm();
+//
+//	/* goto near corn 5 */
+//	trajectory_goto_xy_abs(&mainboard.traj, 478, 653);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//
+//	/* go to tomato 1 */
+//	trajectory_goto_xy_abs(&mainboard.traj, 342, 789);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	
+//	/* when tomato cached go fordward a bit */
+//	trajectory_d_rel(&mainboard.traj, 10);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//		
+//	/* go to read corn 1 */
+//	trajectory_goto_xy_abs(&mainboard.traj, 353, 1010);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	
+//	/* go in angle grid */
+//	trajectory_a_abs(&mainboard.traj, COLOR_A(31));
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//
+//	/* go backward to read corn 5 */
+//	trajectory_d_rel(&mainboard.traj, -100);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//
+//	/* go fordward to get tomato 3 */
+//	trajectory_d_rel(&mainboard.traj, 200);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);	
+//	
+//	/* restore speeds */
+//	strat_set_speed(old_spdd, old_spda);
 	
 	return err;
 }
@@ -364,39 +364,39 @@ static uint8_t strat_beginning(void)
 
 uint8_t strat_main(void)
 {
-	uint8_t err, i, why=0;
-
-	///* go in field of corns or go to harvest oranges */
-	//err = strat_beginning();
-	
-	//wait_ms(20000);
-	
-	/* simple homologation */
-	//err = strat_homologation();
-	
-	/* show arm */ 
-	i2c_slavedspic_mode_show_arm();
-	//i2c_slavedspic_mode_prepare_harvest_ball();
-	
-	/* close balls lids */
-	ball_lids_close();
-	
-	
-	err = strat_harvest_oranges();
-	err = strat_goto_diagonal();
-	
-	err = strat_goto_basket();
-	
-	/* skip error code */
-
-	while (1) {
-		
-		if (err == END_TIMER) {
-			DEBUG(E_USER_STRAT, "End of time");
-			strat_exit();
-			break;
-		}
-
-	}
+//	uint8_t err, i, why=0;
+//
+//	///* go in field of corns or go to harvest oranges */
+//	//err = strat_beginning();
+//	
+//	//wait_ms(20000);
+//	
+//	/* simple homologation */
+//	//err = strat_homologation();
+//	
+//	/* show arm */ 
+//	i2c_slavedspic_mode_show_arm();
+//	//i2c_slavedspic_mode_prepare_harvest_ball();
+//	
+//	/* close balls lids */
+//	ball_lids_close();
+//	
+//	
+//	err = strat_harvest_oranges();
+//	err = strat_goto_diagonal();
+//	
+//	err = strat_goto_basket();
+//	
+//	/* skip error code */
+//
+//	while (1) {
+//		
+//		if (err == END_TIMER) {
+//			DEBUG(E_USER_STRAT, "End of time");
+//			strat_exit();
+//			break;
+//		}
+//
+//	}
 	return END_TRAJ;
 }

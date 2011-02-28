@@ -697,6 +697,61 @@ parse_pgm_inst_t cmd_start = {
 //};
 
 /**********************************************************/
+/* slavedspic commands */
+
+/* this structure is filled when cmd_interact is parsed successfully */
+struct cmd_slavedspic_result {
+	fixed_string_t arg0;
+	fixed_string_t arg1;
+};
+
+
+static void cmd_slavedspic_parsed(void * parsed_result, void * data)
+{
+	int16_t c;
+	int8_t cmd = 0;
+	struct vt100 vt100;
+	struct cmd_slavedspic_result *res = parsed_result;
+
+	vt100_init(&vt100);
+	if(!strcmp_P(res->arg1, "raw"))
+	{
+		/* remap UART2 */
+
+		while(cmd != KEY_CTRL_C) 
+		{
+			/* received from slavedspic */			if((c = uart_recv_nowait(1))!= -1)				uart_send_nowait(CMDLINE_UART,c);
+			
+			/* send to slavedspic */
+			c = cmdline_getchar();
+			if (c == -1) {
+				continue;
+			}
+			cmd = vt100_parser(&vt100, c);
+			uart_send_nowait(1,c);	
+		}
+	}	
+}
+
+prog_char str_slavedspic_arg0[] = "slavedspic";
+parse_pgm_token_string_t cmd_slavedspic_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_result, arg0, str_slavedspic_arg0);
+prog_char str_slavedspic_arg1[] = "raw";
+parse_pgm_token_string_t cmd_slavedspic_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_result, arg1, str_slavedspic_arg1);
+
+prog_char help_slavedspic[] = "slavedspic commads";
+parse_pgm_inst_t cmd_slavedspic = {
+	.f = cmd_slavedspic_parsed,  /* function to call */
+	.data = NULL,      /* 2nd arg of func */
+	.help_str = help_slavedspic,
+	.tokens = {        /* token list, NULL terminated */
+		(prog_void *)&cmd_slavedspic_arg0, 
+		(prog_void *)&cmd_slavedspic_arg1, 
+		NULL,
+	},
+};
+
+
+/**********************************************************/
 /* Slavedspic_Show */
 
 /* this structure is filled when cmd_slavedspic_show is parsed successfully */

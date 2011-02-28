@@ -200,9 +200,9 @@ void maindspic_cs_init(void)
 
 	/* increase gain to decrease dist, increase left and it will turn more left */
 	rs_set_left_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				LEFT_ENCODER, IMP_COEF *  1.014);
+				LEFT_ENCODER, IMP_COEF *  1.000);
 	rs_set_right_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				 RIGHT_ENCODER, IMP_COEF * -1.002);
+				 RIGHT_ENCODER, IMP_COEF * -1.000);
 
 	/* rs will use external encoders */
 	rs_set_flags(&mainboard.rs, RS_USE_EXT);
@@ -226,15 +226,15 @@ void maindspic_cs_init(void)
 	/* ---- CS angle */
 	/* PID */
 	pid_init(&mainboard.angle.pid);
-	pid_set_gains(&mainboard.angle.pid, 140, 3, 5000);
-	pid_set_maximums(&mainboard.angle.pid, 0, 250000, 60000);
+	pid_set_gains(&mainboard.angle.pid, 800, 3, 3000);
+	pid_set_maximums(&mainboard.angle.pid, 0, 30000, 60000);
 	pid_set_out_shift(&mainboard.angle.pid, 6);	
-	pid_set_derivate_filter(&mainboard.angle.pid, 4);
+	pid_set_derivate_filter(&mainboard.angle.pid, 1);
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.angle.qr);
-	quadramp_set_1st_order_vars(&mainboard.angle.qr, 2000, 2000); 	/* set speed */
-	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 10, 10); 		/* set accel */
+	quadramp_set_1st_order_vars(&mainboard.angle.qr, 6000, 6000); 	/* set speed */
+	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 80, 80); 		/* set accel */
 
 
 	/* CS */
@@ -253,14 +253,14 @@ void maindspic_cs_init(void)
 	/* ---- CS distance */
 	/* PID */
 	pid_init(&mainboard.distance.pid);
-	pid_set_gains(&mainboard.distance.pid, 140, 3, 5000);
-	pid_set_maximums(&mainboard.distance.pid, 0, 250000, 60000);
+	pid_set_gains(&mainboard.distance.pid, 300, 3, 3000);
+	pid_set_maximums(&mainboard.distance.pid, 0, 30000, 60000);
 	pid_set_out_shift(&mainboard.distance.pid, 6);
-	pid_set_derivate_filter(&mainboard.distance.pid, 6);
+	pid_set_derivate_filter(&mainboard.distance.pid, 1);
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.distance.qr);
-	quadramp_set_1st_order_vars(&mainboard.distance.qr, 2500, 2500); 	/* set speed */
+	quadramp_set_1st_order_vars(&mainboard.distance.qr, 6000, 6000); 	/* set speed */
 	quadramp_set_2nd_order_vars(&mainboard.distance.qr, 10, 10); 		/* set accel */
 
 	/* CS */

@@ -744,139 +744,139 @@ parse_pgm_inst_t cmd_position_set = {
 };
 
 
-/**********************************************************/
-/* strat configuration */
-
-/* this structure is filled when cmd_strat_infos is parsed successfully */
-struct cmd_strat_infos_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_strat_infos is parsed successfully */
-static void cmd_strat_infos_parsed(void *parsed_result, void *data)
-{
-	struct cmd_strat_infos_result *res = parsed_result;
-
-	if (!strcmp_P(res->arg1, PSTR("reset"))) {
-		strat_reset_infos();
-	}
-	strat_infos.dump_enabled = 1;
-	strat_dump_infos(__FUNCTION__);
-}
-
-prog_char str_strat_infos_arg0[] = "strat_infos";
-parse_pgm_token_string_t cmd_strat_infos_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_infos_result, arg0, str_strat_infos_arg0);
-prog_char str_strat_infos_arg1[] = "show#reset";
-parse_pgm_token_string_t cmd_strat_infos_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_infos_result, arg1, str_strat_infos_arg1);
-
-prog_char help_strat_infos[] = "reset/show strat_infos";
-parse_pgm_inst_t cmd_strat_infos = {
-	.f = cmd_strat_infos_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_strat_infos,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_strat_infos_arg0, 
-		(prog_void *)&cmd_strat_infos_arg1, 
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* strat configuration */
-
-/* this structure is filled when cmd_strat_conf is parsed successfully */
-struct cmd_strat_conf_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-};
-
-/* function called when cmd_strat_conf is parsed successfully */
-static void cmd_strat_conf_parsed(void *parsed_result, void *data)
-{
-	struct cmd_strat_conf_result *res = parsed_result;
-
-	if (!strcmp_P(res->arg1, PSTR("base"))) {
-	}
-
-	strat_infos.dump_enabled = 1;
-	strat_dump_conf();
-}
-
-prog_char str_strat_conf_arg0[] = "strat_conf";
-parse_pgm_token_string_t cmd_strat_conf_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf_result, arg0, str_strat_conf_arg0);
-prog_char str_strat_conf_arg1[] = "show#base";
-parse_pgm_token_string_t cmd_strat_conf_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf_result, arg1, str_strat_conf_arg1);
-
-prog_char help_strat_conf[] = "configure strat options";
-parse_pgm_inst_t cmd_strat_conf = {
-	.f = cmd_strat_conf_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_strat_conf,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_strat_conf_arg0, 
-		(prog_void *)&cmd_strat_conf_arg1, 
-		NULL,
-	},
-};
-
-/**********************************************************/
-/* strat configuration */
-
-/* this structure is filled when cmd_strat_conf2 is parsed successfully */
-struct cmd_strat_conf2_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-	fixed_string_t arg2;
-};
-
-/* function called when cmd_strat_conf2 is parsed successfully */
-static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
-{
-	struct cmd_strat_conf2_result *res = parsed_result;
-	uint8_t on, bit = 0;
-
-	if (!strcmp_P(res->arg2, PSTR("on")))
-		on = 1;
-	else
-		on = 0;
-	
-	if (!strcmp_P(res->arg1, PSTR("harvest_tomatoes")))
-		bit = STRAT_CONF_HARVEST_TOMATOES;
-	else if (!strcmp_P(res->arg1, PSTR("harvest_static_corns")))
-		bit = STRAT_CONF_HARVEST_STATIC_CORNS;
-	else if (!strcmp_P(res->arg1, PSTR("harvest_fall_corns")))
-		bit = STRAT_CONF_HARVEST_FALL_CORNS;
-
-	if (on)
-		strat_infos.conf.flags |= bit;
-	else
-		strat_infos.conf.flags &= (~bit);
-
-	strat_infos.dump_enabled = 1;
-	strat_dump_conf();
-}
-
-prog_char str_strat_conf2_arg0[] = "strat_conf";
-parse_pgm_token_string_t cmd_strat_conf2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg0, str_strat_conf2_arg0);
-prog_char str_strat_conf2_arg1[] = "harvest_tomatoes#harvest_static_corns#harvest_fall_corns";
-parse_pgm_token_string_t cmd_strat_conf2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg1, str_strat_conf2_arg1);
-prog_char str_strat_conf2_arg2[] = "on#off";
-parse_pgm_token_string_t cmd_strat_conf2_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg2, str_strat_conf2_arg2);
-
-
-prog_char help_strat_conf2[] = "configure strat options";
-parse_pgm_inst_t cmd_strat_conf2 = {
-	.f = cmd_strat_conf2_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_strat_conf2,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_strat_conf2_arg0, 
-		(prog_void *)&cmd_strat_conf2_arg1, 
-		(prog_void *)&cmd_strat_conf2_arg2, 
-		NULL,
-	},
-};
+///**********************************************************/
+///* strat configuration */
+//
+///* this structure is filled when cmd_strat_infos is parsed successfully */
+//struct cmd_strat_infos_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_strat_infos is parsed successfully */
+//static void cmd_strat_infos_parsed(void *parsed_result, void *data)
+//{
+//	struct cmd_strat_infos_result *res = parsed_result;
+//
+//	if (!strcmp_P(res->arg1, PSTR("reset"))) {
+//		strat_reset_infos();
+//	}
+//	strat_infos.dump_enabled = 1;
+//	strat_dump_infos(__FUNCTION__);
+//}
+//
+//prog_char str_strat_infos_arg0[] = "strat_infos";
+//parse_pgm_token_string_t cmd_strat_infos_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_infos_result, arg0, str_strat_infos_arg0);
+//prog_char str_strat_infos_arg1[] = "show#reset";
+//parse_pgm_token_string_t cmd_strat_infos_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_infos_result, arg1, str_strat_infos_arg1);
+//
+//prog_char help_strat_infos[] = "reset/show strat_infos";
+//parse_pgm_inst_t cmd_strat_infos = {
+//	.f = cmd_strat_infos_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_strat_infos,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_strat_infos_arg0, 
+//		(prog_void *)&cmd_strat_infos_arg1, 
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* strat configuration */
+//
+///* this structure is filled when cmd_strat_conf is parsed successfully */
+//struct cmd_strat_conf_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//};
+//
+///* function called when cmd_strat_conf is parsed successfully */
+//static void cmd_strat_conf_parsed(void *parsed_result, void *data)
+//{
+//	struct cmd_strat_conf_result *res = parsed_result;
+//
+//	if (!strcmp_P(res->arg1, PSTR("base"))) {
+//	}
+//
+//	strat_infos.dump_enabled = 1;
+//	strat_dump_conf();
+//}
+//
+//prog_char str_strat_conf_arg0[] = "strat_conf";
+//parse_pgm_token_string_t cmd_strat_conf_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf_result, arg0, str_strat_conf_arg0);
+//prog_char str_strat_conf_arg1[] = "show#base";
+//parse_pgm_token_string_t cmd_strat_conf_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf_result, arg1, str_strat_conf_arg1);
+//
+//prog_char help_strat_conf[] = "configure strat options";
+//parse_pgm_inst_t cmd_strat_conf = {
+//	.f = cmd_strat_conf_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_strat_conf,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_strat_conf_arg0, 
+//		(prog_void *)&cmd_strat_conf_arg1, 
+//		NULL,
+//	},
+//};
+//
+///**********************************************************/
+///* strat configuration */
+//
+///* this structure is filled when cmd_strat_conf2 is parsed successfully */
+//struct cmd_strat_conf2_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//	fixed_string_t arg2;
+//};
+//
+///* function called when cmd_strat_conf2 is parsed successfully */
+//static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
+//{
+//	struct cmd_strat_conf2_result *res = parsed_result;
+//	uint8_t on, bit = 0;
+//
+//	if (!strcmp_P(res->arg2, PSTR("on")))
+//		on = 1;
+//	else
+//		on = 0;
+//	
+//	if (!strcmp_P(res->arg1, PSTR("harvest_tomatoes")))
+//		bit = STRAT_CONF_HARVEST_TOMATOES;
+//	else if (!strcmp_P(res->arg1, PSTR("harvest_static_corns")))
+//		bit = STRAT_CONF_HARVEST_STATIC_CORNS;
+//	else if (!strcmp_P(res->arg1, PSTR("harvest_fall_corns")))
+//		bit = STRAT_CONF_HARVEST_FALL_CORNS;
+//
+//	if (on)
+//		strat_infos.conf.flags |= bit;
+//	else
+//		strat_infos.conf.flags &= (~bit);
+//
+//	strat_infos.dump_enabled = 1;
+//	strat_dump_conf();
+//}
+//
+//prog_char str_strat_conf2_arg0[] = "strat_conf";
+//parse_pgm_token_string_t cmd_strat_conf2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg0, str_strat_conf2_arg0);
+//prog_char str_strat_conf2_arg1[] = "harvest_tomatoes#harvest_static_corns#harvest_fall_corns";
+//parse_pgm_token_string_t cmd_strat_conf2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg1, str_strat_conf2_arg1);
+//prog_char str_strat_conf2_arg2[] = "on#off";
+//parse_pgm_token_string_t cmd_strat_conf2_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg2, str_strat_conf2_arg2);
+//
+//
+//prog_char help_strat_conf2[] = "configure strat options";
+//parse_pgm_inst_t cmd_strat_conf2 = {
+//	.f = cmd_strat_conf2_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_strat_conf2,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_strat_conf2_arg0, 
+//		(prog_void *)&cmd_strat_conf2_arg1, 
+//		(prog_void *)&cmd_strat_conf2_arg2, 
+//		NULL,
+//	},
+//};
 
 ///**********************************************************/
 ///* strat configuration */
@@ -940,63 +940,63 @@ parse_pgm_inst_t cmd_strat_conf2 = {
 //};
 
 
-/**********************************************************/
-/* Subtraj */
-
-/* this structure is filled when cmd_subtraj is parsed successfully */
-struct cmd_subtraj_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-	int32_t arg2;
-	int32_t arg3;
-	int32_t arg4;
-	int32_t arg5;
-};
-
-/* function called when cmd_subtraj is parsed successfully */
-static void cmd_subtraj_parsed(void *parsed_result, void *data)
-{
-	struct cmd_subtraj_result *res = parsed_result;
-	uint8_t err = 0;
-
-
-
-	if (strcmp_P(res->arg1, PSTR("oranges")) == 0) {
-		err = strat_harvest_oranges();
-	}
-	else if (strcmp_P(res->arg1, PSTR("basket")) == 0) {
-		err = strat_goto_basket();
-	}
-	else if (strcmp_P(res->arg1, PSTR("diagonal")) == 0) {	
-		err = strat_goto_diagonal();
-	}
-	
-	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
-	trajectory_hardstop(&mainboard.traj);
-}
-
-prog_char str_subtraj_arg0[] = "subtraj";
-parse_pgm_token_string_t cmd_subtraj_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj_result, arg0, str_subtraj_arg0);
-prog_char str_subtraj_arg1[] = "oranges#basket#diagonal";
-parse_pgm_token_string_t cmd_subtraj_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj_result, arg1, str_subtraj_arg1);
-//parse_pgm_token_num_t cmd_subtraj_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg2, INT32);
-//parse_pgm_token_num_t cmd_subtraj_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg3, INT32);
-//parse_pgm_token_num_t cmd_subtraj_arg4 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg4, INT32);
-//parse_pgm_token_num_t cmd_subtraj_arg5 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg5, INT32);
+///**********************************************************/
+///* Subtraj */
 //
-prog_char help_subtraj[] = "Test sub-trajectories (a,b,c,d: specific params)";
-parse_pgm_inst_t cmd_subtraj = {
-	.f = cmd_subtraj_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_subtraj,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_subtraj_arg0, 
-		(prog_void *)&cmd_subtraj_arg1, 
-//		(prog_void *)&cmd_subtraj_arg2, 
-//		(prog_void *)&cmd_subtraj_arg3, 
-//		(prog_void *)&cmd_subtraj_arg4, 
-//		(prog_void *)&cmd_subtraj_arg5, 
-		NULL,
-	},
-};
+///* this structure is filled when cmd_subtraj is parsed successfully */
+//struct cmd_subtraj_result {
+//	fixed_string_t arg0;
+//	fixed_string_t arg1;
+//	int32_t arg2;
+//	int32_t arg3;
+//	int32_t arg4;
+//	int32_t arg5;
+//};
+//
+///* function called when cmd_subtraj is parsed successfully */
+//static void cmd_subtraj_parsed(void *parsed_result, void *data)
+//{
+//	struct cmd_subtraj_result *res = parsed_result;
+//	uint8_t err = 0;
+//
+//
+//
+//	if (strcmp_P(res->arg1, PSTR("oranges")) == 0) {
+//		err = strat_harvest_oranges();
+//	}
+//	else if (strcmp_P(res->arg1, PSTR("basket")) == 0) {
+//		err = strat_goto_basket();
+//	}
+//	else if (strcmp_P(res->arg1, PSTR("diagonal")) == 0) {	
+//		err = strat_goto_diagonal();
+//	}
+//	
+//	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
+//	trajectory_hardstop(&mainboard.traj);
+//}
+//
+//prog_char str_subtraj_arg0[] = "subtraj";
+//parse_pgm_token_string_t cmd_subtraj_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj_result, arg0, str_subtraj_arg0);
+//prog_char str_subtraj_arg1[] = "oranges#basket#diagonal";
+//parse_pgm_token_string_t cmd_subtraj_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj_result, arg1, str_subtraj_arg1);
+////parse_pgm_token_num_t cmd_subtraj_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg2, INT32);
+////parse_pgm_token_num_t cmd_subtraj_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg3, INT32);
+////parse_pgm_token_num_t cmd_subtraj_arg4 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg4, INT32);
+////parse_pgm_token_num_t cmd_subtraj_arg5 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg5, INT32);
+////
+//prog_char help_subtraj[] = "Test sub-trajectories (a,b,c,d: specific params)";
+//parse_pgm_inst_t cmd_subtraj = {
+//	.f = cmd_subtraj_parsed,  /* function to call */
+//	.data = NULL,      /* 2nd arg of func */
+//	.help_str = help_subtraj,
+//	.tokens = {        /* token list, NULL terminated */
+//		(prog_void *)&cmd_subtraj_arg0, 
+//		(prog_void *)&cmd_subtraj_arg1, 
+////		(prog_void *)&cmd_subtraj_arg2, 
+////		(prog_void *)&cmd_subtraj_arg3, 
+////		(prog_void *)&cmd_subtraj_arg4, 
+////		(prog_void *)&cmd_subtraj_arg5, 
+//		NULL,
+//	},
+//};
 

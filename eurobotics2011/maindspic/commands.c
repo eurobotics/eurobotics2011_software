@@ -51,18 +51,18 @@ extern parse_pgm_inst_t cmd_scheduler;
 /* commands_cs.c */
 extern parse_pgm_inst_t cmd_gain;
 extern parse_pgm_inst_t cmd_gain_show;
-//extern parse_pgm_inst_t cmd_speed;
-//extern parse_pgm_inst_t cmd_speed_show;
-//extern parse_pgm_inst_t cmd_derivate_filter;
-//extern parse_pgm_inst_t cmd_derivate_filter_show;
-//extern parse_pgm_inst_t cmd_consign;
-//extern parse_pgm_inst_t cmd_maximum;
-//extern parse_pgm_inst_t cmd_maximum_show;
+extern parse_pgm_inst_t cmd_speed;
+extern parse_pgm_inst_t cmd_speed_show;
+extern parse_pgm_inst_t cmd_derivate_filter;
+extern parse_pgm_inst_t cmd_derivate_filter_show;
+extern parse_pgm_inst_t cmd_consign;
+extern parse_pgm_inst_t cmd_maximum;
+extern parse_pgm_inst_t cmd_maximum_show;
 extern parse_pgm_inst_t cmd_quadramp;
 extern parse_pgm_inst_t cmd_quadramp_show;
-//extern parse_pgm_inst_t cmd_cs_status;
-//extern parse_pgm_inst_t cmd_blocking_i;
-//extern parse_pgm_inst_t cmd_blocking_i_show;
+extern parse_pgm_inst_t cmd_cs_status;
+extern parse_pgm_inst_t cmd_blocking_i;
+extern parse_pgm_inst_t cmd_blocking_i_show;
 
 /* commands_mainboard.c */
 extern parse_pgm_inst_t cmd_event;
@@ -114,11 +114,11 @@ extern parse_pgm_inst_t cmd_goto2;
 extern parse_pgm_inst_t cmd_goto3;
 extern parse_pgm_inst_t cmd_position;
 extern parse_pgm_inst_t cmd_position_set;
-extern parse_pgm_inst_t cmd_strat_infos;
-extern parse_pgm_inst_t cmd_strat_conf;
-extern parse_pgm_inst_t cmd_strat_conf2;
+//extern parse_pgm_inst_t cmd_strat_infos;
+//extern parse_pgm_inst_t cmd_strat_conf;
+//extern parse_pgm_inst_t cmd_strat_conf2;
 //extern parse_pgm_inst_t cmd_strat_conf3;
-extern parse_pgm_inst_t cmd_subtraj;
+//extern parse_pgm_inst_t cmd_subtraj;
 
 /* in progmem */
 parse_pgm_ctx_t main_ctx[] = {
@@ -141,18 +141,18 @@ parse_pgm_ctx_t main_ctx[] = {
 	/* commands_cs.c */
 	(parse_pgm_inst_t *)&cmd_gain,
 	(parse_pgm_inst_t *)&cmd_gain_show,
-//	(parse_pgm_inst_t *)&cmd_speed,
-//	(parse_pgm_inst_t *)&cmd_speed_show,
-//	(parse_pgm_inst_t *)&cmd_consign,
-//	(parse_pgm_inst_t *)&cmd_derivate_filter,
-//	(parse_pgm_inst_t *)&cmd_derivate_filter_show,
-//	(parse_pgm_inst_t *)&cmd_maximum,
-//	(parse_pgm_inst_t *)&cmd_maximum_show,
+	(parse_pgm_inst_t *)&cmd_speed,
+	(parse_pgm_inst_t *)&cmd_speed_show,
+	(parse_pgm_inst_t *)&cmd_consign,
+	(parse_pgm_inst_t *)&cmd_derivate_filter,
+	(parse_pgm_inst_t *)&cmd_derivate_filter_show,
+	(parse_pgm_inst_t *)&cmd_maximum,
+	(parse_pgm_inst_t *)&cmd_maximum_show,
 	(parse_pgm_inst_t *)&cmd_quadramp,
 	(parse_pgm_inst_t *)&cmd_quadramp_show,
-//	(parse_pgm_inst_t *)&cmd_cs_status,
-//	(parse_pgm_inst_t *)&cmd_blocking_i,
-//	(parse_pgm_inst_t *)&cmd_blocking_i_show,
+	(parse_pgm_inst_t *)&cmd_cs_status,
+	(parse_pgm_inst_t *)&cmd_blocking_i,
+	(parse_pgm_inst_t *)&cmd_blocking_i_show,
 
 	/* commands_mainboard.c */
 	(parse_pgm_inst_t *)&cmd_event,
@@ -203,10 +203,10 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_goto2,
 	(parse_pgm_inst_t *)&cmd_position,
 	(parse_pgm_inst_t *)&cmd_position_set,
-	(parse_pgm_inst_t *)&cmd_strat_infos,
-	(parse_pgm_inst_t *)&cmd_strat_conf,
-	(parse_pgm_inst_t *)&cmd_strat_conf2,
+//	(parse_pgm_inst_t *)&cmd_strat_infos,
+//	(parse_pgm_inst_t *)&cmd_strat_conf,
+//	(parse_pgm_inst_t *)&cmd_strat_conf2,
 //	(parse_pgm_inst_t *)&cmd_strat_conf3,
-	(parse_pgm_inst_t *)&cmd_subtraj,
+//	(parse_pgm_inst_t *)&cmd_subtraj,
 	NULL,
 };
