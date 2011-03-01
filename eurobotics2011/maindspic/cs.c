@@ -200,9 +200,9 @@ void maindspic_cs_init(void)
 
 	/* increase gain to decrease dist, increase left and it will turn more left */
 	rs_set_left_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				LEFT_ENCODER, IMP_COEF *  1.000);
+				LEFT_ENCODER, IMP_COEF *  0.998);0.999083
 	rs_set_right_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				 RIGHT_ENCODER, IMP_COEF * -1.000);
+				 RIGHT_ENCODER, IMP_COEF * -1.002);1.003087
 
 	/* rs will use external encoders */
 	rs_set_flags(&mainboard.rs, RS_USE_EXT);
@@ -226,7 +226,7 @@ void maindspic_cs_init(void)
 	/* ---- CS angle */
 	/* PID */
 	pid_init(&mainboard.angle.pid);
-	pid_set_gains(&mainboard.angle.pid, 800, 3, 3000);
+	pid_set_gains(&mainboard.angle.pid, 600, 3, 3000);
 	pid_set_maximums(&mainboard.angle.pid, 0, 30000, 60000);
 	pid_set_out_shift(&mainboard.angle.pid, 6);	
 	pid_set_derivate_filter(&mainboard.angle.pid, 1);
