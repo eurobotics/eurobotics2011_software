@@ -2,9 +2,9 @@
 %% Data calibration
 clear all
 load beacon_as_fixed_calib;
-offset_cm = 0;                   %-6.2;
+offset_cm = 0;   %-6.2;
 first_sample = 2;
-x = data(first_sample:end,2).*1.6;               % timer_counts, timer_period = 1.6us
+x = data(first_sample:end,2).*1.6;          % timer_counts, timer_period = 1.6us
 y = data(first_sample:end,1) + offset_cm;   % distance(cm), from 30 cm aprox.
 
 %% Scale and interpolation of data
@@ -36,9 +36,10 @@ plot(x, error);
 legend('error (cm)')
 
 %% Table
-% Nota: forma de sacar índice tabla = 832-1- ((table(1,1)-3852)/8)
+% Nota: forma de sacar indice tabla = 831- (x_medida-3852)/8)
+% medida-x_eval
 %x_eval = 6560:-5:2415;
-x_eval = 10500:-8:3850;
+x_eval = 10500:-8:3852;
 y_eval = polyval(p,(x_eval-mu)./sigma);
 
 y_int = round(y_eval);
