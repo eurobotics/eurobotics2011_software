@@ -36,9 +36,12 @@
 
 #include <uart.h>
 #include <dac_mc.h>
-#include <pwm_servo.h>
 #include <i2c_mem.h>
 #include <time.h>
+#include <pwm_servo.h>
+
+#include <parse.h>
+#include <rdline.h>
 
 #include <pid.h>
 #include <quadramp.h>
@@ -52,70 +55,75 @@
 #include <robot_system.h>
 #include <position_manager.h>
 
-#include <rdline.h>
-#include <parse.h>
-#include <parse_string.h>
-#include <parse_num.h>
-
 #include "../common/i2c_commands.h"
 #include "main.h"
 #include "sensor.h"
 #include "i2c_protocol.h"
 
 
-#define I2C_STATE_MAX 3
+#define I2C_STATE_MAX 			3
+#define I2C_TIMEOUT 				100 /* ms */
+#define I2C_WATCH_DOG_TIMEOUT	10
 
-#define I2C_TIMEOUT 100 /* ms */
-#define I2C_MAX_ERRORS 5
-
-static volatile uint8_t i2c_poll_num = 0;
-static volatile uint8_t i2c_state = 0;
-static volatile uint16_t i2c_errors = 0;
-
-#define OP_READY 0 /* no i2c op running */
-#define OP_POLL  1 /* a user command is running */
-#define OP_CMD   2 /* a polling (req / ans) is running */
-
-#define WATCH_DOG_TIMEOUT	10
-
-static volatile uint8_t running_op = OP_READY;
-
-#define I2C_MAX_LOG 1
-static uint8_t error_log = 0;
-
-/* used for gpios */
-volatile uint8_t gpio_addr = 0;
-
-/* used for commands */
-volatile uint16_t command_dest=-1;
-volatile uint16_t command_size=0;
-uint8_t command_buf[I2C_SEND_BUFFER_SIZE];
-
+/* local headers */
 static int8_t i2c_read_gpios_01_values(void);
 static int8_t i2c_read_gpios_23_values(void);
 static int8_t i2c_req_slavedspic_status(void);
 
+/* limited error logs */
+#define I2C_MAX_ERRORS	5
 #define I2C_ERROR(args...) do {						\
 		if (error_log < I2C_MAX_LOG) {				\
 			ERROR(E_USER_I2C_PROTO, args);			\
-			error_log ++;					\
+			error_log ++;									\
 			if (error_log == I2C_MAX_LOG) {			\
-				ERROR(E_USER_I2C_PROTO,			\
+				ERROR(E_USER_I2C_PROTO,					\
 				      "i2c logs are now warnings");	\
-			}						\
-		}							\
-		else							\
-			WARNING(E_USER_I2C_PROTO, args);		\
+			}													\
+		}														\
+		else													\
+			WARNING(E_USER_I2C_PROTO, args);			\
 	} while(0)
 
+/* i2c pulling state */
+static volatile uint8_t i2c_state = 0;
 
+/* pulling counter */
+static volatile uint8_t i2c_poll_num = 0;
 
+/* comunication errors */
+static volatile uint16_t i2c_errors = 0;
+
+/* type of running operation */
+#define OP_READY 0 		/* no i2c op running */
+#define OP_POLL  1 		/* a polling (req / ans) is running */
+#define OP_CMD   2 		/* a user command is running */
+
+/* actual running operation */
+static volatile uint8_t running_op = OP_READY;
+
+/* error log counter */
+static uint8_t error_log = 0;
+#define I2C_MAX_LOG	1
+
+/* gpios */
+volatile uint8_t gpio_addr = 0;
+
+/* commands */
+volatile uint16_t command_dest=-1;
+volatile uint16_t command_size=0;
+uint8_t command_buf[I2C_SEND_BUFFER_SIZE];
+
+/* debug */
 uint8_t dummy = 0;
 
+/* init i2c stuff */
 void i2c_protocol_init(void)
 {
+	/* add initialization setup here */
 }
 
+/* debug protocol */
 void i2c_protocol_debug(void)
 {
 	printf_P(PSTR("I2C protocol debug infos:\r\n"));
@@ -127,6 +135,7 @@ void i2c_protocol_debug(void)
 	printf_P(PSTR("  i2c_status=%x\r\n"), i2c_status());
 }
 
+/* update to next state */
 static void i2cproto_next_state(uint8_t inc)
 {
 	i2c_state += inc;
@@ -136,6 +145,7 @@ static void i2cproto_next_state(uint8_t inc)
 	}
 }
 
+/* wait one cycle of pulling or timeout */
 void i2cproto_wait_update(void)
 {
 	uint8_t poll_num;
@@ -144,21 +154,21 @@ void i2cproto_wait_update(void)
 }
 
 /* called periodically : the goal of this 'thread' is to send requests
- * and read answers on i2c slaves in the correct order. */
+ * and read answers on i2c slaves in the correct order. 						*/
 void i2c_poll_slaves(void *dummy)
 {
 	uint8_t flags;
 	int8_t err;
 	static uint8_t a = 0;
+	static uint8_t watchdog_cnt = 0;
 
+	/* goto error implementation */
 	void * p_error;
 	p_error = &&error1;
 
-	static uint8_t watchdog_cnt = 0;
-
 	/* watchdog */
 	watchdog_cnt++;	
-	if(watchdog_cnt == WATCH_DOG_TIMEOUT){
+	if(watchdog_cnt == I2C_WATCH_DOG_TIMEOUT){
 		
 		if(running_op == OP_CMD)
 			I2C_ERROR("I2C wathdog timeout wating COMMAND");
@@ -172,7 +182,7 @@ void i2c_poll_slaves(void *dummy)
 		return;
 	}
 		
-	/* already running */
+	/* return if last operation not finished */
 	IRQ_LOCK(flags);
 	if (running_op != OP_READY) {
 		IRQ_UNLOCK(flags);
@@ -182,16 +192,17 @@ void i2c_poll_slaves(void *dummy)
 	/* reset watchdog */
 	watchdog_cnt = 0;
 	
+	/* led debug */
 	a++;
 	if (a & 0x4)
 		LED2_TOGGLE();
-
 
 	/* if a command is ready to be sent, so send it */
 	if (command_size) {
 		running_op = OP_CMD;
 		err = i2c_write(command_dest, I2C_CMD_GENERIC, command_buf, command_size);		
 
+		/* if i2c write error -> end with error */
 		if (err)
 			goto *p_error;
 		IRQ_UNLOCK(flags);

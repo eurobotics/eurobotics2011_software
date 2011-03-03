@@ -78,11 +78,11 @@
  * 14400/173 -> 832 imps/10 mm */
 
 /* increase it to go further */
-#define IMP_ENCODERS 		3600
+#define IMP_ENCODERS 		3600.0
 #define WHEEL_DIAMETER_MM 	55.0
 
 #define WHEEL_PERIM_MM 	(WHEEL_DIAMETER_MM * M_PI)
-#define IMP_COEF 			10.
+#define IMP_COEF 			10.0
 #define DIST_IMP_MM 		(((IMP_ENCODERS*4) / WHEEL_PERIM_MM) * IMP_COEF)
 
 /* encoders handlers */

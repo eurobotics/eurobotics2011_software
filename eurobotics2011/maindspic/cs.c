@@ -200,9 +200,9 @@ void maindspic_cs_init(void)
 
 	/* increase gain to decrease dist, increase left and it will turn more left */
 	rs_set_left_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				LEFT_ENCODER, IMP_COEF *  0.998);0.999083
+				LEFT_ENCODER, IMP_COEF * 1.014); //0.998);//0.999083
 	rs_set_right_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				 RIGHT_ENCODER, IMP_COEF * -1.002);1.003087
+				 RIGHT_ENCODER, IMP_COEF * -1.055);//-1.002);//1.003087
 
 	/* rs will use external encoders */
 	rs_set_flags(&mainboard.rs, RS_USE_EXT);
