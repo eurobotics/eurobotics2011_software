@@ -87,6 +87,9 @@ static int8_t i2c_req_slavedspic_status(void);
 
 /* i2c pulling state */
 static volatile uint8_t i2c_state = 0;
+#define I2C_READ_GPIOS_01_VALUES 	0
+#define I2C_READ_GPIOS_23_VALUES 	1
+#define I2C_REQ_SLAVEDSPIC				2
 
 /* pulling counter */
 static volatile uint8_t i2c_poll_num = 0;
@@ -145,7 +148,8 @@ static void i2cproto_next_state(uint8_t inc)
 	}
 }
 
-/* wait one cycle of pulling or timeout */
+/* wait one cycle of pulling or timeout ,
+ * usefull to syncronize processes        */
 void i2cproto_wait_update(void)
 {
 	uint8_t poll_num;
@@ -163,8 +167,8 @@ void i2c_poll_slaves(void *dummy)
 	static uint8_t watchdog_cnt = 0;
 
 	/* goto error implementation */
-	void * p_error;
-	p_error = &&error1;
+	void * p_error_pull;
+	p_error_pull = &&error_pull;
 
 	/* watchdog */
 	watchdog_cnt++;	
@@ -181,10 +185,14 @@ void i2c_poll_slaves(void *dummy)
 		i2c_reset();
 		return;
 	}
-		
-	/* return if last operation not finished */
+
+	/* start of critical section */		
 	IRQ_LOCK(flags);
+
+	/* return if last operation not finished */
 	if (running_op != OP_READY) {
+		
+		/* end of critical section */
 		IRQ_UNLOCK(flags);
 		return;
 	}
@@ -204,33 +212,32 @@ void i2c_poll_slaves(void *dummy)
 
 		/* if i2c write error -> end with error */
 		if (err)
-			goto *p_error;
+			goto *p_error_pull;
 		IRQ_UNLOCK(flags);
+
+		/* return and wait the send ends */
 		return;
 	}
 
-	/* no command, so do the polling */
+	/* at this point: no command, so do the polling */
 	running_op = OP_POLL;
-	//i2c_state = 2;
+	
+	/* poll status of gpios and microcontrollers */
 	switch(i2c_state) {
 
-		/* poll status of gpios and boards */
-		#define I2C_READ_GPIOS_01_VALUES 0
 		case I2C_READ_GPIOS_01_VALUES:
 			if ((err = i2c_read_gpios_01_values()))
-				goto *p_error;
+				goto *p_error_pull;
 			break;
 	
-		#define I2C_READ_GPIOS_23_VALUES 1
 		case I2C_READ_GPIOS_23_VALUES:
 			if ((err = i2c_read_gpios_23_values()))
-				goto *p_error;
+				goto *p_error_pull;
 			break;
 
-		#define I2C_REQ_SLAVEDSPIC 			 2
 		case I2C_REQ_SLAVEDSPIC:
 			if ((err = i2c_req_slavedspic_status()))
-				goto *p_error;
+				goto *p_error_pull;
 			break;
 
 		/* nothing, go to the first request */
@@ -238,16 +245,26 @@ void i2c_poll_slaves(void *dummy)
 			i2c_state = 0;
 			running_op = OP_READY;
 	}
+
+	/* end critical section */
 	IRQ_UNLOCK(flags);
 	return;
 
- error1:
+/* error during pull operation */
+ error_pull:
+
+	/* reset op */
 	running_op = OP_READY;
+	
+	/* end critical section */
 	IRQ_UNLOCK(flags);
+	
+	/* manage error */
 	i2c_errors++;
 	if (i2c_errors > I2C_MAX_ERRORS) {
 		I2C_ERROR("I2C send is_cmd=%d proto_state=%d " 
 		      "err=%d i2c_status=%x", !!command_size, i2c_state, err, i2c_status());
+		
 		i2c_reset();
 		i2c_errors = 0;
 	}
@@ -256,6 +273,7 @@ void i2c_poll_slaves(void *dummy)
 /* called when the xmit is finished */
 void i2c_write_event(uint16_t size)
 {
+	/* pull or cmd OK sended */
 	if (size > 0) {
 		if (running_op == OP_POLL) {
 			i2cproto_next_state(1);
@@ -263,15 +281,15 @@ void i2c_write_event(uint16_t size)
 		else
 			command_size = 0;
 	}
+	/* error */
 	else {
 		i2c_errors++;
 		NOTICE(E_USER_I2C_PROTO, "send error state=%d size=%d "
 			"op=%d", i2c_state, size, running_op);
-		
-		//command_size = 0;	
-			
+				
 		if (i2c_errors > I2C_MAX_ERRORS) {
 			I2C_ERROR("I2C error, slave not ready");
+
 			i2c_reset();
 			i2c_errors = 0;
 		}
@@ -281,6 +299,8 @@ void i2c_write_event(uint16_t size)
 			i2cproto_next_state(2);
 		}
 	}
+
+	/* ready for next op */
 	running_op = OP_READY;
 }
 
@@ -288,34 +308,41 @@ void i2c_write_event(uint16_t size)
 void i2c_read_event(uint8_t * buf, uint16_t size)
 {
 	volatile uint8_t i2c_state_save = i2c_state;
-	void * p_error;
-	p_error = &&error2;
+	void * p_error_recv;
+	p_error_recv = &&error_recv;
 	
+	/* if actual op is pulling, go next pulling state */
 	if (running_op == OP_POLL)
 		i2cproto_next_state(1);
 
 	/* recv is only trigged after a poll */
 	running_op = OP_READY;
 	
-	if ( size == 0) {
-		goto *p_error;
+	/* error if null size */
+	if (size == 0) {
+		goto *p_error_recv;
 	}
 
+	/* parse GPIOS answers */
 	if(i2c_state_save == I2C_READ_GPIOS_01_VALUES ||
 		i2c_state_save == I2C_READ_GPIOS_23_VALUES)
 	{
 		struct i2c_gpios_status * ans = 
 			(struct i2c_gpios_status *)buf;
 		
+		/* error */
+		/* XXX read even is called on every data received,
+       * wil zero size be managed as error  ??         */
 		if (size != sizeof (*ans))
-			goto *p_error;
+			goto *p_error_recv;
 
-		
+		/* GPIO_01 */
 		if(gpio_addr == I2C_GPIOS_01_ADDR){
 			gen.i2c_gpio0 = ans->gpio0;
 			gen.i2c_gpio1 = ans->gpio1;
 			
 		}
+		/* GPIO_23 */
 		else if(gpio_addr == I2C_GPIOS_23_ADDR){
 			gen.i2c_gpio2 = ans->gpio0;
 			gen.i2c_gpio3 = ans->gpio1;
@@ -324,8 +351,10 @@ void i2c_read_event(uint8_t * buf, uint16_t size)
 		
 	}
 
-	switch (buf[0]) {
-	
+	/* parse microcontrolers answeers */
+	switch (buf[0]) 
+	{
+		/* slavedspic */	
 		case I2C_ANS_SLAVEDSPIC_STATUS: {
 			struct i2c_slavedspic_status * ans = 
 				(struct i2c_slavedspic_status *)buf;
@@ -350,13 +379,18 @@ void i2c_read_event(uint8_t * buf, uint16_t size)
 	}
 
 	return;
-	
- error2:
+
+ /* received error */	
+ error_recv:
+
+	/* manage error */
 	i2c_errors++;
 	NOTICE(E_USER_I2C_PROTO, "recv error state=%d op=%d", 
 	       i2c_state, running_op);
+
 	if (i2c_errors > I2C_MAX_ERRORS) {
 		I2C_ERROR("I2C error, slave not ready");
+
 		i2c_reset();
 		i2c_errors = 0;
 	}
