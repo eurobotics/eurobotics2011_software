@@ -98,7 +98,7 @@ struct i2c_cmd_slavedspic_set_mode {
 	union{
 		struct{
 			uint8_t side;
-			uint8_t speed_div4;	
+			uint8_t speed_div4;
 		}ts;
 		
 		/* add more here */

@@ -1965,9 +1965,9 @@ dac_l	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic
 dac_mc	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\dac_mc\dac_mc.h	58;"	s	line:58
 dac_mc_channel_init	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\dac_mc\dac_mc.c	47;"	f	line:47	signature:(struct dac_mc *dac, uint8_t dac_module_num, uint8_t dac_channel, uint8_t dac_mode, volatile uint16_t *sign_port, uint8_t sign_bit, volatile uint16_t *sign_port_n, uint8_t sign_bit_n)
 dac_mc_channel_init	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\dac_mc\dac_mc.h	85;"	p	line:85	signature:(struct dac_mc *dac, uint8_t dac_module_num, uint8_t dac_channel, uint8_t dac_mode, volatile uint16_t *sign_port, uint8_t sign_bit, volatile uint16_t *sign_port_n, uint8_t sign_bit_n)
-dac_mc_left	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	115;"	m	line:115	struct:genboard
+dac_mc_left	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	115;"	m	line:115	struct:mainboard
 dac_mc_ptr	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	300;"	l	line:300
-dac_mc_right	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	116;"	m	line:116	struct:genboard
+dac_mc_right	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	116;"	m	line:116	struct:mainboard
 dac_mc_set	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\dac_mc\dac_mc.c	190;"	f	line:190	signature:(void *data, int32_t value)
 dac_mc_set	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\dac_mc\dac_mc.h	98;"	p	line:98	signature:(void *dac, int32_t value)
 dac_r	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	171;"	m	line:171	struct:mainboard
@@ -1980,7 +1980,7 @@ data	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\m
 data	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\parse\parse.h	106;"	m	line:106	struct:inst_pgm
 data	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\parse\parse.h	97;"	m	line:97	struct:inst
 debug	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_mainboard.c	281;"	m	line:281	struct:cmd_start_result	file:
-debug	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	131;"	m	line:131	struct:genboard
+debug	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	131;"	m	line:131	struct:mainboard
 debug	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\debug\error\error.h	56;"	m	line:56	struct:error_fct
 debug_buf	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\parse\parse.c	180;"	l	line:180
 debug_cpt	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\devices\robot\blocking_detection_manager\blocking_detection_manager.h	54;"	m	line:54	struct:blocking_detection
@@ -2300,7 +2300,7 @@ gain_D	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic
 gain_I	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\devices\control_system\filters\pid\pid.h	35;"	m	line:35	struct:pid_filter
 gain_P	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\devices\control_system\filters\pid\pid.h	34;"	m	line:34	struct:pid_filter
 gen	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.c	74;"	v	line:74
-genboard	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	109;"	s	line:109
+mainboard	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	109;"	s	line:109
 generic_list	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\include\aversive\list.h	283;"	s	line:283
 getErrLoc	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\common\traps.c	60;"	p	line:60	file:	signature:(void)
 get_color	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\strat_utils.c	270;"	f	line:270	signature:(void)
@@ -2467,10 +2467,10 @@ i2c_cmd_hdr	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\com
 i2c_cmd_led_control	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\common\i2c_commands.h	77;"	s	line:77
 i2c_cmd_slavedspic_set_mode	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\common\i2c_commands.h	85;"	s	line:85
 i2c_errors	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\i2c_protocol.c	65;"	v	line:65	file:
-i2c_gpio0	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	123;"	m	line:123	struct:genboard
-i2c_gpio1	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	124;"	m	line:124	struct:genboard
-i2c_gpio2	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	125;"	m	line:125	struct:genboard
-i2c_gpio3	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	126;"	m	line:126	struct:genboard
+i2c_gpio0	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	123;"	m	line:123	struct:mainboard
+i2c_gpio1	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	124;"	m	line:124	struct:mainboard
+i2c_gpio2	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	125;"	m	line:125	struct:mainboard
+i2c_gpio3	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	126;"	m	line:126	struct:mainboard
 i2c_gpios_status	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\common\i2c_commands.h	48;"	s	line:48
 i2c_init	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\i2c_mem.c	187;"	f	line:187	signature:(void)
 i2c_init	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\i2c_mem.h	45;"	p	line:45	signature:(void)
@@ -2655,13 +2655,13 @@ linelen	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspi
 link_id	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\beacon.c	63;"	v	line:63
 list_hdr	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\include\aversive\list.h	272;"	s	line:272
 local_state	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\parse\parse.c	293;"	l	line:293
-log_level	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	130;"	m	line:130	struct:genboard
+log_level	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	130;"	m	line:130	struct:mainboard
 log_name2num	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	471;"	f	line:471	file:	signature:(const char * s)
 log_name_and_num	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	452;"	s	line:452	file:
 log_name_and_num	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	457;"	v	line:457	file:
 log_num2name	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	484;"	f	line:484	signature:(uint8_t num)
 lognum	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	574;"	l	line:574
-logs	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	129;"	m	line:129	struct:genboard
+logs	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	129;"	m	line:129	struct:mainboard
 loop	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	393;"	l	line:393
 main	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.c	272;"	f	line:272	signature:(void)
 main_ctx	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands.c	116;"	v	line:116
@@ -3023,7 +3023,7 @@ prog_void	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4ds
 prog_void	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\include\aversive\pgmspace.h	93;"	t	line:93
 proj_pt_line	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\base\math\geometry\lines.c	110;"	f	line:110	signature:(const point_t * p, const line_t * l, point_t * p_out)
 proj_pt_line	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\base\math\geometry\lines.h	12;"	p	line:12	signature:(const point_t * p, const line_t * l, point_t * p_out)
-prompt	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	112;"	m	line:112	struct:genboard
+prompt	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	112;"	m	line:112	struct:mainboard
 prompt	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\rdline\rdline.h	87;"	m	line:87	struct:rdline
 prompt_size	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\rdline\rdline.h	88;"	m	line:88	struct:rdline
 ps	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\base\math\geometry\vect_base.c	71;"	l	line:71
@@ -3046,8 +3046,8 @@ pwm_servo_enable	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aver
 pwm_servo_enable	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\pwm_servo\pwm_servo.h	37;"	p	line:37	signature:()
 pwm_servo_init	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\pwm_servo\pwm_servo.c	66;"	f	line:66	signature:(struct pwm_servo *pwm, uint16_t num, uint16_t th_min_us, uint16_t th_max_us)
 pwm_servo_init	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\pwm_servo\pwm_servo.h	36;"	p	line:36	signature:(struct pwm_servo * pwm, uint16_t num, uint16_t th_min, uint16_t th_max)
-pwm_servo_oc1	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	119;"	m	line:119	struct:genboard
-pwm_servo_oc2	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	120;"	m	line:120	struct:genboard
+pwm_servo_oc1	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	119;"	m	line:119	struct:mainboard
+pwm_servo_oc2	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	120;"	m	line:120	struct:mainboard
 pwm_servo_ptr	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\commands_gen.c	222;"	l	line:222
 pwm_servo_set	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\pwm_servo\pwm_servo.c	118;"	f	line:118	signature:(struct pwm_servo *pwm, uint16_t value)
 pwm_servo_set	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\hardware\dspic\pwm_servo\pwm_servo.h	39;"	p	line:39	signature:(struct pwm_servo *pwm, uint16_t value)
@@ -3097,7 +3097,7 @@ ratio_mot_ext	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversiv
 ray_n	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\base\math\geometry\polygon.c	197;"	l	line:197
 ray_n	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\devices\robot\obstacle_avoidance\obstacle_avoidance.h	67;"	m	line:67	struct:obstacle_avoidance
 rays	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\devices\robot\obstacle_avoidance\obstacle_avoidance.h	73;"	m	line:73	union:obstacle_avoidance::<anonymous>
-rdl	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	111;"	m	line:111	struct:genboard
+rdl	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\euRobotics\maindspic\main.h	111;"	m	line:111	struct:mainboard
 rdline	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\rdline\rdline.h	79;"	s	line:79
 rdline_add_history	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\rdline\rdline.c	511;"	f	line:511	signature:(struct rdline * rdl, const char * buf)
 rdline_add_history	D:\Javier\Proyectos\Proyectos_2010\Eurobot_2010\mplab\libs\aversive4dspic\modules\ihm\rdline\rdline.c	544;"	f	line:544	signature:(struct rdline * rdl, const char * buf)

@@ -774,10 +774,10 @@ static void cmd_slavedspic_show_parsed(void * parsed_result, void * data)
 		return;
 	}	
 
-	printf("slavedspic status = %d\r\n", slavedspic.status);	
-	printf("slavedspic dummy = %d\r\n", slavedspic.dummy);
-	printf("slavedspic balls_count = %d\r\n", slavedspic.balls_count);
-	printf("slavedspic corns_count = %d\r\n", slavedspic.corns_count);
+//	printf("slavedspic status = %d\r\n", slavedspic.status);	
+//	printf("slavedspic dummy = %d\r\n", slavedspic.dummy);
+//	printf("slavedspic balls_count = %d\r\n", slavedspic.balls_count);
+//	printf("slavedspic corns_count = %d\r\n", slavedspic.corns_count);
 }
 
 prog_char str_slavedspic_show_arg0[] = "slavedspic";
@@ -811,29 +811,29 @@ static void cmd_slavedspic_setmode1_parsed(void *parsed_result, void *data)
 {
 	struct cmd_slavedspic_setmode1_result *res = parsed_result;
 
-	if (!strcmp_P(res->arg1, PSTR("init")))
+	if (!strcmp(res->arg1, "init"))
 		i2c_slavedspic_mode_init();
-	else if (!strcmp_P(res->arg1, PSTR("exit")))
-		i2c_slavedspic_mode_exit();
-	else if (!strcmp_P(res->arg1, PSTR("wait")))
-		i2c_slavedspic_mode_wait();
-	else if (!strcmp_P(res->arg1, PSTR("hide_arm")))
-		i2c_slavedspic_mode_hide_arm();
-	else if (!strcmp_P(res->arg1, PSTR("show_arm")))
-		i2c_slavedspic_mode_show_arm();
-	else if (!strcmp_P(res->arg1, PSTR("prepare_harvest_ball")))
-		i2c_slavedspic_mode_prepare_harvest_ball();
-	else if (!strcmp_P(res->arg1, PSTR("harvest_tomato")))
-		i2c_slavedspic_mode_harvest_tomato();
-	else if (!strcmp_P(res->arg1, PSTR("finger_ball")))
-		i2c_slavedspic_mode_putin_finger_ball();
+	else if (!strcmp(res->arg1, "info"))
+	{
+		/* wait one pulling cycle */
+		i2c_wait_update();
 
+		/* show info */
+		printf("FRONT TS: state = %d / blocked = %d / catched = %d \n\r",
+				 slavedspic.ts[I2C_SIDE_FRONT].state,
+				 slavedspic.ts[I2C_SIDE_FRONT].blocked,
+				 slavedspic.ts[I2C_SIDE_FRONT].catched);
 
+		printf("REAR TS: state = %d / blocked = %d / catched = %d \n\r",
+				 slavedspic.ts[I2C_SIDE_REAR].state,
+				 slavedspic.ts[I2C_SIDE_REAR].blocked,
+				 slavedspic.ts[I2C_SIDE_REAR].catched);
+	}
 }
 
 prog_char str_slavedspic_setmode1_arg0[] = "slavedspic";
 parse_pgm_token_string_t cmd_slavedspic_setmode1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_setmode1_result, arg0, str_slavedspic_setmode1_arg0);
-prog_char str_slavedspic_setmode1_arg1[] = "init#exit#wait#hide_arm#show_arm#prepare_harvest_ball#harvest_tomato#finger_ball";
+prog_char str_slavedspic_setmode1_arg1[] = "init#info";
 parse_pgm_token_string_t cmd_slavedspic_setmode1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_setmode1_result, arg1, str_slavedspic_setmode1_arg1);
 
 prog_char help_slavedspic_setmode1[] = "set slavedspic mode (mode)";
@@ -855,6 +855,7 @@ parse_pgm_inst_t cmd_slavedspic_setmode1 = {
 struct cmd_slavedspic_setmode2_result {
 	fixed_string_t arg0;
 	fixed_string_t arg1;
+	fixed_string_t arg2;
 };
 
 /* function called when cmd_slavedspic_setmode2 is parsed successfully */
@@ -862,27 +863,31 @@ static void cmd_slavedspic_setmode2_parsed(void *parsed_result,
 			      __attribute__((unused)) void *data)
 {
 	struct cmd_slavedspic_setmode2_result *res = parsed_result;
+	uint8_t side;
 
-	if (!strcmp_P(res->arg1, PSTR("pump_on")))
-		i2c_slavedspic_mode_arm_pump_on();
-	else if (!strcmp_P(res->arg1, PSTR("pump_off")))
-		i2c_slavedspic_mode_arm_pump_off();
-	else if (!strcmp_P(res->arg1, PSTR("rolls_in")))
-		i2c_slavedspic_mode_corn_rolls_in();
-	else if (!strcmp_P(res->arg1, PSTR("rolls_out")))
-		i2c_slavedspic_mode_corn_rolls_out();
-	else if (!strcmp_P(res->arg1, PSTR("rolls_stop")))
-		i2c_slavedspic_mode_corn_rolls_stop();
-	else if (!strcmp_P(res->arg1, PSTR("harvest_corn")))
-		i2c_slavedspic_mode_harvest_corn();
-	else if (!strcmp_P(res->arg1, PSTR("out_corns")))
-		i2c_slavedspic_mode_out_corns();
+	/* get side */
+	if (!strcmp(res->arg3, "front"))
+		side = I2C_SIDE_FRONT;
+	else
+		side = I2C_SIDE_REAR;
+
+	/* token systems control */
+	if (!strcmp(res->arg1, "take"))
+		i2c_slavedspic_mode_token_take(side);
+	else if (!strcmp(res->arg1, "eject"))
+		i2c_slavedspic_mode_token_eject(side);
+	else if (!strcmp(res->arg1, "stop"))
+		i2c_slavedspic_mode_token_stop(side);
+	else if (!strcmp(res->arg1, "show"))
+		i2c_slavedspic_mode_token_show(side);
 }
 
 prog_char str_slavedspic_setmode2_arg0[] = "slavedspic";
 parse_pgm_token_string_t cmd_slavedspic_setmode2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_setmode2_result, arg0, str_slavedspic_setmode2_arg0);
-prog_char str_slavedspic_setmode2_arg1[] = "pump_on#pump_off#rolls_in#rolls_out#rolls_stop#harvest_corn#out_corns";
+prog_char str_slavedspic_setmode2_arg1[] = "take#eject#stop#show";
 parse_pgm_token_string_t cmd_slavedspic_setmode2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_setmode2_result, arg1, str_slavedspic_setmode2_arg1);
+prog_char str_slavedspic_setmode2_arg2[] = "front#rear";
+parse_pgm_token_string_t cmd_slavedspic_setmode2_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_setmode2_result, arg2, str_slavedspic_setmode2_arg2);
 
 prog_char help_slavedspic_setmode2[] = "set slavedspic mode";
 parse_pgm_inst_t cmd_slavedspic_setmode2 = {
@@ -896,50 +901,6 @@ parse_pgm_inst_t cmd_slavedspic_setmode2 = {
 	},
 };
 
-
-/**********************************************************/
-/* Slavedspic slavedspic_setmode3 */
-
-/* this structure is filled when cmd_slavedspic_setmode3 is parsed successfully */
-struct cmd_slavedspic_setmode3_result {
-	fixed_string_t arg0;
-	fixed_string_t arg1;
-	int16_t arg2;
-	int16_t arg3;
-};
-
-/* function called when cmd_slavedspic_setmode3 is parsed successfully */
-static void cmd_slavedspic_setmode3_parsed(void *parsed_result,
-			      __attribute__((unused)) void *data)
-{
-	struct cmd_slavedspic_setmode3_result *res = parsed_result;
-
-	if (!strcmp_P(res->arg1, PSTR("arm_goto_ah")))
-		i2c_slavedspic_mode_arm_goto_ah(res->arg2, res->arg3);
-	else if (!strcmp_P(res->arg1, PSTR("harvest_orange")))
-		i2c_slavedspic_mode_harvest_orange(res->arg2, res->arg3, 0);
-}
-
-prog_char str_slavedspic_setmode3_arg0[] = "slavedspic";
-parse_pgm_token_string_t cmd_slavedspic_setmode3_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_setmode3_result, arg0, str_slavedspic_setmode3_arg0);
-prog_char str_slavedspic_setmode3_arg1[] = "arm_goto_ah#harvest_orange";
-parse_pgm_token_string_t cmd_slavedspic_setmode3_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_setmode3_result, arg1, str_slavedspic_setmode3_arg1);
-parse_pgm_token_num_t cmd_slavedspic_setmode3_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_slavedspic_setmode3_result, arg2, INT16);
-parse_pgm_token_num_t cmd_slavedspic_setmode3_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_slavedspic_setmode3_result, arg3, INT16);
-
-prog_char help_slavedspic_setmode3[] = "set slavedspic mode";
-parse_pgm_inst_t cmd_slavedspic_setmode3 = {
-	.f = cmd_slavedspic_setmode3_parsed,  /* function to call */
-	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_slavedspic_setmode3,
-	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_slavedspic_setmode3_arg0, 
-		(prog_void *)&cmd_slavedspic_setmode3_arg1, 
-		(prog_void *)&cmd_slavedspic_setmode3_arg2, 
-		(prog_void *)&cmd_slavedspic_setmode3_arg3, 
-		NULL,
-	},
-};
 
 ///**********************************************************/
 ///* Mechboard_Setmode2 */

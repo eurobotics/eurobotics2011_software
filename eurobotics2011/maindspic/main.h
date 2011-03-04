@@ -20,6 +20,24 @@
  *  Javier Baliñas Santos <javier@arc-robots.org>
  */
 
+#include <aversive.h>
+#include <aversive/error.h>
+
+#include <time.h>
+#include <rdline.h>
+
+#include <encoders_dspic.h>
+#include <dac_mc.h>
+
+#include <pid.h>
+#include <quadramp.h>
+#include <control_system_manager.h>
+#include <robot_system.h>
+
+#include "../common/i2c_commands.h"
+
+
+/* SOME USEFUL MACROS AND VALUES  *********************************************/
 
 /* generic led toggle macro */
 #define LED_TOGGLE(port, bit) do {		\
@@ -55,16 +73,13 @@
 #define MATCH_TIME 89
 
 
-/* PHYSICS DIMENSIONS */
+/* ROBOT PARAMETERS *************************************************/
 
 /* distance between encoders weels,
  * decrease track to decrease angle */
-//#define EXT_TRACK_MM 292.0
+#define EXT_TRACK_MM 292.0
 //#define EXT_TRACK_MM 291.0275
-#define EXT_TRACK_MM 290.37650894
-
-
-
+//#define EXT_TRACK_MM 290.37650894
 
 #define VIRTUAL_TRACK_MM EXT_TRACK_MM
 
@@ -94,11 +109,11 @@
 #define RIGHT_MOTOR         ((void *)&gen.dac_mc_right)
 
 /** ERROR NUMS */
-#define E_USER_STRAT           194
-#define E_USER_I2C_PROTO       195
-#define E_USER_SENSOR          196
-#define E_USER_CS              197
-#define E_USER_BEACON          198
+#define E_USER_STRAT        194
+#define E_USER_I2C_PROTO    195
+#define E_USER_SENSOR       196
+#define E_USER_CS           197
+#define E_USER_BEACON       198
 
 /* EVENTS PRIORITIES */
 #define EVENT_PRIORITY_LED 			  170
@@ -120,8 +135,20 @@
 /* dynamic logs */
 #define NB_LOGS 10
 
-/* generic to all boards */
-struct genboard{
+/* MAIN DATA STRUCTURES **************************************/
+
+/* cs data */
+struct cs_block {
+	uint8_t on;
+	struct cs cs;
+  	struct pid_filter pid;
+	struct quadramp_filter qr;
+	struct blocking_detection bd;
+};
+
+/* genboard */
+struct genboard
+{
 	/* command line interface */
 	struct rdline rdl;
 	char prompt[RDLINE_PROMPT_SIZE];
@@ -146,17 +173,9 @@ struct genboard{
 	uint8_t debug;
 };
 
-struct cs_block {
-	uint8_t on;
-  struct cs cs;
-  struct pid_filter pid;
-	struct quadramp_filter qr;
-	struct blocking_detection bd;
-};
-
-/* mainboard specific */
-struct mainboard {
-
+/* maindspic */
+struct mainboard
+{
 #define DO_ENCODERS  1
 #define DO_CS        2
 #define DO_RS        4
@@ -166,14 +185,14 @@ struct mainboard {
 #define DO_POWER    64
 #define DO_OPP     128
 
-	/* misc flags */
+	/* events flags */
 	uint8_t flags;                
 
 	/* control systems */
-  struct cs_block angle;
-  struct cs_block distance;
+	struct cs_block angle;
+	struct cs_block distance;
 
-	/* x,y positionning */
+	/* x,y positionning and traj*/
 	struct robot_system rs;
 	struct robot_position pos;
    struct trajectory traj;
@@ -182,21 +201,28 @@ struct mainboard {
 	uint8_t our_color;
 	volatile int16_t speed_a;     /* current angle speed */
 	volatile int16_t speed_d;     /* current dist speed */
-	int32_t dac_l;                /* current left dac */
-	int32_t dac_r;                /* current right dac */
+	volatile int32_t dac_l;       /* current left dac */
+	volatile int32_t dac_r;       /* current right dac */
 };
 
+
 /* state of slavedspic, synchronized through i2c */
-struct slavedspic {
-	uint8_t status;
-	uint8_t dummy;
-	uint8_t balls_count;
-	uint8_t corns_count;
+struct slavedspic 
+{
+	struct {
+		uint8_t state;
+		uint8_t belts_blocked;
+		uint8_t token_catched;
+	}ts[I2C_SIDE_MAX];
+
+#define TOKEN_SYSTEM_SPEED 255
+
 };
 
 /* state of beaconboard, synchronized through i2c */
-struct beaconboard {
-	
+struct beaconboard 
+{
+	/* status and color */
 	uint8_t status;
 	uint8_t color;
 	
