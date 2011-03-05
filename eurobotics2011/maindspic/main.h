@@ -32,16 +32,25 @@
 
 #include <encoders_dspic.h>
 #include <dac_mc.h>
+#include <pwm_servo.h>
 
 #include <pid.h>
 #include <quadramp.h>
 #include <control_system_manager.h>
+#include <blocking_detection_manager.h>
 #include <robot_system.h>
+#include <position_manager.h>
+#include <trajectory_manager.h>
 
 #include "../common/i2c_commands.h"
 
 
 /* SOME USEFUL MACROS AND VALUES  *********************************************/
+
+/* uart 0 is for cmds and uart 1 is 
+ * multiplexed between beacon and slavedspic */
+#define CMDLINE_UART 	0
+#define MUX_UART 			1
 
 /* generic led toggle macro */
 #define LED_TOGGLE(port, bit) do {		\
@@ -52,20 +61,20 @@
 	} while(0)
 
 /* leds manage */
-#define LED1_ON() 	cbi(LATA, 4)
-#define LED1_OFF() 	sbi(LATA, 4)
+#define LED1_ON() 		cbi(LATA, 4)
+#define LED1_OFF() 		sbi(LATA, 4)
 #define LED1_TOGGLE() 	LED_TOGGLE(LATA, 4)
 
-#define LED2_ON() 	cbi(LATA, 8)
-#define LED2_OFF() 	sbi(LATA, 8)
+#define LED2_ON() 		cbi(LATA, 8)
+#define LED2_OFF() 			sbi(LATA, 8)
 #define LED2_TOGGLE() 	LED_TOGGLE(LATA, 8)
 
-#define LED3_ON() 	cbi(LATC, 2)
-#define LED3_OFF() 	sbi(LATC, 2)
+#define LED3_ON() 		cbi(LATC, 2)
+#define LED3_OFF() 		sbi(LATC, 2)
 #define LED3_TOGGLE() 	LED_TOGGLE(LATC, 2)
 
-#define LED4_ON() 	cbi(LATC, 8)
-#define LED4_OFF() 	sbi(LATC, 8)
+#define LED4_ON() 		cbi(LATC, 8)
+#define LED4_OFF() 		sbi(LATC, 8)
 #define LED4_TOGGLE() 	LED_TOGGLE(LATC, 8)
 
 

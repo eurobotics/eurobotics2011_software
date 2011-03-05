@@ -23,16 +23,15 @@
 #ifndef _BEACON_H_
 #define _BEACON_H_
 
-#define BEACON_UART	1
-#define LINE_BUFF_SIZE 	64
-#define CMD_LINE_SIZE 	16
 
 void beacon_cmd_wt11_local_reset(void);
 void beacon_cmd_wt11_call(void);
 void beacon_cmd_wt11_close(void);
+
 void beacon_daemon(void * dummy);
 void beacon_send_daemon(void * dummy);
 void beacon_recv_daemon(void);
+
 void beacon_init(void);
 
 void beacon_cmd_color(void);

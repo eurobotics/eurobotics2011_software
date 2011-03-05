@@ -218,7 +218,8 @@ void maindspic_cs_init(void)
 	trajectory_set_cs(&mainboard.traj, &mainboard.distance.cs,
 			  &mainboard.angle.cs);
 	trajectory_set_robot_params(&mainboard.traj, &mainboard.rs, &mainboard.pos);
-	trajectory_set_speed(&mainboard.traj, SPEED_DIST_FAST, SPEED_ANGLE_FAST); 		/* d, a */
+	/* d, a */
+	trajectory_set_speed(&mainboard.traj, SPEED_DIST_FAST, SPEED_ANGLE_FAST); 		
 	/* distance window, angle window, angle start */
 	trajectory_set_windows(&mainboard.traj, 200., 5.0, 30.);
 

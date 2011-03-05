@@ -21,33 +21,11 @@
  */
 
 #include <aversive.h>
-#include <aversive/pgmspace.h>
-#include <aversive/wait.h>
-#include <aversive/error.h>
-
-#include <uart.h>
 #include <encoders_dspic.h>
 #include <dac_mc.h>
-#include <pwm_servo.h>
-#include <scheduler.h>
-#include <time.h>
 
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <trajectory_manager.h>
-#include <vect_base.h>
-#include <lines.h>
-#include <polygon.h>
-#include <obstacle_avoidance.h>
-#include <blocking_detection_manager.h>
-#include <robot_system.h>
-#include <position_manager.h>
-
-#include <rdline.h>
-
-#include "main.h"
 #include "actuator.h"
+#include "main.h"
 
 void dac_set_and_save(void *dac, int32_t val)
 {
@@ -71,4 +49,14 @@ void dac_set_and_save(void *dac, int32_t val)
 	dac_mc_set(dac, val);
 }
 
-/* TODO: enable lasers */
+/* lasers off */
+void lasers_enable(void)
+{
+	_LATC7 = 0;
+}
+
+/* lasers on */
+void lasers_disable(void)
+{
+	_LATC7 = 1;
+}

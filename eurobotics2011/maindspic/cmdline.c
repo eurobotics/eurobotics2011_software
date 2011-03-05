@@ -40,25 +40,8 @@
 
 #include <uart.h>
 
-#include <dac_mc.h>
-#include <pwm_servo.h>
-#include <time.h>
-
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <trajectory_manager.h>
-#include <vect_base.h>
-#include <lines.h>
-#include <polygon.h>
-#include <obstacle_avoidance.h>
-#include <blocking_detection_manager.h>
-#include <robot_system.h>
-#include <position_manager.h>
-
 #include "main.h"
 #include "cmdline.h"
-#include "beacon.h"
 #include "strat_base.h"
 
 
@@ -81,6 +64,7 @@ static void valid_buffer(const char *buf, uint8_t size)
 	interrupt_traj_reset();
 
 	ret = parse(main_ctx, buf);
+	
 	if (ret == PARSE_AMBIGUOUS)
 		printf_P(PSTR("Ambiguous command\r\n"));
 	else if (ret == PARSE_NOMATCH)

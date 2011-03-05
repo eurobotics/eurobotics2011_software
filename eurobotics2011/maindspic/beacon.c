@@ -24,40 +24,26 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <aversive/pgmspace.h>
+#include <aversive.h>
 #include <aversive/wait.h>
 #include <aversive/error.h>
 
 #include <uart.h>
-#include <dac_mc.h>
-#include <pwm_servo.h>
-#include <i2c_mem.h>
 #include <time.h>
-
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <trajectory_manager.h>
-#include <vect_base.h>
-#include <lines.h>
-#include <polygon.h>
-#include <obstacle_avoidance.h>
-#include <blocking_detection_manager.h>
-#include <robot_system.h>
-#include <position_manager.h>
-
-#include <rdline.h>
-#include <parse.h>
-#include <parse_string.h>
-#include <parse_num.h>
 
 #include "../common/i2c_commands.h"
 
 #include "main.h"
 #include "beacon.h"
 
+#define BEACON_UART		1
+#define LINE_BUFF_SIZE 	64
+#define CMD_LINE_SIZE 	16
+
+/* local header functions */
 void beacon_pull_opponent(void);
 
+/* global variables */
 int8_t beacon_connected=0;
 int16_t link_id = 0;
 int16_t error_id = 0;

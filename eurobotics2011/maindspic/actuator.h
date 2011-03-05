@@ -20,14 +20,12 @@
  *  Javier Baliñas Santos <javier@arc-robots.org>
  */
 
+#include <stdint.h>
+
+/* used by cs, correct offset and save values */
 void dac_set_and_save(void *dac, int32_t val);
 
-#define PWM_BALL_LID_R_OPEN		350
-#define PWM_BALL_LID_R_CLOSE	700
+/* lasers on/off */
+void lasers_enable(void);
+void lasers_disable(void);
 
-#define PWM_BALL_LID_L_OPEN 	775
-#define PWM_BALL_LID_L_CLOSE	375
-
-
-void ball_lids_close(void);
-void ball_lids_open(void);

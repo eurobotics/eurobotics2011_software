@@ -32,26 +32,7 @@
 
 #include <aversive.h>
 #include <aversive/error.h>
-
-//#include <adc.h>
 #include <scheduler.h>
-#include <pwm_servo.h>
-#include <dac_mc.h>
-
-#include <pid.h>
-#include <quadramp.h>
-#include <control_system_manager.h>
-#include <trajectory_manager.h>
-#include <vect_base.h>
-#include <lines.h>
-#include <polygon.h>
-#include <obstacle_avoidance.h>
-#include <blocking_detection_manager.h>
-#include <robot_system.h>
-#include <position_manager.h>
-
-#include <parse.h>
-#include <rdline.h>
 
 #include "main.h"
 #include "sensor.h"
