@@ -32,7 +32,17 @@
 #include <aversive/pgmspace.h>
 #include <parse.h>
 
+#define COMPILE_COMMANDS_GEN
+#define COMPILE_COMMANDS_CS
+#define COMPILE_COMMANDS_MAINBOARD
+#define COMPILE_COMMANDS_TRAJ
+
+
 /* commands_gen.c */
+#ifdef COMPILE_COMMANDS_GEN
+
+#include "./commands_gen.c"
+
 extern parse_pgm_inst_t cmd_reset;
 //extern parse_pgm_inst_t cmd_bootloader;
 extern parse_pgm_inst_t cmd_encoders;
@@ -47,8 +57,13 @@ extern parse_pgm_inst_t cmd_log_type;
 //extern parse_pgm_inst_t cmd_stack_space;
 extern parse_pgm_inst_t cmd_scheduler;
 
+#endif /* COMPILE_COMMANDS_GEN */
 
 /* commands_cs.c */
+#ifdef COMPILE_COMMANDS_CS
+
+#include "./commands_cs.c"
+
 extern parse_pgm_inst_t cmd_gain;
 extern parse_pgm_inst_t cmd_gain_show;
 extern parse_pgm_inst_t cmd_speed;
@@ -64,39 +79,34 @@ extern parse_pgm_inst_t cmd_cs_status;
 extern parse_pgm_inst_t cmd_blocking_i;
 extern parse_pgm_inst_t cmd_blocking_i_show;
 
+#endif /* COMPILE_COMMANDS_CS */
+
 /* commands_mainboard.c */
+#ifdef COMPILE_COMMANDS_MAINBOARD
+
+#include "./commands_mainboard.c"
+
 extern parse_pgm_inst_t cmd_event;
-//extern parse_pgm_inst_t cmd_spi_test;
 extern parse_pgm_inst_t cmd_opponent;
 extern parse_pgm_inst_t cmd_opponent_set;
 extern parse_pgm_inst_t cmd_start;
+extern parse_pgm_inst_t cmd_color;
+extern parse_pgm_inst_t cmd_slavedspic;
+extern parse_pgm_inst_t cmd_slavedspic_ts;
+extern parse_pgm_inst_t cmd_beacon;
 //extern parse_pgm_inst_t cmd_interact;
-//extern parse_pgm_inst_t cmd_color;
 //extern parse_pgm_inst_t cmd_rs;
 //extern parse_pgm_inst_t cmd_i2cdebug;
-extern parse_pgm_inst_t cmd_slavedspic_show;
-extern parse_pgm_inst_t cmd_slavedspic_setmode1;
-extern parse_pgm_inst_t cmd_slavedspic_setmode2;
-extern parse_pgm_inst_t cmd_slavedspic_setmode3;
-//extern parse_pgm_inst_t cmd_mechboard_setmode4;
-//extern parse_pgm_inst_t cmd_mechboard_setmode5;
-//extern parse_pgm_inst_t cmd_pickup_wheels;
-extern parse_pgm_inst_t cmd_beacon;
-//extern parse_pgm_inst_t cmd_beacon_start;
-//extern parse_pgm_inst_t cmd_pump_current;
-//extern parse_pgm_inst_t cmd_build_test;
-//extern parse_pgm_inst_t cmd_column_test;
-//extern parse_pgm_inst_t cmd_column_test2;
-//extern parse_pgm_inst_t cmd_lintel_test;
-//extern parse_pgm_inst_t cmd_pickup_test;
-//extern parse_pgm_inst_t cmd_scan_test;
-//extern parse_pgm_inst_t cmd_scan_test2;
-//extern parse_pgm_inst_t cmd_time_monitor;
-//extern parse_pgm_inst_t cmd_scanner;
-//extern parse_pgm_inst_t cmd_build_z1;
-//extern parse_pgm_inst_t cmd_test;
+
+#endif /* COMPILE_COMMANDS_MAINBOARD */
+
+
 
 /* commands_traj.c */
+#ifdef COMPILE_COMMANDS_TRAJ
+
+#include "./commands_traj.c"
+
 extern parse_pgm_inst_t cmd_traj_speed;
 extern parse_pgm_inst_t cmd_traj_speed_show;
 extern parse_pgm_inst_t cmd_trajectory;
@@ -120,9 +130,12 @@ extern parse_pgm_inst_t cmd_position_set;
 //extern parse_pgm_inst_t cmd_strat_conf3;
 //extern parse_pgm_inst_t cmd_subtraj;
 
+#endif /* COMPILE_COMMANDS_TRAJ */
+
 /* in progmem */
 parse_pgm_ctx_t main_ctx[] = {
 
+#ifdef COMPILE_COMMANDS_GEN
 	/* commands_gen.c */
 	(parse_pgm_inst_t *)&cmd_reset,
 //	(parse_pgm_inst_t *)&cmd_bootloader,
@@ -137,6 +150,10 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_log_type,
 //	(parse_pgm_inst_t *)&cmd_stack_space,
 	(parse_pgm_inst_t *)&cmd_scheduler,
+
+#endif /* COMPILE_COMMANDS_GEN */
+
+#ifdef COMPILE_COMMANDS_CS
 
 	/* commands_cs.c */
 	(parse_pgm_inst_t *)&cmd_gain,
@@ -154,37 +171,26 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_blocking_i,
 	(parse_pgm_inst_t *)&cmd_blocking_i_show,
 
+#endif /* COMPILE_COMMANDS_CS */
+
+#ifdef COMPILE_COMMANDS_MAINBOARD
+
 	/* commands_mainboard.c */
 	(parse_pgm_inst_t *)&cmd_event,
-//	(parse_pgm_inst_t *)&cmd_spi_test,
 	(parse_pgm_inst_t *)&cmd_opponent,
 	(parse_pgm_inst_t *)&cmd_opponent_set,
 	(parse_pgm_inst_t *)&cmd_start,
+	(parse_pgm_inst_t *)&cmd_color,
+	(parse_pgm_inst_t *)&cmd_slavedspic,
+	(parse_pgm_inst_t *)&cmd_slavedspic_ts,
+	(parse_pgm_inst_t *)&cmd_beacon,
 //	(parse_pgm_inst_t *)&cmd_interact,
-//	(parse_pgm_inst_t *)&cmd_color,
 //	(parse_pgm_inst_t *)&cmd_rs,
 //	(parse_pgm_inst_t *)&cmd_i2cdebug,
-	(parse_pgm_inst_t *)&cmd_slavedspic_show,
-	(parse_pgm_inst_t *)&cmd_slavedspic_setmode1,
-	(parse_pgm_inst_t *)&cmd_slavedspic_setmode2,
-	(parse_pgm_inst_t *)&cmd_slavedspic_setmode3,
-//	(parse_pgm_inst_t *)&cmd_mechboard_setmode4,
-//	(parse_pgm_inst_t *)&cmd_mechboard_setmode5,
-//	(parse_pgm_inst_t *)&cmd_pickup_wheels,
-//	(parse_pgm_inst_t *)&cmd_beacon_start,
-	(parse_pgm_inst_t *)&cmd_beacon,
-//	(parse_pgm_inst_t *)&cmd_pump_current,
-//	(parse_pgm_inst_t *)&cmd_build_test,
-//	(parse_pgm_inst_t *)&cmd_column_test,
-//	(parse_pgm_inst_t *)&cmd_column_test2,
-//	(parse_pgm_inst_t *)&cmd_lintel_test,
-//	(parse_pgm_inst_t *)&cmd_pickup_test,
-//	(parse_pgm_inst_t *)&cmd_scan_test,
-//	(parse_pgm_inst_t *)&cmd_scan_test2,
-//	(parse_pgm_inst_t *)&cmd_time_monitor,
-//	(parse_pgm_inst_t *)&cmd_scanner,
-//	(parse_pgm_inst_t *)&cmd_build_z1,
-//	(parse_pgm_inst_t *)&cmd_test,
+
+#endif /* COMPILE_COMMANDS_MAINBOARD */
+
+#ifdef COMPILE_COMMANDS_TRAJ
 
 	/* commands_traj.c */
 	(parse_pgm_inst_t *)&cmd_traj_speed,
@@ -208,5 +214,8 @@ parse_pgm_ctx_t main_ctx[] = {
 //	(parse_pgm_inst_t *)&cmd_strat_conf2,
 //	(parse_pgm_inst_t *)&cmd_strat_conf3,
 //	(parse_pgm_inst_t *)&cmd_subtraj,
+
+#endif /* COMPILE_COMMANDS_TRAJ */
+
 	NULL,
 };

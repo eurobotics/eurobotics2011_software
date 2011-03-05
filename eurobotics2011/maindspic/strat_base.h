@@ -27,6 +27,9 @@
  *  strat_base.h,v 1.4 2009/05/27 20:04:07 zer0 Exp.
  */
 
+#ifndef _STRAT_BASE_H_
+#define _STRAT_BASE_H_
+
 
 /* return values for strats and sub trajs */
 #define END_TRAJ       1 /* traj successful */
@@ -97,3 +100,5 @@ uint8_t test_traj_end(uint8_t why);
 /* loop until test_traj_end() is true */
 #define wait_traj_end(why) __wait_traj_end_debug(why, __LINE__)
 uint8_t __wait_traj_end_debug(uint8_t why, uint16_t line);
+
+#endif

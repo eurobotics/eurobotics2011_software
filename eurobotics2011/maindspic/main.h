@@ -20,6 +20,10 @@
  *  Javier Baliñas Santos <javier@arc-robots.org>
  */
 
+#ifndef _MAIN_H_
+#define _MAIN_H_
+
+
 #include <aversive.h>
 #include <aversive/error.h>
 
@@ -174,8 +178,10 @@ struct genboard
 };
 
 /* maindspic */
-struct mainboard
+struct mainboard 
 {
+	/* events flags */
+	uint8_t flags;                
 #define DO_ENCODERS  1
 #define DO_CS        2
 #define DO_RS        4
@@ -184,9 +190,6 @@ struct mainboard
 #define DO_TIMER    32
 #define DO_POWER    64
 #define DO_OPP     128
-
-	/* events flags */
-	uint8_t flags;                
 
 	/* control systems */
 	struct cs_block angle;
@@ -209,14 +212,12 @@ struct mainboard
 /* state of slavedspic, synchronized through i2c */
 struct slavedspic 
 {
+#define TOKEN_SYSTEM_SPEED	255
 	struct {
 		uint8_t state;
 		uint8_t belts_blocked;
 		uint8_t token_catched;
 	}ts[I2C_SIDE_MAX];
-
-#define TOKEN_SYSTEM_SPEED 255
-
 };
 
 /* state of beaconboard, synchronized through i2c */
@@ -243,10 +244,10 @@ extern struct beaconboard beaconboard;
 //void bootloader(void);
 
 /* swap UART 2 between beacon and slavedspic */ 
-static void uart2_swap_to(uint8_t channel)
+static inline void set_uart_mux(uint8_t channel)
 {
-#define BEACON_CHANNEL		0
-#define SLAVEDSPIC_CHANNEL	1
+#define BEACON_CHANNEL			0
+#define SLAVEDSPIC_CHANNEL		1
 
 	uint8_t flags;
 
@@ -284,3 +285,4 @@ static void uart2_swap_to(uint8_t channel)
 							      \
         __ret;                                                \
 })
+#endif

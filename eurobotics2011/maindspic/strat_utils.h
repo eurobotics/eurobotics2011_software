@@ -27,6 +27,9 @@
  *  strat_utils.h,v 1.4 2009/05/27 20:04:07 zer0 Exp.
  */
 
+#ifndef _STRAT_UTILS_H_
+#define _STRAT_UTILS_H_
+
 
 #define DEG(x) (((double)(x)) * (180.0 / M_PI))
 #define RAD(x) (((double)(x)) * (M_PI / 180.0))
@@ -84,3 +87,5 @@ int8_t get_opponent_xyda(int16_t *x, int16_t *y, int16_t *d, int16_t *a);
 //uint8_t wait_scan_done(uint16_t timeout);
 
 uint8_t opponent_is_behind(void);
+
+#endif

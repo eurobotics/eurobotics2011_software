@@ -28,7 +28,11 @@
  *  cmdline.h,v 1.3 2009/05/27 20:04:07 zer0 Exp.
  */
 
+#ifndef _CMDLINE_H_
+#define _CMDLINE_H_
+
 #define CMDLINE_UART 0
+#define MUX_UART 		1
 
 /* uart rx callback for reset() */
 void emergency(char c);
@@ -50,3 +54,5 @@ static inline int16_t cmdline_getchar(void) {
 static inline uint8_t cmdline_getchar_wait(void) {
 	return uart_recv(CMDLINE_UART);
 }
+
+#endif

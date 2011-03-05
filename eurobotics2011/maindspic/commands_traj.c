@@ -617,59 +617,59 @@ struct cmd_position_result {
 #define ROBOT_DIS2_WALL 		45
 static void auto_position(void)
 {
-	uint8_t err;
-	uint16_t old_spdd, old_spda;
-
-	interrupt_traj_reset();
-	strat_get_speed(&old_spdd, &old_spda);
-	strat_set_speed(AUTOPOS_SPEED_FAST, AUTOPOS_SPEED_FAST);
-
-	trajectory_d_rel(&mainboard.traj, -300);
-	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
-	if (err == END_INTR)
-		goto intr;
-	wait_ms(100);
-	
-	if(mainboard.our_color == I2C_COLOR_RED)
-		strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), 0, 0);
-	else
-		strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), 0, -180);
-	
-	trajectory_d_rel(&mainboard.traj, (230-45));
-	err = wait_traj_end(END_INTR|END_TRAJ);
-	if (err == END_INTR)
-		goto intr;
-
-	trajectory_a_rel(&mainboard.traj, COLOR_A(90));
-	err = wait_traj_end(END_INTR|END_TRAJ);
-	if (err == END_INTR)
-		goto intr;
-
-	trajectory_d_rel(&mainboard.traj, -300);
-	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
-	if (err == END_INTR)
-		goto intr;
-	wait_ms(100);
-	strat_reset_pos(DO_NOT_SET_POS, ROBOT_DIS2_WALL, 90);
-
-	trajectory_d_rel(&mainboard.traj, (190-45));
-	err = wait_traj_end(END_INTR|END_TRAJ);
-	if (err == END_INTR)
-		goto intr;
-	wait_ms(100);
-	
-	trajectory_a_rel(&mainboard.traj, COLOR_A(-27));
-	err = wait_traj_end(END_INTR|END_TRAJ);
-	if (err == END_INTR)
-		goto intr;
-	wait_ms(100);
-	
-	strat_set_speed(old_spdd, old_spda);
-	return;
-
-intr:
-	strat_hardstop();
-	strat_set_speed(old_spdd, old_spda);
+//	uint8_t err;
+//	uint16_t old_spdd, old_spda;
+//
+//	interrupt_traj_reset();
+//	strat_get_speed(&old_spdd, &old_spda);
+//	strat_set_speed(AUTOPOS_SPEED_FAST, AUTOPOS_SPEED_FAST);
+//
+//	trajectory_d_rel(&mainboard.traj, -300);
+//	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
+//	if (err == END_INTR)
+//		goto intr;
+//	wait_ms(100);
+//	
+//	if(mainboard.our_color == I2C_COLOR_RED)
+//		strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), 0, 0);
+//	else
+//		strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), 0, -180);
+//	
+//	trajectory_d_rel(&mainboard.traj, (230-45));
+//	err = wait_traj_end(END_INTR|END_TRAJ);
+//	if (err == END_INTR)
+//		goto intr;
+//
+//	trajectory_a_rel(&mainboard.traj, COLOR_A_REL(90));
+//	err = wait_traj_end(END_INTR|END_TRAJ);
+//	if (err == END_INTR)
+//		goto intr;
+//
+//	trajectory_d_rel(&mainboard.traj, -300);
+//	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
+//	if (err == END_INTR)
+//		goto intr;
+//	wait_ms(100);
+//	strat_reset_pos(DO_NOT_SET_POS, ROBOT_DIS2_WALL, 90);
+//
+//	trajectory_d_rel(&mainboard.traj, (190-45));
+//	err = wait_traj_end(END_INTR|END_TRAJ);
+//	if (err == END_INTR)
+//		goto intr;
+//	wait_ms(100);
+//	
+//	trajectory_a_rel(&mainboard.traj, COLOR_A_REL(-27));
+//	err = wait_traj_end(END_INTR|END_TRAJ);
+//	if (err == END_INTR)
+//		goto intr;
+//	wait_ms(100);
+//	
+//	strat_set_speed(old_spdd, old_spda);
+//	return;
+//
+//intr:
+//	strat_hardstop();
+//	strat_set_speed(old_spdd, old_spda);
 }
 
 /* function called when cmd_position is parsed successfully */

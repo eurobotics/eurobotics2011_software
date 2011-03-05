@@ -136,9 +136,8 @@ static void do_cs(void *dummy)
 
 			/* TODO: disable lasers */
 
-			/* stop slavedspic actuators */		
-			i2c_slavedspic_mode_wait();
-
+			/* TODO: stop slavedspic actuators */		
+	
 			/* TODO: stop beacon */
 
 			/* kill strat */

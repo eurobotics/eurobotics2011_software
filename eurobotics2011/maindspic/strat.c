@@ -68,26 +68,6 @@ struct strat_infos strat_infos = {
 	.conf = {
 		.flags = 0,
 	},
-	.corn = {
-		[0] = {X(0), Y(9)},
-		[1] = {X(0), Y(5)},
-		[2] = {X(0), Y(1)},
-		[3] = {X(2), Y(11)},
-		[4] = {X(2), Y(7)},
-		[5] = {X(2), Y(3)},
-		[6] = {X(4), Y(9)},
-		[7] = {X(4), Y(5)},
-		[8] = {X(6), Y(11)},
-		[9] = {X(6), Y(7)},
-		[10] = {X(8), Y(9)},
-		[11] = {X(8), Y(5)},
-		[12] = {X(10), Y(11)},
-		[13] = {X(10), Y(7)},
-		[14] = {X(10), Y(3)},
-		[15] = {X(12), Y(9)},
-		[16] = {X(12), Y(5)},
-		[17] = {X(12), Y(1)},
-	}
 };
 
 /*************************************************************/
@@ -101,13 +81,13 @@ void strat_set_bounding_box(void)
 	if (get_color() == I2C_COLOR_RED) {
 		strat_infos.area_bbox.x1 = 350;
 		strat_infos.area_bbox.y1 = 300;
-		strat_infos.area_bbox.x2 = 2650; /* needed for c1 */
+		strat_infos.area_bbox.x2 = 2650;
 		strat_infos.area_bbox.y2 = 1800;
 	}
 	else {
 		strat_infos.area_bbox.x1 = 350;
 		strat_infos.area_bbox.y1 = 300;
-		strat_infos.area_bbox.x2 = 2650; /* needed for c1 */
+		strat_infos.area_bbox.x2 = 2650;
 		strat_infos.area_bbox.y2 = 1800;
 	}
 
@@ -123,9 +103,7 @@ void strat_preinit(void)
 	time_reset();
 	interrupt_traj_reset();
 	mainboard.flags =  DO_ENCODERS | DO_CS | DO_RS |
-										DO_POS | DO_BD | DO_POWER | DO_OPP;
-
-	i2c_slavedspic_mode_hide_arm();
+							 DO_POS | DO_BD | DO_POWER | DO_OPP;
 
 	strat_dump_conf();
 	strat_dump_infos(__FUNCTION__);
@@ -138,23 +116,6 @@ void strat_dump_conf(void)
 
 	printf_P(PSTR("-- conf --\r\n"));
 	
-	printf_P(PSTR("  harvest_tomatoes: "));
-	if (strat_infos.conf.flags & STRAT_CONF_HARVEST_TOMATOES)
-		printf_P(PSTR("on\r\n"));
-	else
-		printf_P(PSTR("off\r\n"));
-
-	printf_P(PSTR("  harvest_static_corns: "));
-	if (strat_infos.conf.flags & STRAT_CONF_HARVEST_STATIC_CORNS)
-		printf_P(PSTR("on\r\n"));
-	else
-		printf_P(PSTR("off\r\n"));
-
-	printf_P(PSTR("  harvest_fall_corns: "));
-	if (strat_infos.conf.flags & STRAT_CONF_HARVEST_FALL_CORNS)
-		printf_P(PSTR("on\r\n"));
-	else
-		printf_P(PSTR("off\r\n"));
 }
 
 /* display current information about the state of the game */
@@ -165,12 +126,6 @@ void strat_dump_infos(const char *caller)
 
 	printf_P(PSTR("%s() dump strat infos:\r\n"), caller);
 
-	printf("balls_count = %d\n\r", strat_infos.balls_count);
-	printf("corns_count = %d\n\r", strat_infos.corns_count);
-	printf("opp_was_on_rampe = %d\n\r", strat_infos.opp_was_on_rampe);
-  printf("tomato_event = %d\n\r", strat_infos.tomato_event);
-  printf("static_corn_event = %d\n\r", strat_infos.static_corn_event);
-  printf("fall_corn_event = %d\n\r", strat_infos.fall_corn_event);
 }
 
 /* init current area state before a match. Dump update user conf
@@ -179,11 +134,6 @@ void strat_reset_infos(void)
 {
 	strat_set_bounding_box();
 	
-	strat_infos.opp_was_on_rampe = FALSE;
-	strat_infos.tomato_event = OFF;
-	strat_infos.static_corn_event = OFF;
-	strat_infos.fall_corn_event = OFF;
-	strat_infos.event_elements_enable = 0;
 }
 
 /* call it just before launching the strat */
@@ -212,11 +162,13 @@ void strat_exit(void)
 	strat_hardstop();
 	time_reset();
 	wait_ms(1000);
+
 	IRQ_LOCK(flags);
 	mainboard.flags &= ~(DO_CS);
 	dac_mc_set(LEFT_MOTOR, 0);
 	dac_mc_set(RIGHT_MOTOR, 0);
 	IRQ_UNLOCK(flags);
+
 	beacon_cmd_beacon_off();
 }
 
@@ -226,20 +178,6 @@ void strat_event(void *dummy)
 	/* limit speed when opponent is close */
 	strat_limit_speed();
 	
-	//if(strat_infos.event_elements_enable){
-		/* dectect tomatos */
-		//strat_event_tomato();
-		
-		/* detect corns */
-		//strat_event_static_corn();
-		
-		/* detect fall corns */
-		//strat_event_fall_corn();
-	//}	
-
-//	/* dectct opponent with sensor */
-//	if(sensor_get(S_OBSTACLE_FRONT))
-//		strat_hardstop();
 }
 
 /* dump state (every 5 s max) */
@@ -261,7 +199,7 @@ void strat_event(void *dummy)
 uint8_t strat_homologation(void)
 {
 	uint8_t err;
-	uint16_t old_spdd, old_spda;
+//	uint16_t old_spdd, old_spda;
 
 //	/* set new speed */
 //	strat_get_speed(&old_spdd, &old_spda);
