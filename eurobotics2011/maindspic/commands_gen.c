@@ -633,7 +633,7 @@ prog_char str_log_arg1_type[] = "type";
 parse_pgm_token_string_t cmd_log_arg1_type = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg1, str_log_arg1_type);
 /* keep it sync with log_name_and_num above */
 //prog_char str_log_arg2_type[] = "uart#rs#servo#traj#i2c#oa#strat#i2cproto#ext#sensor#bd#cs";
-prog_char str_log_arg2_type[] = "uart#rs#traj#oa#ext#sensor#cs";
+prog_char str_log_arg2_type[] = "uart#rs#traj#oa#ext#sensor#cs#bd";
 parse_pgm_token_string_t cmd_log_arg2_type = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg2, str_log_arg2_type);
 prog_char str_log_arg3[] = "on#off";
 parse_pgm_token_string_t cmd_log_arg3 = TOKEN_STRING_INITIALIZER(struct cmd_log_type_result, arg3, str_log_arg3);

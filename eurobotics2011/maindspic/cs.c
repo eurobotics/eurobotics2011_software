@@ -199,9 +199,9 @@ void maindspic_cs_init(void)
 
 	/* increase gain to decrease dist, increase left and it will turn more left */
 	rs_set_left_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				LEFT_ENCODER, IMP_COEF * 1.014); //0.998);//0.999083
+				LEFT_ENCODER, IMP_COEF * 0.996); //0.998);//0.999083
 	rs_set_right_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-				 RIGHT_ENCODER, IMP_COEF * -1.055);//-1.002);//1.003087
+				 RIGHT_ENCODER, IMP_COEF * -1.004);//-1.002);//1.003087
 
 	/* rs will use external encoders */
 	rs_set_flags(&mainboard.rs, RS_USE_EXT);
@@ -226,15 +226,15 @@ void maindspic_cs_init(void)
 	/* ---- CS angle */
 	/* PID */
 	pid_init(&mainboard.angle.pid);
-	pid_set_gains(&mainboard.angle.pid, 600, 3, 3000);
+	pid_set_gains(&mainboard.angle.pid, 300, 3, 3000);
 	pid_set_maximums(&mainboard.angle.pid, 0, 30000, 60000);
 	pid_set_out_shift(&mainboard.angle.pid, 6);	
 	pid_set_derivate_filter(&mainboard.angle.pid, 1);
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.angle.qr);
-	quadramp_set_1st_order_vars(&mainboard.angle.qr, 6000, 6000); 	/* set speed */
-	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 80, 80); 		/* set accel */
+	quadramp_set_1st_order_vars(&mainboard.angle.qr, 100, 100); 	/* set speed */
+	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 5, 5); 		/* set accel */
 
 
 	/* CS */
@@ -247,8 +247,8 @@ void maindspic_cs_init(void)
 
 	/* Blocking detection */
 	bd_init(&mainboard.angle.bd);
-	bd_set_speed_threshold(&mainboard.angle.bd, 140);
-	bd_set_current_thresholds(&mainboard.angle.bd, 30, 4500, 1000000, 50);
+	bd_set_speed_threshold(&mainboard.angle.bd, 500);
+	bd_set_current_thresholds(&mainboard.angle.bd, 100, 5000, 1000000, 30);
 
 	/* ---- CS distance */
 	/* PID */
@@ -260,8 +260,8 @@ void maindspic_cs_init(void)
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.distance.qr);
-	quadramp_set_1st_order_vars(&mainboard.distance.qr, 6000, 6000); 	/* set speed */
-	quadramp_set_2nd_order_vars(&mainboard.distance.qr, 10, 10); 		/* set accel */
+	quadramp_set_1st_order_vars(&mainboard.distance.qr, 100, 100); 	/* set speed */
+	quadramp_set_2nd_order_vars(&mainboard.distance.qr, 5, 5); 	/* set accel */
 
 	/* CS */
 	cs_init(&mainboard.distance.cs);
@@ -273,8 +273,8 @@ void maindspic_cs_init(void)
 
 	/* Blocking detection */
 	bd_init(&mainboard.distance.bd);
-	bd_set_speed_threshold(&mainboard.distance.bd, 100);
-	bd_set_current_thresholds(&mainboard.distance.bd, 30, 4500, 1000000, 50);
+	bd_set_speed_threshold(&mainboard.distance.bd, 500);
+	bd_set_current_thresholds(&mainboard.distance.bd, 100, 8000, 1000000, 30);
 
 	/* set them on !! */
 	mainboard.angle.on = 1;

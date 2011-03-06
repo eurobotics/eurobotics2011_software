@@ -90,8 +90,8 @@
 
 /* distance between encoders weels,
  * decrease track to decrease angle */
-#define EXT_TRACK_MM 292.0
-//#define EXT_TRACK_MM 291.0275
+//#define EXT_TRACK_MM 292.0
+#define EXT_TRACK_MM 293.57360825271
 //#define EXT_TRACK_MM 290.37650894
 
 #define VIRTUAL_TRACK_MM EXT_TRACK_MM
@@ -107,7 +107,8 @@
 
 /* increase it to go further */
 #define IMP_ENCODERS 		3600.0
-#define WHEEL_DIAMETER_MM 	55.0
+#define WHEEL_DIAMETER_MM 	(55.0/0.989123953)// 0.988333287)//0.993077287)
+
 
 #define WHEEL_PERIM_MM 	(WHEEL_DIAMETER_MM * M_PI)
 #define IMP_COEF 			10.0
