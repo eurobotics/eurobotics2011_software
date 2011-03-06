@@ -405,9 +405,19 @@ static void cmd_sensor_parsed(void *parsed_result, void *data)
 	
 	do {
 		printf_P(PSTR("SENSOR values: \r\n"));
-		for (i=0; i<SENSOR_MAX; i++) {				
-			printf_P(PSTR("S_CAP%.2d = %d "), i, !!sensor_get(i));
-		
+		for (i=0; i<SENSOR_MAX; i++) {
+
+			if(i<8)				
+				printf_P(PSTR("S_CAP%.2d = %d "), i, !!sensor_get(i));
+			else if (i<16)
+				printf_P(PSTR("S_GPI%.2d = %d "), (i-8), !!sensor_get(i));
+			else if (i<24)
+				printf_P(PSTR("S_GPI%.2d = %d "), 10+(i-16), !!sensor_get(i));
+			else if (i<32)
+				printf_P(PSTR("S_GPI%.2d = %d "), 20+(i-24), !!sensor_get(i));
+			else
+				printf_P(PSTR("S_GPI%.2d = %d "), 30+(i-32), !!sensor_get(i));
+			
 			if((i+1)%8 == 0)
 				printf("\n\r");
 		}

@@ -426,12 +426,12 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 		i2cproto_wait_update();
 
 		/* show info */
-		printf("FRONT TS: state = %d / blocked = %d / catched = %d \n\r",
+		printf("FRONT: state = %d / blocked = %d / catched = %d \n\r",
 				 slavedspic.ts[I2C_SIDE_FRONT].state,
 				 slavedspic.ts[I2C_SIDE_FRONT].belts_blocked,
 				 slavedspic.ts[I2C_SIDE_FRONT].token_catched);
 
-		printf("REAR TS: state = %d / blocked = %d / catched = %d \n\r",
+		printf("REAR:  state = %d / blocked = %d / catched = %d \n\r",
 				 slavedspic.ts[I2C_SIDE_REAR].state,
 				 slavedspic.ts[I2C_SIDE_REAR].belts_blocked,
 				 slavedspic.ts[I2C_SIDE_REAR].token_catched);
@@ -509,9 +509,9 @@ parse_pgm_inst_t cmd_slavedspic_ts = {
 	.data = NULL,      /* 2nd arg of func */
 	.help_str = help_slavedspic_ts,
 	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_slavedspic_ts_arg0, 
+		(prog_void *)&cmd_slavedspic_ts_arg0,
+		(prog_void *)&cmd_slavedspic_ts_arg2, 
 		(prog_void *)&cmd_slavedspic_ts_arg1, 
-		(prog_void *)&cmd_slavedspic_ts_arg2,
 		NULL,
 	},
 };
@@ -605,6 +605,97 @@ parse_pgm_inst_t cmd_beacon = {
 };
 
 /**********************************************************/
+/* Robot sensors test */
+
+/* this structure is filled when cmd_sensor is parsed successfully */
+struct cmd_sensor_robot_result {
+	fixed_string_t arg0;
+	fixed_string_t arg1;
+};
+
+
+#define _BV64(i) ((uint64_t)1 << i)
+
+/* function called when cmd_sensor is parsed successfully */
+static void cmd_sensor_robot_parsed(void *parsed_result, void *data)
+{
+	struct cmd_sensor_robot_result *res = parsed_result;
+	volatile int64_t sensor_prev = 0;
+	uint8_t sensor_event = 0;
+	uint8_t i;
+	char sensor_string[15];
+
+	if (!strcmp(res->arg1, "robot"))
+	{	
+		do {
+			for (i=0; i<SENSOR_MAX; i++) {
+
+				if(sensor_get(i) && ((sensor_prev & _BV64(i))==0) ){
+					sensor_event = 1;
+					sensor_prev |= _BV64(i);
+				}
+				else if (!sensor_get(i) && ((sensor_prev & _BV64(i))!=0)){
+					sensor_event = 1;
+					sensor_prev &= (~_BV64(i));
+				}
+			
+				if(sensor_event){
+
+					sensor_event = 0;
+
+					switch(i){
+						case S_START_SWITCH: strcpy(sensor_string, "START"); break;
+
+						case S_TOKEN_FRONT_R: 		strcpy(sensor_string, "T_FRONT_R"); break;
+						case S_TOKEN_FRONT_L: 		strcpy(sensor_string, "T_FRONT_L"); break;
+						case S_TOKEN_FRONT_45R: 	strcpy(sensor_string, "T_FRONT_45R"); break;
+						case S_TOKEN_FRONT_45L: 	strcpy(sensor_string, "T_FRONT_45L"); break;
+						case S_TOKEN_FRONT_TOWER: 	strcpy(sensor_string, "T_FRONT_TOWER"); break;
+
+						case S_TOKEN_REAR_R: 		strcpy(sensor_string, "T_REAR_R"); break;
+						case S_TOKEN_REAR_L: 		strcpy(sensor_string, "T_REAR_L"); break;
+						case S_TOKEN_REAR_45R: 		strcpy(sensor_string, "T_REAR_45R"); break;
+						case S_TOKEN_REAR_45L: 		strcpy(sensor_string, "T_REAR_45L"); break;
+						case S_TOKEN_REAR_TOWER: 	strcpy(sensor_string, "T_REAR_TOWER"); break;
+
+						case S_OPPONENT_FRONT_R: 	strcpy(sensor_string, "OP_FRONT_R"); break;
+						case S_OPPONENT_FRONT_L: 	strcpy(sensor_string, "OP_FRONT_L"); break;
+						case S_OPPONENT_REAR_R: 	strcpy(sensor_string, "OP_REAR_R"); break;
+						case S_OPPONENT_REAR_L: 	strcpy(sensor_string, "OP_REAR_L"); break;
+						case S_OPPONENT_RIGHT: 		strcpy(sensor_string, "OP_RIGHT"); break;
+						case S_OPPONENT_LEFT: 		strcpy(sensor_string, "OP_LEFT"); break;
+
+						default: strcpy(sensor_string, "S_UNKNOW"); continue;
+					}
+
+					printf("%s %s!\n\r", sensor_string, (sensor_prev & _BV64(i))? "on":"off" ); 
+
+				}
+			}
+
+			wait_ms(100);
+		} while (!cmdline_keypressed());
+	}
+}
+
+prog_char str_sensor_robot_arg0[] = "sensor";
+parse_pgm_token_string_t cmd_sensor_robot_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_sensor_robot_result, arg0, str_sensor_robot_arg0);
+prog_char str_sensor_robot_arg1[] = "robot";
+parse_pgm_token_string_t cmd_sensor_robot_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_sensor_robot_result, arg1, str_sensor_robot_arg1);
+
+prog_char help_sensor_robot[] = "Show robot sensors";
+parse_pgm_inst_t cmd_sensor_robot = {
+	.f = cmd_sensor_robot_parsed,  /* function to call */
+	.data = NULL,      /* 2nd arg of func */
+	.help_str = help_sensor_robot,
+	.tokens = {        /* token list, NULL terminated */
+		(prog_void *)&cmd_sensor_robot_arg0, 
+		(prog_void *)&cmd_sensor_robot_arg1, 
+		NULL,
+	},
+};
+
+/**********************************************************/
 /* Interact */
 
 ///* this structure is filled when cmd_interact is parsed successfully */
@@ -643,7 +734,7 @@ parse_pgm_inst_t cmd_beacon = {
 //static void print_sensors(void)
 //{
 //#ifdef notyet
-//	if (sensor_start_switch())
+//	if (sensor_robot_start_switch())
 //		printf_P(PSTR("Start switch | "));
 //	else
 //		printf_P(PSTR("             | "));

@@ -85,27 +85,27 @@
 #define SENSOR_MAX    40
 
 /* token sensors */
-#define S_TOKEN_FRONT_R			S_GP0_0
-#define S_TOKEN_FRONT_L			S_GP0_0
-#define S_TOKEN_FRONT_45R		S_GP0_0
-#define S_TOKEN_FRONT_45L		S_GP0_0
-#define S_TOKEN_FRONT_TOWER	S_GP0_0
+#define S_TOKEN_FRONT_R			S_GP3_4
+#define S_TOKEN_FRONT_L			S_GP1_0
+#define S_TOKEN_FRONT_45R		S_GP1_1
+#define S_TOKEN_FRONT_45L		S_GP3_3
+#define S_TOKEN_FRONT_TOWER	S_GP0_6
 
-#define S_TOKEN_REAR_R			S_GP0_0
-#define S_TOKEN_REAR_L			S_GP0_0
-#define S_TOKEN_REAR_45R		S_GP0_0
-#define S_TOKEN_REAR_45L		S_GP0_0
-#define S_TOKEN_REAR_TOWER		S_GP0_0
+#define S_TOKEN_REAR_R			S_GP2_6
+#define S_TOKEN_REAR_L			S_GP2_4
+#define S_TOKEN_REAR_45R		S_GP2_7
+#define S_TOKEN_REAR_45L		S_GP2_3
+#define S_TOKEN_REAR_TOWER		S_GP0_3
 
 /* opponent sensors */
-#define S_OPPONENT_FRONT_R		S_GP0_0
-#define S_OPPONENT_FRONT_L		S_GP0_0
+#define S_OPPONENT_FRONT_R		S_GP1_7
+#define S_OPPONENT_FRONT_L		S_GP0_4
 
-#define S_OPPONENT_REAR_R		S_GP0_0
-#define S_OPPONENT_REAR_L		S_GP0_0
+#define S_OPPONENT_REAR_R		S_GP1_6
+#define S_OPPONENT_REAR_L		S_GP1_4
 
-#define S_OPPONENT_RIGHT		S_GP0_0
-#define S_OPPONENT_LEFT			S_GP0_0
+#define S_OPPONENT_RIGHT		S_GP0_7
+#define S_OPPONENT_LEFT			S_GP1_3
 
 /* digital and analog */
 void sensor_init(void);

@@ -94,6 +94,7 @@ extern parse_pgm_inst_t cmd_color;
 extern parse_pgm_inst_t cmd_slavedspic;
 extern parse_pgm_inst_t cmd_slavedspic_ts;
 extern parse_pgm_inst_t cmd_beacon;
+extern parse_pgm_inst_t cmd_sensor_robot;
 //extern parse_pgm_inst_t cmd_interact;
 //extern parse_pgm_inst_t cmd_rs;
 //extern parse_pgm_inst_t cmd_i2cdebug;
@@ -184,6 +185,7 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_slavedspic,
 	(parse_pgm_inst_t *)&cmd_slavedspic_ts,
 	(parse_pgm_inst_t *)&cmd_beacon,
+	(parse_pgm_inst_t *)&cmd_sensor_robot,
 //	(parse_pgm_inst_t *)&cmd_interact,
 //	(parse_pgm_inst_t *)&cmd_rs,
 //	(parse_pgm_inst_t *)&cmd_i2cdebug,
