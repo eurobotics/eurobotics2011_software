@@ -221,20 +221,20 @@ void maindspic_cs_init(void)
 	/* d, a */
 	trajectory_set_speed(&mainboard.traj, SPEED_DIST_FAST, SPEED_ANGLE_FAST); 		
 	/* distance window, angle window, angle start */
-	trajectory_set_windows(&mainboard.traj, 200., 5.0, 30.);
+	trajectory_set_windows(&mainboard.traj, 100., 5.0, 5.0);
 
 	/* ---- CS angle */
 	/* PID */
 	pid_init(&mainboard.angle.pid);
 	pid_set_gains(&mainboard.angle.pid, 300, 3, 3000);
-	pid_set_maximums(&mainboard.angle.pid, 0, 30000, 60000);
+	pid_set_maximums(&mainboard.angle.pid, 0, 30000, 65000);
 	pid_set_out_shift(&mainboard.angle.pid, 6);	
 	pid_set_derivate_filter(&mainboard.angle.pid, 1);
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.angle.qr);
-	quadramp_set_1st_order_vars(&mainboard.angle.qr, 100, 100); 	/* set speed */
-	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 5, 5); 		/* set accel */
+	quadramp_set_1st_order_vars(&mainboard.angle.qr, 4000, 4000); 	/* set speed */
+	quadramp_set_2nd_order_vars(&mainboard.angle.qr, 80, 80); 		/* set accel */
 
 
 	/* CS */
@@ -248,20 +248,20 @@ void maindspic_cs_init(void)
 	/* Blocking detection */
 	bd_init(&mainboard.angle.bd);
 	bd_set_speed_threshold(&mainboard.angle.bd, 500);
-	bd_set_current_thresholds(&mainboard.angle.bd, 100, 5000, 1000000, 30);
+	bd_set_current_thresholds(&mainboard.angle.bd, 100, 3000, 1000000, 30); /* TODO: more margin */
 
 	/* ---- CS distance */
 	/* PID */
 	pid_init(&mainboard.distance.pid);
 	pid_set_gains(&mainboard.distance.pid, 300, 3, 3000);
-	pid_set_maximums(&mainboard.distance.pid, 0, 30000, 60000);
+	pid_set_maximums(&mainboard.distance.pid, 0, 30000, 65000);
 	pid_set_out_shift(&mainboard.distance.pid, 6);
 	pid_set_derivate_filter(&mainboard.distance.pid, 1);
 
 	/* QUADRAMP */
 	quadramp_init(&mainboard.distance.qr);
-	quadramp_set_1st_order_vars(&mainboard.distance.qr, 100, 100); 	/* set speed */
-	quadramp_set_2nd_order_vars(&mainboard.distance.qr, 5, 5); 	/* set accel */
+	quadramp_set_1st_order_vars(&mainboard.distance.qr, 4000, 4000); 	/* set speed */
+	quadramp_set_2nd_order_vars(&mainboard.distance.qr, 50, 50); 	/* set accel */
 
 	/* CS */
 	cs_init(&mainboard.distance.cs);
@@ -274,7 +274,7 @@ void maindspic_cs_init(void)
 	/* Blocking detection */
 	bd_init(&mainboard.distance.bd);
 	bd_set_speed_threshold(&mainboard.distance.bd, 500);
-	bd_set_current_thresholds(&mainboard.distance.bd, 100, 8000, 1000000, 30);
+	bd_set_current_thresholds(&mainboard.distance.bd, 120, 4500, 1000000, 30); /* TODO: more margin */
 
 	/* set them on !! */
 	mainboard.angle.on = 1;

@@ -459,37 +459,7 @@ uint8_t test_traj_end(uint8_t why)
 	robot_pt.x = position_get_x_s16(&mainboard.pos);
 	robot_pt.y = position_get_y_s16(&mainboard.pos);
 
-	/* trigger an event at 3 sec before the end of the match if we
-	 * have balls in the barrel */
-	cur_timer = time_get_s();
-
-	if ((mainboard.flags & DO_TIMER) && (why & END_TIMER)) {
-		/* end of match */
-		if (cur_timer >= MATCH_TIME)
-			return END_TIMER;
-	}
-
-	if ((why & END_INTR) && traj_intr) {
-		interrupt_traj_reset();		
-		return END_INTR;
-	}
-
-	if ((why & END_TRAJ) && trajectory_finished(&mainboard.traj))
-		return END_TRAJ;
-	
-	/* we are near the destination point (depends on current
-	 * speed) AND the robot is in the area bounding box. */
-	if (why & END_NEAR) {
-		int16_t d_near = 100;	
-		
-		if (mainboard.speed_d > 2000)
-			d_near = 150;
-		
-		if (trajectory_in_window(&mainboard.traj, d_near, RAD(5.0)) &&
-		    is_in_boundingbox(&robot_pt))
-			return END_NEAR;
-	}
-	
+	/* XXX hardstop ends are the most priorities */
 	if ((why & END_BLOCKING) && bd_get(&mainboard.angle.bd)) {
 		strat_hardstop();
 		return END_BLOCKING;
@@ -504,6 +474,41 @@ uint8_t test_traj_end(uint8_t why)
 		strat_hardstop();
 		return END_OBSTACLE;
 	}
+
+	/* interrupt traj by user */
+	if ((why & END_INTR) && traj_intr) {
+		interrupt_traj_reset();		
+		return END_INTR;
+	}
+
+	/* traj ends succesfully */
+	if ((why & END_TRAJ) && trajectory_finished(&mainboard.traj))
+		return END_TRAJ;
+
+	/* trigger an event at 3 sec before the end of the match if we
+	 * have balls in the barrel */
+	cur_timer = time_get_s();
+
+	if ((mainboard.flags & DO_TIMER) && (why & END_TIMER)) {
+		/* end of match */
+		if (cur_timer >= MATCH_TIME)
+			return END_TIMER;
+	}
+
+	/* we are near the destination point (depends on current
+	 * speed) AND the robot is in the area bounding box. */
+	if (why & END_NEAR) {
+		int16_t d_near = 100;	
+		
+		if (mainboard.speed_d > 2000)
+			d_near = 150;
+		
+		if (trajectory_in_window(&mainboard.traj, d_near, RAD(5.0)) &&
+		    is_in_boundingbox(&robot_pt))
+			return END_NEAR;
+	}
+	
+
 
 	return 0;
 }
