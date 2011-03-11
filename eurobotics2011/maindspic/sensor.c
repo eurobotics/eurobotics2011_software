@@ -37,92 +37,145 @@
 #include "main.h"
 #include "sensor.h"
 
-///************ ADC */
-//
-//struct adc_infos {
-//	uint16_t config;
-//	int16_t value;
-//	int16_t prev_val;
-//        int16_t (*filter)(struct adc_infos *, int16_t);
-//};
-//
-///* reach 90% of the value in 4 samples */
-//int16_t rii_light(struct adc_infos *adc, int16_t val)
-//{
-//	adc->prev_val = val + (int32_t)adc->prev_val / 2;
-//	return adc->prev_val / 2;
-//}
-//
-///* reach 90% of the value in 8 samples */
-//int16_t rii_medium(struct adc_infos *adc, int16_t val)
-//{
-//	adc->prev_val = val + ((int32_t)adc->prev_val * 3) / 4;
-//	return adc->prev_val / 4;
-//}
-//
-///* reach 90% of the value in 16 samples */
-//int16_t rii_strong(struct adc_infos *adc, int16_t val)
-//{
-//	adc->prev_val = val + ((int32_t)adc->prev_val * 7) / 8;
-//	return adc->prev_val / 8;
-//}
-//
-//
-//#define ADC_CONF(x) ( ADC_REF_AVCC | ADC_MODE_INT | MUX_ADC##x )
-//
-///* define which ADC to poll, see in sensor.h */
-//static struct adc_infos adc_infos[ADC_MAX] = { 
-//	[ADC_CSENSE1] = { .config = ADC_CONF(0), .filter = rii_medium },
-//	[ADC_CSENSE2] = { .config = ADC_CONF(1), .filter = rii_medium },
-//	[ADC_CSENSE3] = { .config = ADC_CONF(2), .filter = rii_medium },
-//	[ADC_CSENSE4] = { .config = ADC_CONF(3), .filter = rii_medium },
-//	[ADC_BATTERY1] = { .config = ADC_CONF(8), .filter = rii_strong },
-//	[ADC_BATTERY2] = { .config = ADC_CONF(9), .filter = rii_strong },
-//
-//	/* add adc on "cap" pins if needed */
-///* 	[ADC_CAP1] = { .config = ADC_CONF(10) }, */
-///* 	[ADC_CAP2] = { .config = ADC_CONF(11) }, */
-///* 	[ADC_CAP3] = { .config = ADC_CONF(12) }, */
-///* 	[ADC_CAP4] = { .config = ADC_CONF(13) }, */
-//};
-//
-//static void adc_event(int16_t result);
-//
-///* called every 10 ms, see init below */
-//static void do_adc(void *dummy) 
-//{
-//	/* launch first conversion */
-//	adc_launch(adc_infos[0].config);
-//}
-//
-//static void adc_event(int16_t result)
-//{
-//	static uint8_t i = 0;
-//
-//	/* filter value if needed */
-//	if (adc_infos[i].filter)
-//		adc_infos[i].value = adc_infos[i].filter(&adc_infos[i],
-//							 result);
-//	else
-//		adc_infos[i].value = result;
-//
-//	i ++;
-//	if (i >= ADC_MAX)
-//		i = 0;
-//	else
-//		adc_launch(adc_infos[i].config);
-//}
-//
-//int16_t sensor_get_adc(uint8_t i)
-//{
-//	int16_t tmp;
-//	uint8_t flags;
-//
-//	IRQ_LOCK(flags);
-//	tmp = adc_infos[i].value;
-//	IRQ_UNLOCK(flags);
-//	return tmp;
-//}
+/************ ADC */
+
+/* config init */
+static void adc_init(void)
+{
+	/* adc off */
+	_ADON = 0;
+
+	/* 3V external reference  */
+	_VCFG = 0b011;
+
+	/* by default: 10 bit mode and ADCLK from TCY */
+	
+	/* Adquisition and conversion time (TAD, TCONV):
+
+		_ADCS =	00111111 = TCY · (ADCS<7:0> + 1) = 64 · TCY = TAD
+					.
+					.
+					. 	
+					00000010 = TCY · (ADCS<7:0> + 1) = 3 · TCY = TAD 
+					00000001 = TCY · (ADCS<7:0> + 1) = 2 · TCY = TAD
+					00000000 = TCY · (ADCS<7:0> + 1) = 1 · TCY = TAD
+
+		TADmin = 76 ns
+
+		TCONV = 12 • TAD
+
+		FCONVmax = 1.1 Msps 
+
+	*/
+
+	_ADCS = 0b00111111;	/* TAD = 64·TCY = 1.6 us, TCONV = 19.2 us (50 Ksps max) */ 
+
+
+	/* interrupt */
+	_AD1IF = 0;
+	_AD1IE = 1;
+
+	/* adc on */
+	_ADON = 1;
+}
+
+
+/* launch new adquisition */
+void adc_launch(uint16_t conf)
+{
+	/* select channels */
+	AD1CHS0 = conf;  
+
+	/* lauch conversion */
+	_SAMP = 1;
+}
+
+
+/* adc interrupt */
+static void adc_event(uint16_t result);
+void __attribute__((__interrupt__, no_auto_psv)) _ADC1Interrupt(void)
+{
+  	_AD1IF=0;
+
+	/* XXX suposse _DONE = 1 */
+	adc_event(ADCBUF0);
+}
+
+struct adc_infos {
+	uint16_t config;
+	int16_t value;
+	int16_t prev_val;
+        int16_t (*filter)(struct adc_infos *, int16_t);
+};
+
+
+/* reach 90% of the value in 4 samples */
+int16_t rii_light(struct adc_infos *adc, int16_t val)
+{
+	adc->prev_val = val + (int32_t)adc->prev_val / 2;
+	return adc->prev_val / 2;
+}
+
+/* reach 90% of the value in 8 samples */
+int16_t rii_medium(struct adc_infos *adc, int16_t val)
+{
+	adc->prev_val = val + ((int32_t)adc->prev_val * 3) / 4;
+	return adc->prev_val / 4;
+}
+
+/* reach 90% of the value in 16 samples */
+int16_t rii_strong(struct adc_infos *adc, int16_t val)
+{
+	adc->prev_val = val + ((int32_t)adc->prev_val * 7) / 8;
+	return adc->prev_val / 8;
+}
+
+#define ADC_CONF(x) (x)
+
+/* define which ADC to poll, see in sensor.h */
+static struct adc_infos adc_infos[ADC_MAX] = { 
+	[ADC_LASER_1] = { .config = ADC_CONF(7), .filter = NULL },
+	[ADC_LASER_2] = { .config = ADC_CONF(6), .filter = NULL },
+};
+
+/* call on adc interrupt */
+static void adc_event(uint16_t result)
+{
+	static uint8_t i = 0;
+
+	/* filter value if needed */
+	if (adc_infos[i].filter)
+		adc_infos[i].value = adc_infos[i].filter(&adc_infos[i], result);
+	else
+		adc_infos[i].value = result;
+
+	i ++;
+	if (i >= ADC_MAX)
+		i = 0;
+	else
+		adc_launch(adc_infos[i].config);
+}
+
+/* called every 10 ms, see init below */
+static void do_adc(void *dummy) 
+{
+	/* launch first conversion */
+	adc_launch(adc_infos[0].config);
+}
+
+/* get analog sensor value */
+int16_t sensor_get_adc(uint8_t i)
+{
+	int16_t tmp;
+	uint8_t flags;
+
+	IRQ_LOCK(flags);
+	tmp = adc_infos[i].value;
+	IRQ_UNLOCK(flags);
+	return tmp;
+}
+
+/* TODO: sensor_get_laser_distance(uint8_t laser) */
 
 /************ boolean sensors */
 
@@ -212,19 +265,10 @@ uint8_t sensor_get(uint8_t i)
 	return (uint8_t)((tmp & ((uint64_t)1 << i))>>i);
 }
 
-//uint64_t gpio0_temp=0, gpio1_temp=0, gpio2_temp=0 , gpio3_temp=0;
-
-
 /* get the physical value of pins */
 static uint64_t sensor_read(void)
 {
 	uint64_t tmp = 0;
-
-	//gpio0_temp = ((uint64_t)((uint16_t)gen.i2c_gpio0))<< 8;
-	//gpio1_temp = ((uint64_t)((uint16_t)gen.i2c_gpio1))<< 16;
-	//gpio2_temp = ((uint64_t)((uint16_t)gen.i2c_gpio2))<< 24;
-	//gpio3_temp = ((uint64_t)((uint16_t)gen.i2c_gpio3))<< 32;
-
 
 	tmp |= (uint64_t)((PORTA & (_BV(9))) >> 9) << 0;
 	/* 1 to 7 reserved */
@@ -233,11 +277,6 @@ static uint64_t sensor_read(void)
 	tmp |= ((uint64_t)((uint16_t)gen.i2c_gpio2))<< 24;
 	tmp |= ((uint64_t)((uint16_t)gen.i2c_gpio3))<< 32;
 
-	//tmp |= ((gpio0_temp));
-	//tmp |= ((gpio1_temp));
-	//tmp |= ((gpio2_temp));
-	//tmp |= ((gpio3_temp));
-	
 	/* add reserved sensors here */
 	return tmp;
 }
@@ -282,14 +321,12 @@ static void do_boolean_sensors(void *dummy)
 }
 
 /* virtual obstacle */
-
 #define DISABLE_CPT_MAX 500
 static uint16_t disable = 0; /* used to disable obstacle detection 
 			   				  * during some time */
 
 /* called every 10 ms */
-void
-sensor_obstacle_update(void)
+void sensor_obstacle_update(void)
 {
 	if (disable > 0) {
 		disable --;
@@ -320,15 +357,14 @@ uint8_t sensor_obstacle_is_disabled(void)
 /* called every 10 ms, see init below */
 static void do_sensors(void *dummy)
 {
-	//do_adc(NULL);
+	do_adc(NULL);
 	do_boolean_sensors(NULL);
 	sensor_obstacle_update();
 }
 
 void sensor_init(void)
 {
-	//adc_init();
-	//adc_register_event(adc_event);
+	adc_init();
 	
 	/* CS EVENT */
 	scheduler_add_periodical_event_priority(do_sensors, NULL, 

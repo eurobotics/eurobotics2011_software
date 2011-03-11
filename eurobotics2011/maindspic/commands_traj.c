@@ -66,7 +66,7 @@
 #include "strat_avoid.h"
 #include "strat.h"
 #include "../common/i2c_commands.h"
-//#include "i2c_protocol.h"
+
 
 /**********************************************************/
 /* Traj_Speeds for trajectory_manager */
@@ -217,9 +217,9 @@ static void cmd_rs_gains_parsed(void * parsed_result, void * data)
 	
 	if (!strcmp_P(res->arg1, PSTR("set"))) {
 		rs_set_left_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-					LEFT_ENCODER, res->left); // increasing one turns to the left (en augmentant on tourne à gauche)
+					LEFT_ENCODER, res->left); 		// increasing one turns to the left (en augmentant on tourne à gauche)
 		rs_set_right_ext_encoder(&mainboard.rs, encoders_dspic_get_value, 
-					 RIGHT_ENCODER, res->right); // increasing one turns to the right (en augmentant on tourne à droite)
+					 RIGHT_ENCODER, res->right); 	// increasing one turns to the right (en augmentant on tourne à droite)
 	}	
 	
 	/* XXX on dspic decimal part of negative values don`t print well, because compiler C30?? */	

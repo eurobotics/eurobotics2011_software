@@ -49,12 +49,11 @@ extern parse_pgm_inst_t cmd_encoders;
 extern parse_pgm_inst_t cmd_pwm_servo;
 extern parse_pgm_inst_t cmd_pwm_servo_show_range;
 extern parse_pgm_inst_t cmd_dac_mc;
-//extern parse_pgm_inst_t cmd_adc;
+extern parse_pgm_inst_t cmd_adc;
 extern parse_pgm_inst_t cmd_sensor;
 extern parse_pgm_inst_t cmd_log;
 extern parse_pgm_inst_t cmd_log_show;
 extern parse_pgm_inst_t cmd_log_type;
-//extern parse_pgm_inst_t cmd_stack_space;
 extern parse_pgm_inst_t cmd_scheduler;
 
 #endif /* COMPILE_COMMANDS_GEN */

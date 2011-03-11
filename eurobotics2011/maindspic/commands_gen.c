@@ -40,7 +40,6 @@
 #include <pwm_servo.h>
 #include <time.h>
 #include <encoders_dspic.h>
-//#include <adc.h>
 
 #include <scheduler.h>
 #include <pid.h>
@@ -60,8 +59,6 @@
 #include <parse_string.h>
 #include <parse_num.h>
 
-//#include <diagnostic.h>
-
 #include "main.h"
 #include "cmdline.h"
 #include "sensor.h"
@@ -77,7 +74,6 @@ struct cmd_reset_result {
 /* function called when cmd_reset is parsed successfully */
 static void cmd_reset_parsed(void * parsed_result, void * data)
 {
-	//reset();
 	asm("Reset");
 }
 
@@ -141,11 +137,6 @@ static void cmd_encoders_parsed(void *parsed_result, void *data)
 		
 		encoders_dspic_set_value((void *)1, 0);
 		encoders_dspic_set_value((void *)2, 0);
-		
-//		encoders_spi_set_value((void *)0, 0);
-//		encoders_spi_set_value((void *)1, 0);
-//		encoders_spi_set_value((void *)2, 0);
-//		encoders_spi_set_value((void *)3, 0);
 		return;
 	}
 
@@ -156,11 +147,6 @@ static void cmd_encoders_parsed(void *parsed_result, void *data)
 			 encoders_dspic_get_value((void *)1),
 			 encoders_dspic_get_value((void *)2));
 
-//		printf_P(PSTR("% .8ld % .8ld % .8ld % .8ld\r\n"), 			 
-//			 encoders_spi_get_value((void *)0),
-//			 encoders_spi_get_value((void *)1),
-//			 encoders_spi_get_value((void *)2),
-//			 encoders_spi_get_value((void *)3));
 		wait_ms(50);
 	}
 }
@@ -339,50 +325,50 @@ parse_pgm_inst_t cmd_dac_mc = {
 	},
 };
 
-///**********************************************************/
-///* Adcs tests */
-//
-///* this structure is filled when cmd_adc is parsed successfully */
-//struct cmd_adc_result {
-//	fixed_string_t arg0;
-//	fixed_string_t arg1;
-//};
-//
-///* function called when cmd_adc is parsed successfully */
-//static void cmd_adc_parsed(void *parsed_result, void *data)
-//{
-//	struct cmd_adc_result *res = parsed_result;
-//	uint8_t i, loop = 0;
-//
-//	if (!strcmp_P(res->arg1, PSTR("loop_show")))
-//		loop = 1;
-//	
-//	do {
-//		printf_P(PSTR("ADC values: "));
-//		for (i=0; i<ADC_MAX; i++) {
-//			printf_P(PSTR("%.4d "), sensor_get_adc(i));
-//		}
-//		printf_P(PSTR("\r\n"));
-//		wait_ms(100);
-//	} while (loop && !cmdline_keypressed());
-//}
-//
-//prog_char str_adc_arg0[] = "adc";
-//parse_pgm_token_string_t cmd_adc_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg0, str_adc_arg0);
-//prog_char str_adc_arg1[] = "show#loop_show";
-//parse_pgm_token_string_t cmd_adc_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg1, str_adc_arg1);
-//
-//prog_char help_adc[] = "Show adc values";
-//parse_pgm_inst_t cmd_adc = {
-//	.f = cmd_adc_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_adc,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_adc_arg0, 
-//		(prog_void *)&cmd_adc_arg1, 
-//		NULL,
-//	},
-//};
+/**********************************************************/
+/* Adcs tests */
+
+/* this structure is filled when cmd_adc is parsed successfully */
+struct cmd_adc_result {
+	fixed_string_t arg0;
+	fixed_string_t arg1;
+};
+
+/* function called when cmd_adc is parsed successfully */
+static void cmd_adc_parsed(void *parsed_result, void *data)
+{
+	struct cmd_adc_result *res = parsed_result;
+	uint8_t i, loop = 0;
+
+	if (!strcmp_P(res->arg1, PSTR("loop_show")))
+		loop = 1;
+	
+	do {
+		printf_P(PSTR("ADC values: "));
+		for (i=0; i<ADC_MAX; i++) {
+			printf_P(PSTR("%.4d "), sensor_get_adc(i));
+		}
+		printf_P(PSTR("\r\n"));
+		wait_ms(100);
+	} while (loop && !cmdline_keypressed());
+}
+
+prog_char str_adc_arg0[] = "adc";
+parse_pgm_token_string_t cmd_adc_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg0, str_adc_arg0);
+prog_char str_adc_arg1[] = "show#loop_show";
+parse_pgm_token_string_t cmd_adc_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_adc_result, arg1, str_adc_arg1);
+
+prog_char help_adc[] = "Show adc values";
+parse_pgm_inst_t cmd_adc = {
+	.f = cmd_adc_parsed,  /* function to call */
+	.data = NULL,      /* 2nd arg of func */
+	.help_str = help_adc,
+	.tokens = {        /* token list, NULL terminated */
+		(prog_void *)&cmd_adc_arg0, 
+		(prog_void *)&cmd_adc_arg1, 
+		NULL,
+	},
+};
 
 
 /**********************************************************/
@@ -653,31 +639,3 @@ parse_pgm_inst_t cmd_log_type = {
 };
 
 
-///**********************************************************/
-///* Stack_Space */
-//
-///* this structure is filled when cmd_stack_space is parsed successfully */
-//struct cmd_stack_space_result {
-//	fixed_string_t arg0;
-//};
-//
-///* function called when cmd_stack_space is parsed successfully */
-//static void cmd_stack_space_parsed(void *parsed_result, void *data)
-//{
-//	printf("res stack: %d\r\n", min_stack_space_available());
-//	
-//}
-//
-//prog_char str_stack_space_arg0[] = "stack_space";
-//parse_pgm_token_string_t cmd_stack_space_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_stack_space_result, arg0, str_stack_space_arg0);
-//
-//prog_char help_stack_space[] = "Display remaining stack space";
-//parse_pgm_inst_t cmd_stack_space = {
-//	.f = cmd_stack_space_parsed,  /* function to call */
-//	.data = NULL,      /* 2nd arg of func */
-//	.help_str = help_stack_space,
-//	.tokens = {        /* token list, NULL terminated */
-//		(prog_void *)&cmd_stack_space_arg0, 
-//		NULL,
-//	},
-//};

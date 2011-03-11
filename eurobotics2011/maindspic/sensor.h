@@ -29,13 +29,9 @@
  */
 
 /* synchronize with sensor.c */
-//#define ADC_CSENSE1   0
-//#define ADC_CSENSE2   1
-//#define ADC_CSENSE3   2
-//#define ADC_CSENSE4   3
-//#define ADC_BATTERY1  4
-//#define ADC_BATTERY2  5
-//#define ADC_MAX       6
+#define ADC_LASER_1   0
+#define ADC_LASER_2   1
+#define ADC_MAX       2
 
 /* synchronize with sensor.c */
 #define S_START_SWITCH 0
@@ -83,6 +79,10 @@
 #define S_GP3_6		 38
 #define S_GP3_7		 39
 #define SENSOR_MAX    40
+
+/* TODO: map lasers */
+#define ADC_LASER_R	ADC_LASER_0
+#define ADC_LASER_L	ADC_LASER_1
 
 /* token sensors */
 #define S_TOKEN_FRONT_R			S_GP3_4

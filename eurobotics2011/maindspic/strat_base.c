@@ -459,7 +459,7 @@ uint8_t test_traj_end(uint8_t why)
 	robot_pt.x = position_get_x_s16(&mainboard.pos);
 	robot_pt.y = position_get_y_s16(&mainboard.pos);
 
-	/* XXX hardstop ends are the most priorities */
+	/* hardstop ends */
 	if ((why & END_BLOCKING) && bd_get(&mainboard.angle.bd)) {
 		strat_hardstop();
 		return END_BLOCKING;
@@ -508,8 +508,6 @@ uint8_t test_traj_end(uint8_t why)
 			return END_NEAR;
 	}
 	
-
-
 	return 0;
 }
 

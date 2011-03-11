@@ -60,7 +60,6 @@
 #include <parse_num.h>
 
 #include "../common/i2c_commands.h"
-//#include "../common/eeprom_mapping.h"
 
 #include "main.h"
 #include "sensor.h"
@@ -270,7 +269,7 @@ static void cmd_start_parsed(void *parsed_result, void *data)
 	}
 	else{
 		beacon_cmd_wt11_call();
-		WAIT_COND_OR_TIMEOUT((beacon_connected==1),3000);
+		WAIT_COND_OR_TIMEOUT((beacon_connected==1),5000);
 		if(!beacon_connected){
 			printf("Beacon connection FAIL, reseting local wt11\r\n");
 			beacon_cmd_wt11_local_reset();
@@ -327,9 +326,6 @@ parse_pgm_inst_t cmd_start = {
 		NULL,
 	},
 };
-
-
-
 
 
 /**********************************************************/
@@ -694,6 +690,54 @@ parse_pgm_inst_t cmd_sensor_robot = {
 		NULL,
 	},
 };
+
+/**********************************************************/
+/* Lasers measures */
+
+/* TODO */
+#if 0
+/* this structure is filled when cmd_laser is parsed successfully */
+struct cmd_laser_result {
+	fixed_string_t arg0;
+	fixed_string_t arg1;
+};
+
+/* function called when cmd_laser is parsed successfully */
+static void cmd_laser_parsed(void *parsed_result, void *data)
+{
+	struct cmd_laser_result *res = parsed_result;
+	uint8_t i, loop = 0;
+
+	if (!strcmp_P(res->arg1, PSTR("loop_show")))
+		loop = 1;
+	
+	do {
+		printf_P(PSTR("laser values: "));
+		for (i=0; i<laser_MAX; i++) {
+			printf_P(PSTR("%.4d "), sensor_get_laser(i));
+		}
+		printf_P(PSTR("\r\n"));
+		wait_ms(100);
+	} while (loop && !cmdline_keypressed());
+}
+
+prog_char str_laser_arg0[] = "laser";
+parse_pgm_token_string_t cmd_laser_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_laser_result, arg0, str_laser_arg0);
+prog_char str_laser_arg1[] = "show#loop_show";
+parse_pgm_token_string_t cmd_laser_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_laser_result, arg1, str_laser_arg1);
+
+prog_char help_laser[] = "Show laser values";
+parse_pgm_inst_t cmd_laser = {
+	.f = cmd_laser_parsed,  /* function to call */
+	.data = NULL,      /* 2nd arg of func */
+	.help_str = help_laser,
+	.tokens = {        /* token list, NULL terminated */
+		(prog_void *)&cmd_laser_arg0, 
+		(prog_void *)&cmd_laser_arg1, 
+		NULL,
+	},
+};
+#endif
 
 /**********************************************************/
 /* Interact */

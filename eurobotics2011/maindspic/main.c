@@ -103,7 +103,7 @@ void main_timer_init(void)
 /* timer 1 interrupt */
 void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void)
 {
-  IFS0bits.T1IF=0;
+  _T1IF=0;
   main_timer_interrupt();
 }
 
