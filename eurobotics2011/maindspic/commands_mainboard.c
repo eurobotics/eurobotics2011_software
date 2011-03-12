@@ -34,7 +34,6 @@
 #include <aversive/pgmspace.h>
 #include <aversive/wait.h>
 #include <aversive/error.h>
-//#include <avr/eeprom.h>
 
 #include <uart.h>
 #include <dac_mc.h>
@@ -694,50 +693,52 @@ parse_pgm_inst_t cmd_sensor_robot = {
 /**********************************************************/
 /* Lasers measures */
 
-/* TODO */
-#if 0
-/* this structure is filled when cmd_laser is parsed successfully */
-struct cmd_laser_result {
+/* this structure is filled when cmd_lasers is parsed successfully */
+struct cmd_lasers_result {
 	fixed_string_t arg0;
 	fixed_string_t arg1;
 };
 
-/* function called when cmd_laser is parsed successfully */
-static void cmd_laser_parsed(void *parsed_result, void *data)
+/* function called when cmd_lasers is parsed successfully */
+static void cmd_lasers_parsed(void *parsed_result, void *data)
 {
-	struct cmd_laser_result *res = parsed_result;
-	uint8_t i, loop = 0;
+	struct cmd_lasers_result *res = parsed_result;
+	uint8_t loop = 0;
 
-	if (!strcmp_P(res->arg1, PSTR("loop_show")))
-		loop = 1;
-	
-	do {
-		printf_P(PSTR("laser values: "));
-		for (i=0; i<laser_MAX; i++) {
-			printf_P(PSTR("%.4d "), sensor_get_laser(i));
-		}
-		printf_P(PSTR("\r\n"));
-		wait_ms(100);
-	} while (loop && !cmdline_keypressed());
+	if (!strcmp_P(res->arg1, PSTR("on")))
+		lasers_set_on();
+	else if (!strcmp_P(res->arg1, PSTR("off")))
+		lasers_set_off();
+	else if ( !strcmp_P(res->arg1, PSTR("loop_show"))
+				|| !strcmp_P(res->arg1, PSTR("show")) )
+	{
+		if (!strcmp_P(res->arg1, PSTR("loop_show")))
+			loop = 1;
+		do {
+			printf_P(PSTR("lasers measure: "));
+			printf_P(PSTR("\r\n"));
+			wait_ms(100);
+		} while (loop && !cmdline_keypressed());
+	}
 }
 
-prog_char str_laser_arg0[] = "laser";
-parse_pgm_token_string_t cmd_laser_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_laser_result, arg0, str_laser_arg0);
-prog_char str_laser_arg1[] = "show#loop_show";
-parse_pgm_token_string_t cmd_laser_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_laser_result, arg1, str_laser_arg1);
+prog_char str_lasers_arg0[] = "lasers";
+parse_pgm_token_string_t cmd_lasers_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg0, str_lasers_arg0);
+prog_char str_lasers_arg1[] = "on#off#show#loop_show";
+parse_pgm_token_string_t cmd_lasers_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg1, str_lasers_arg1);
 
-prog_char help_laser[] = "Show laser values";
-parse_pgm_inst_t cmd_laser = {
-	.f = cmd_laser_parsed,  /* function to call */
+prog_char help_lasers[] = "Show lasers values";
+parse_pgm_inst_t cmd_lasers = {
+	.f = cmd_lasers_parsed,  /* function to call */
 	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_laser,
+	.help_str = help_lasers,
 	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_laser_arg0, 
-		(prog_void *)&cmd_laser_arg1, 
+		(prog_void *)&cmd_lasers_arg0, 
+		(prog_void *)&cmd_lasers_arg1, 
 		NULL,
 	},
 };
-#endif
+
 
 /**********************************************************/
 /* Interact */

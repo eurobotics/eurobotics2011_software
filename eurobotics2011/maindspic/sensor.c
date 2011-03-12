@@ -48,9 +48,17 @@ static void adc_init(void)
 	/* 3V external reference  */
 	_VCFG = 0b011;
 
+
 	/* by default: 10 bit mode and ADCLK from TCY */
 	
-	/* Adquisition and conversion time (TAD, TCONV):
+	/* Adquisition and conversion time (TSAM, TAD, TCONV):
+
+		_SAMC =	11111 = 31 TAD = TSAM
+					•
+					•
+					•
+					00001 = 1 TAD
+					00000 = 0 TAD
 
 		_ADCS =	00111111 = TCY · (ADCS<7:0> + 1) = 64 · TCY = TAD
 					.
@@ -68,9 +76,12 @@ static void adc_init(void)
 
 	*/
 
-	_ADCS = 0b00111111;	/* TAD = 64·TCY = 1.6 us, TCONV = 19.2 us (50 Ksps max) */ 
+	_SSRC = 0b111;			/* TSAM auto with internal counter */
+	_SAMC = 0b11111;		/* TSAM = 31· TCY = 775 ns */
+	_ADCS = 0b00111111;	/* TAD = 64· TCY = 1.6 us, TCONV = 19.2 us (50 Ksps max) */ 
 
-
+	_ASAM = 0;
+	
 	/* interrupt */
 	_AD1IF = 0;
 	_AD1IE = 1;
@@ -83,9 +94,8 @@ static void adc_init(void)
 /* launch new adquisition */
 void adc_launch(uint16_t conf)
 {
-	/* select channels */
-	AD1CHS0 = conf;  
-
+	AD1CHS0 = conf;
+	
 	/* lauch conversion */
 	_SAMP = 1;
 }

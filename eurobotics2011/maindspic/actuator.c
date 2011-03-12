@@ -50,13 +50,13 @@ void dac_set_and_save(void *dac, int32_t val)
 }
 
 /* lasers off */
-void lasers_enable(void)
+void lasers_set_on(void)
 {
-	_LATC7 = 0;
+	_LATC7 = 1;
 }
 
 /* lasers on */
-void lasers_disable(void)
+void lasers_set_off(void)
 {
-	_LATC7 = 1;
+	_LATC7 = 0;
 }

@@ -150,10 +150,10 @@ void io_pins_init(void)
 	_TRISB4	= 1;	
 	
 	/* lasers */
-	AD1PCFGL&= ~(_BV(7));	/* AN7 <- MAIN_LASER_1 */
-	AD1PCFGL&= ~(_BV(6));	/* AN6 <- MAIN_LASER_2 */
+	AD1PCFGL &= ~(_BV(7));	/* AN7 <- MAIN_LASER_1 */
+	AD1PCFGL &= ~(_BV(6));	/* AN6 <- MAIN_LASER_2 */
 	_ODCC7 	= 1;				/* lasers enable is open collector */
-	_LATC7 	= 1;				/* lasers off */
+	_LATC7 	= 0;				/* lasers off */
 			
 	/* i2c */
 	/* XXX open collector */
@@ -276,7 +276,7 @@ int main(void)
 	/* strat-related event */
 //	scheduler_add_periodical_event_priority(strat_event, NULL,
 //						EVENT_PERIOD_STRAT / SCHEDULER_UNIT, EVENT_PRIORITY_STRAT);
-//
+
 
 	/* log setup */
  	gen.logs[0] = E_USER_STRAT;

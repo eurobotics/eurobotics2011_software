@@ -94,6 +94,7 @@ extern parse_pgm_inst_t cmd_slavedspic;
 extern parse_pgm_inst_t cmd_slavedspic_ts;
 extern parse_pgm_inst_t cmd_beacon;
 extern parse_pgm_inst_t cmd_sensor_robot;
+extern parse_pgm_inst_t cmd_lasers;
 //extern parse_pgm_inst_t cmd_interact;
 //extern parse_pgm_inst_t cmd_rs;
 //extern parse_pgm_inst_t cmd_i2cdebug;
@@ -143,7 +144,7 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_pwm_servo,
 	(parse_pgm_inst_t *)&cmd_pwm_servo_show_range,
 	(parse_pgm_inst_t *)&cmd_dac_mc,
-//	(parse_pgm_inst_t *)&cmd_adc,
+	(parse_pgm_inst_t *)&cmd_adc,
 	(parse_pgm_inst_t *)&cmd_sensor,
 	(parse_pgm_inst_t *)&cmd_log,
 	(parse_pgm_inst_t *)&cmd_log_show,
@@ -185,6 +186,7 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_slavedspic_ts,
 	(parse_pgm_inst_t *)&cmd_beacon,
 	(parse_pgm_inst_t *)&cmd_sensor_robot,
+	(parse_pgm_inst_t *)&cmd_lasers,
 //	(parse_pgm_inst_t *)&cmd_interact,
 //	(parse_pgm_inst_t *)&cmd_rs,
 //	(parse_pgm_inst_t *)&cmd_i2cdebug,
