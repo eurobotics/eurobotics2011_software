@@ -1,11 +1,4 @@
-
-%% Data calibration
-clear all
-load beacon_as_fixed_calib;
-offset_cm = 0;   %-6.2;
-first_sample = 2;
-x = data(first_sample:end,2).*1.6;          % timer_counts, timer_period = 1.6us
-y = data(first_sample:end,1) + offset_cm;   % distance(cm), from 30 cm aprox.
+%% Process to get a cuve that fit with data calibration
 
 %% Scale and interpolation of data
 mu = mean(x);
@@ -36,19 +29,27 @@ plot(x, error);
 legend('error (cm)')
 
 %% Table
-% Nota: forma de sacar indice tabla = 831- (x_medida-3852)/8)
-% medida-x_eval
+% Note: array index = (array_size-1) - (medida-x_eval_min)/x_eval_delta
 %x_eval = 6560:-5:2415;
-x_eval = 10500:-8:3852;
+%x_eval = 10500:-8:3852; % index = 831- (x_medida-3852)/8)
+
+% evaluate a x range and get y
+x_eval = 4600:-8:1600;
 y_eval = polyval(p,(x_eval-mu)./sigma);
 
+% round to integer values
 y_int = round(y_eval);
+
+% y increment per x value
 y_inc = y_int(2:end)-y_int(1:end-1);
+
+% info table
 table = [x_eval; y_int; [0 y_inc]];
 
-figure
-stem(table(2,:), table(3,:))
+% plot y increment per x
+figure, stem(table(2,:), table(3,:))
 
+% plot y = f(x)
 figure
 plot(x,y,'ro')
 hold on
@@ -56,14 +57,13 @@ plot(x_eval,y_eval)
 grid on
 
 
-% %% Inverse fit
-% p_inv = polyfit((y-mean(y))./std(y), x, 6);
-% y_eval = [30:5:350];
-% x_eval = polyval(p_inv, (y_eval-mean(y_eval))./std(y_eval));
-% 
-% figure
-% plot(x_eval,y_eval)
-% legend('Pulse(us) = f(dist(cm)')
-% 
-% table = [x_eval; y_eval]
+%% Inverse fit
+p_inv = polyfit((y-mean(y))./std(y), x, 6);
+y_eval = [30:5:350];
+x_eval = polyval(p_inv, (y_eval-mean(y_eval))./std(y_eval));
+
+figure
+plot(x_eval,y_eval)
+legend('Pulse(us) = f(dist(cm))')
+
 

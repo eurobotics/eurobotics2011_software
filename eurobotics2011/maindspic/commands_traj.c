@@ -614,62 +614,62 @@ struct cmd_position_result {
 };
 
 #define AUTOPOS_SPEED_FAST 	500
-#define ROBOT_DIS2_WALL 		45
+#define ROBOT_DIS2_WALL 		(int16_t)(ROBOT_LENGTH/2)
 static void auto_position(void)
 {
-//	uint8_t err;
-//	uint16_t old_spdd, old_spda;
-//
-//	interrupt_traj_reset();
-//	strat_get_speed(&old_spdd, &old_spda);
-//	strat_set_speed(AUTOPOS_SPEED_FAST, AUTOPOS_SPEED_FAST);
-//
-//	trajectory_d_rel(&mainboard.traj, -300);
-//	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
-//	if (err == END_INTR)
-//		goto intr;
-//	wait_ms(100);
-//	
-//	if(mainboard.our_color == I2C_COLOR_RED)
-//		strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), 0, 0);
-//	else
-//		strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), 0, -180);
-//	
-//	trajectory_d_rel(&mainboard.traj, (230-45));
-//	err = wait_traj_end(END_INTR|END_TRAJ);
-//	if (err == END_INTR)
-//		goto intr;
-//
-//	trajectory_a_rel(&mainboard.traj, COLOR_A_REL(90));
-//	err = wait_traj_end(END_INTR|END_TRAJ);
-//	if (err == END_INTR)
-//		goto intr;
-//
-//	trajectory_d_rel(&mainboard.traj, -300);
-//	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
-//	if (err == END_INTR)
-//		goto intr;
-//	wait_ms(100);
-//	strat_reset_pos(DO_NOT_SET_POS, ROBOT_DIS2_WALL, 90);
-//
-//	trajectory_d_rel(&mainboard.traj, (190-45));
-//	err = wait_traj_end(END_INTR|END_TRAJ);
-//	if (err == END_INTR)
-//		goto intr;
-//	wait_ms(100);
-//	
-//	trajectory_a_rel(&mainboard.traj, COLOR_A_REL(-27));
-//	err = wait_traj_end(END_INTR|END_TRAJ);
-//	if (err == END_INTR)
-//		goto intr;
-//	wait_ms(100);
-//	
-//	strat_set_speed(old_spdd, old_spda);
-//	return;
-//
-//intr:
-//	strat_hardstop();
-//	strat_set_speed(old_spdd, old_spda);
+	uint8_t err;
+	uint16_t old_spdd, old_spda;
+
+	/* save & set speeds */
+	interrupt_traj_reset();
+	strat_get_speed(&old_spdd, &old_spda);
+	strat_set_speed(AUTOPOS_SPEED_FAST, AUTOPOS_SPEED_FAST);
+
+	/* goto blocking to y axis */
+	trajectory_d_rel(&mainboard.traj, -300);
+	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
+	if (err == END_INTR)
+		goto intr;
+	wait_ms(100);
+	
+	/* set y */
+	strat_reset_pos(0, COLOR_Y(ROBOT_DIS2_WALL), 90);
+	
+	/* prepare to x axis */
+	trajectory_d_rel(&mainboard.traj, 35);
+	err = wait_traj_end(END_INTR|END_TRAJ);
+	if (err == END_INTR)
+		goto intr;
+
+	trajectory_a_rel(&mainboard.traj, COLOR_A_REL(-90));
+	err = wait_traj_end(END_INTR|END_TRAJ);
+	if (err == END_INTR)
+		goto intr;
+
+	/* goto blocking to x axis */
+	trajectory_d_rel(&mainboard.traj, -500);
+	err = wait_traj_end(END_INTR|END_TRAJ|END_BLOCKING);
+	if (err == END_INTR)
+		goto intr;
+	wait_ms(100);
+
+	/* set x and angle */
+	strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), DO_NOT_SET_POS, COLOR_A_ABS(0));
+
+	/* goto start position */
+	trajectory_d_rel(&mainboard.traj, 400-ROBOT_LENGTH);
+	err = wait_traj_end(END_INTR|END_TRAJ);
+	if (err == END_INTR)
+		goto intr;
+	wait_ms(100);
+	
+	/* restore speeds */	
+	strat_set_speed(old_spdd, old_spda);
+	return;
+
+intr:
+	strat_hardstop();
+	strat_set_speed(old_spdd, old_spda);
 }
 
 /* function called when cmd_position is parsed successfully */
@@ -686,14 +686,10 @@ static void cmd_position_parsed(void * parsed_result, void * data)
 	}
 	else if (!strcmp_P(res->arg1, PSTR("autoset_blue"))) {
 		mainboard.our_color = I2C_COLOR_BLUE;
-		//i2c_set_color(I2C_MECHBOARD_ADDR, I2C_COLOR_GREEN);
-		//i2c_set_color(I2C_SENSORBOARD_ADDR, I2C_COLOR_GREEN);
 		auto_position();
 	}
 	else if (!strcmp_P(res->arg1, PSTR("autoset_red"))) {
 		mainboard.our_color = I2C_COLOR_RED;
-		//i2c_set_color(I2C_MECHBOARD_ADDR, I2C_COLOR_RED);
-		//i2c_set_color(I2C_SENSORBOARD_ADDR, I2C_COLOR_RED);
 		auto_position();
 	}
 

@@ -28,8 +28,8 @@
 #define AREA_Y 2100
 
 /* convert coords according to our color */
-#define COLOR_Y(y)     ((mainboard.our_color==I2C_COLOR_BLUE)? (y) : (AREA_Y-(y)))
-#define COLOR_X(x)     (x)
+#define COLOR_Y(y)     (y)
+#define COLOR_X(x)     ((mainboard.our_color==I2C_COLOR_BLUE)? (x) : (AREA_X-(x)))
 
 #define COLOR_A_REL(a) ((mainboard.our_color==I2C_COLOR_BLUE)? (a) : (-a))
 #define COLOR_A_ABS(a) ((mainboard.our_color==I2C_COLOR_BLUE)? (a) : (180-a))
@@ -44,15 +44,8 @@
 #define CENTER_X 1500
 #define CENTER_Y 1050
 
-#define CORNER_X 3000
-#define CORNER_Y COLOR_Y(2100)
-
-/* grid */
-#define GRID_X(num)	(150 + 225*num)
-#define GRID_Y(num)	(2100-(128 + 125*(11-num)))
-
 /* useful traj flags */
-#define TRAJ_SUCCESS(f) 		(f & (END_TRAJ|END_NEAR))
+#define TRAJ_SUCCESS(f) 				(f & (END_TRAJ|END_NEAR))
 
 #define TRAJ_FLAGS_STD 					(END_TRAJ|END_BLOCKING|END_NEAR|END_OBSTACLE|END_INTR|END_TIMER)
 #define TRAJ_FLAGS_NO_TIMER 			(END_TRAJ|END_BLOCKING|END_NEAR|END_OBSTACLE|END_INTR)
@@ -61,12 +54,12 @@
 #define TRAJ_FLAGS_SMALL_DIST 		(END_TRAJ|END_BLOCKING|END_INTR)
 
 /* default speeds */
-#define SPEED_DIST_FAST 		2000
-#define SPEED_ANGLE_FAST 		2000
-#define SPEED_DIST_SLOW 		1500
-#define SPEED_ANGLE_SLOW 		1500
-#define SPEED_DIST_VERY_SLOW 	1000
-#define SPEED_ANGLE_VERY_SLOW 1000
+#define SPEED_DIST_FAST 		4000
+#define SPEED_ANGLE_FAST 		4000
+#define SPEED_DIST_SLOW 		2000
+#define SPEED_ANGLE_SLOW 		2000
+#define SPEED_DIST_VERY_SLOW 	 500
+#define SPEED_ANGLE_VERY_SLOW  500
 
 /************************************************************* 
  * Strat data structures 
@@ -92,11 +85,40 @@ struct conf {
 #define STRAT_CONF_C 		0x04
 };
 
+struct slot {
+	uint16_t x;
+	uint16_t y;
+
+	uint16_t color;
+#define SLOT_BLUE	I2C_COLOR_BLUE
+#define SLOT_RED	I2C_COLOR_RED
+	
+	uint8_t weight;
+#define SLOT_WEIGHT_
+#define SLOT_WEIGHT_MEDIUM
+#define SLOT_WEIGHT_WALL
+#define SLOT_WEIGHT_BONUS
+#define SLOT_WEIGHT_SAFE
+
+	uint8_t flags;
+#define SLOT_BONUS			0x01
+#define SLOT_SAFE				0x02
+#define SLOT_WALL				0x04
+#define SLOT_CHECK			0x08
+#define SLOT_CHECK_ONESIDE	0x16
+#define SLOT_BUSY				0x32
+#define SLOT_NEAR_GREEN		0x64
+
+}
+
 /* infos */
 struct strat_infos {
 	uint8_t dump_enabled;
 	struct conf conf;
 	struct bbox area_bbox;
+
+	struct slot[NB_SLOT_X][NB_SLOT_Y];
+	struct slot_green[]
 };
 
 extern struct strat_infos strat_infos;

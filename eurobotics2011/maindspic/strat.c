@@ -68,6 +68,8 @@ struct strat_infos strat_infos = {
 	.conf = {
 		.flags = 0,
 	},
+	/* slots */
+	.slot[0][0] = {.x = 0, .y = 0, .color = 0, .weight = 0, .flags = 0, },
 };
 
 /*************************************************************/
@@ -157,6 +159,9 @@ void strat_init(void)
 void strat_exit(void)
 {
 	uint8_t flags;
+
+
+	/* TODO: disable lasers and slavespic */
 
 	mainboard.flags &= ~(DO_TIMER);
 	strat_hardstop();

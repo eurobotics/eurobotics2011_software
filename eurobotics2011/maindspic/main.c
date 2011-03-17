@@ -206,10 +206,8 @@ int main(void)
 	memset(&mainboard, 0, sizeof(mainboard));
 
 	/* init flags */
-	mainboard.flags = DO_ENCODERS | DO_RS 
+	mainboard.flags = DO_ENCODERS | DO_RS | DO_BD
 							| DO_POS | DO_POWER;
-
-	//mainboard.flags = DO_ENCODERS | DO_POWER;
 
 	
 	beaconboard.opponent_x = I2C_OPPONENT_NOT_THERE;

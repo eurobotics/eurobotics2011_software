@@ -118,7 +118,7 @@ uint64_t sensor_get_all(void);
 uint8_t sensor_get(uint8_t i);
 
 /* manage obtacles with sensors */
-/* TODO: learn how works this feature */
+/* XXX take care with disable obstacle detection */
 void sensor_obstacle_disable(void);
 void sensor_obstacle_enable(void);
 uint8_t sensor_obstacle_is_disabled(void);

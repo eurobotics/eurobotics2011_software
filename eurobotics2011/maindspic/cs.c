@@ -134,7 +134,8 @@ static void do_cs(void *dummy)
 			dac_mc_set(LEFT_MOTOR, 0);
 			dac_mc_set(RIGHT_MOTOR, 0);
 
-			/* TODO: disable lasers */
+			/* power off lasers */
+			lasers_set_off();
 
 			/* TODO: stop slavedspic actuators */		
 	
