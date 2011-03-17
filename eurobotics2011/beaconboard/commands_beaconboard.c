@@ -237,7 +237,7 @@ struct cmd_opponent_result {
 static void cmd_opponent_parsed(void * parsed_result, void *data)
 {
 	struct cmd_opponent_result *res = parsed_result;
-	int16_t opponent_x, opponent_y, opponent_dist, opponent_angle;
+	int32_t opponent_x, opponent_y, opponent_dist, opponent_angle;
 	uint8_t flags;
 	
 	IRQ_LOCK(flags);
@@ -245,14 +245,21 @@ static void cmd_opponent_parsed(void * parsed_result, void *data)
 	beacon.robot_y = res->robot_y;
 	beacon.robot_a = res->robot_a;
 	
-	opponent_x = (int16_t)(beacon.opponent_x);
-	opponent_y = (int16_t)(beacon.opponent_y);
-	opponent_angle = (int16_t)(beacon.opponent_angle);
-	opponent_dist = (int16_t)(beacon.opponent_dist);
+	opponent_x = beacon.opponent_x;
+	opponent_y = beacon.opponent_y;
+	opponent_angle = beacon.opponent_angle;
+	opponent_dist = beacon.opponent_dist;
 	IRQ_UNLOCK(flags);
-	
+
+	/* get actual value of (x,y) */
+	if(opponent_x != I2C_OPPONENT_NOT_THERE){
+		/* calculate (x,y) coordenates relative to (0,0) */
+		beacon_angle_dist_to_x_y(opponent_angle, opponent_dist, &opponent_x, &opponent_y);
+	}
+
 	printf("opponent is %d %d %d %d\n\r",
-	 			opponent_x, opponent_y, opponent_angle, opponent_dist);
+	 			(int16_t)opponent_x, (int16_t)opponent_y,
+			   (int16_t)opponent_angle, (int16_t)opponent_dist);
 	
 }
 

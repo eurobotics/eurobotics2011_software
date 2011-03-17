@@ -20,26 +20,6 @@
  *  Javier Baliñas Santos <javier@arc-robots.org>
  */
 
-struct beacon {
-	int32_t beacon_speed;
-	uint8_t angle_offset;
-	
-	int32_t opponent_angle;
-	int32_t opponent_dist;
-	int32_t prev_opponent_angle;
-	int32_t prev_opponent_dist;
-	int32_t robot_x;
-	int32_t robot_y;
-	int32_t robot_a;
-	int32_t opponent_x;
-	int32_t opponent_y;
-};
 
-extern struct beacon beacon;
-
-void beacon_init(void);
-void beacon_start(void);
-void beacon_stop(void);
-void beacon_calc(void *dummy);
-
-void beacon_angle_dist_to_x_y(int32_t angle, int32_t dist, int32_t *x, int32_t *y);
+/* get distance (cm) from calib array */
+uint16_t get_dist_array(int32_t size, int32_t period);

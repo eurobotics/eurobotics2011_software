@@ -49,6 +49,7 @@
 #include "../common/i2c_commands.h"
 #include "main.h"
 #include "beacon.h"
+#include "beacon_calib.h"
 
 /* functional modes of beacon */
 #undef BEACON_MODE_EXTERNAL
@@ -99,7 +100,7 @@
 #define BEACON_ERROR(args...) ERROR(E_USER_BEACON, args)
 
 /* beacon calculations funcions */
-static int32_t get_dist(int32_t size, int32_t period);
+//static int32_t get_dist(int32_t size, int32_t period);
 static int32_t get_angle(int32_t middle, int32_t period, int32_t offset);
 
 /* data structure to store beacon results */
@@ -167,9 +168,9 @@ void beacon_init(void)
 	IFS0bits.IC2IF = 0; 	// clear IC2 Interrupt Status Flag
 	IEC0bits.IC2IE = 1; 	// enable IC2 interrupt
 
-	IPC5bits.IC7IP = 5; 	// setup IC1 interrupt priority level XXX, higher than scheduler!
-	IFS1bits.IC7IF = 0; 	// clear IC1 Interrupt Status Flag
-	IEC1bits.IC7IE = 1; 	// enable IC1 interrupt
+	IPC5bits.IC7IP = 6; 	// setup IC7 interrupt priority level XXX, higher than scheduler!
+	IFS1bits.IC7IF = 0; 	// clear IC7 Interrupt Status Flag
+	IEC1bits.IC7IE = 1; 	// enable IC7 interrupt
 
 	/* TODO: for the moment beacon only uses one turn sensor */
 /*	IPC5bits.IC8IP = 5; 	// setup IC1 interrupt priority level XXX, higher than scheduler!
@@ -399,24 +400,24 @@ uint8_t is_in_margin(int16_t dx, int16_t dy, int16_t margin)
 
 
 /* calculate distance from size of a pulse width and turn period */
-static int32_t get_dist(int32_t size, int32_t period)
-{
-	int32_t dist=0;
-	double size_rel;
-	
-	/* calcule relative angle */
-	size_rel = size*1.0/period;
-
-	/* dist = offset + (a0 + a1*x + a2*x² + a3x³) */	
-	dist =  (int32_t)((0.0062 + (-0.1546*size_rel) + 
-							(1.1832*size_rel*size_rel) + 
-							(-2.4025*size_rel*size_rel*size_rel))*100000);
-	
-	/* practical offset */
-	dist += 16;      
- 
-	return dist;
-}
+//static int32_t get_dist(int32_t size, int32_t period)
+//{
+//	int32_t dist=0;
+//	double size_rel;
+//	
+//	/* calcule relative angle */
+//	size_rel = size*1.0/period;
+//
+//	/* dist = offset + (a0 + a1*x + a2*x² + a3x³) */	
+//	dist =  (int32_t)((0.0062 + (-0.1546*size_rel) + 
+//							(1.1832*size_rel*size_rel) + 
+//							(-2.4025*size_rel*size_rel*size_rel))*100000);
+//	
+//	/* practical offset */
+//	dist += 16;      
+// 
+//	return dist;
+//}
 
 /* calculate angle from middle of pulse width, turn period and angle offset */
 static int32_t get_angle(int32_t middle, int32_t period, int32_t offset)
@@ -526,7 +527,7 @@ void sensor_calc(uint8_t sensor)
 		local_count_period += ((MODULO_TIMER + 1)*local_count_period_ov);	
 
 		/* low pass filtered version of period */		
-		local_count_period_filtered = (int32_t)(local_count_period_filtered*0.8 + local_count_period*0.2);
+		local_count_period_filtered = (int32_t)(local_count_period_filtered*0.5 + local_count_period*0.5);
 	}
 		
 	/* if not valid pulse return */
@@ -570,14 +571,14 @@ void sensor_calc(uint8_t sensor)
 	}
 	
 	/* filter version of size and middle counts */
-	count_size_filtered   = (int32_t)(count_size_filtered*0.8 + count_size*0.2); 
-	count_middle_filtered = (int32_t)(count_middle_filtered*0.8 + count_middle*0.2);
+	count_size_filtered   = (int32_t)(count_size_filtered*0.5 + count_size*0.5); 
+	count_middle_filtered = (int32_t)(count_middle_filtered*0.5 + count_middle*0.5);
 
 
 	/* debug counts */
-	BEACON_DEBUG("period = %.5ld / size = %.5ld / middle = %.5ld (x0.1)",
+	//BEACON_DEBUG("period = %.5ld / size = %.5ld / middle = %.5ld (x0.1)",
 					// local_count_period_filtered/10, count_size_filtered/10, count_middle_filtered/10);
-					 local_count_period/10, count_size/10, count_middle/10);
+					// local_count_period/10, count_size/10, count_middle/10);
 
 	/* if pulse width is out of range return */
 /*		if(count_size > 5000){
@@ -593,11 +594,12 @@ void sensor_calc(uint8_t sensor)
 		local_angle = get_angle(count_middle, local_count_period, 0);
 
 	/* calculate distance in mm */
-	local_dist = get_dist(count_size, local_count_period);
+	local_dist = get_dist_array(count_size, local_count_period);
+	//local_dist = get_dist_array(count_size_filtered, local_count_period_filtered);
 
 
 	/* debug angle and distance */
-	//BEACON_DEBUG("a = %.4d deg / d = %.4ld mm", local_angle, local_dist);
+	//BEACON_DEBUG("a = %.4ld deg / d = %.4ld mm", local_angle, local_dist);
 
 #ifdef BEACON_MODE_EXTERNAL
 	/* check angle range */
@@ -609,7 +611,7 @@ void sensor_calc(uint8_t sensor)
 	}
 #endif
 
-	/* TODO: check distance range */
+	/* XXX: check distance range */
 
 	/* calculate (x,y) coordenates relative to (0,0) */
 	beacon_angle_dist_to_x_y(local_angle, local_dist, &result_x, &result_y);
@@ -650,9 +652,9 @@ void sensor_calc(uint8_t sensor)
 	IRQ_UNLOCK(flags);
 
 	/* final results */
-	//BEACON_NOTICE("opp: a = %f / d = %.4ld / x = %.4ld / y = %.4ld",
-	//				 beacon.opponent_angle, beacon.opponent_dist,
-	//				 beacon.opponent_x, beacon.opponent_y);
+	BEACON_NOTICE("opp: a = %.3ld / d = %.4ld / x = %.4ld / y = %.4ld",
+					 beacon.opponent_angle, beacon.opponent_dist,
+					 beacon.opponent_x, beacon.opponent_y);
 
 	return;
 
@@ -665,7 +667,7 @@ void sensor_calc(uint8_t sensor)
 			beacon.opponent_x = I2C_OPPONENT_NOT_THERE;
 			IRQ_UNLOCK(flags);
 			
-			//BEACON_NOTICE("opponent not there");
+			BEACON_NOTICE("opponent not there");
 		}	
 }
 
