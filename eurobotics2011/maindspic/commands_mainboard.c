@@ -293,11 +293,11 @@ static void cmd_start_parsed(void *parsed_result, void *data)
 	
 	if (!strcmp_P(res->color, PSTR("blue"))) {
 		mainboard.our_color = I2C_COLOR_BLUE;
-		beacon_cmd_color();
+		//beacon_cmd_color();
 	}
 	else if (!strcmp_P(res->color, PSTR("red"))) {
 		mainboard.our_color = I2C_COLOR_RED;
-		beacon_cmd_color();
+		//beacon_cmd_color();
 	}
 
 	strat_start();

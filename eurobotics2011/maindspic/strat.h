@@ -80,45 +80,70 @@ struct conf {
  * do one things or anothers */
 
 	uint8_t flags;
+/* example : */
 #define STRAT_CONF_A		 	0x01
 #define STRAT_CONF_B			0x02
 #define STRAT_CONF_C 		0x04
 };
 
-struct slot {
+/* slot of token */
+struct slot_info {
 	uint16_t x;
 	uint16_t y;
 
-	uint16_t color;
-#define SLOT_BLUE	I2C_COLOR_BLUE
-#define SLOT_RED	I2C_COLOR_RED
+	uint8_t color;
+#define SLOT_BLUE			I2C_COLOR_BLUE
+#define SLOT_RED			I2C_COLOR_RED
+#define SLOT_GREEN_AREA	I2C_COLOR_MAX
 	
-	uint8_t weight;
-#define SLOT_WEIGHT_
-#define SLOT_WEIGHT_MEDIUM
-#define SLOT_WEIGHT_WALL
-#define SLOT_WEIGHT_BONUS
-#define SLOT_WEIGHT_SAFE
+	uint8_t prio;
+#define SLOT_PRIO_0			0
+#define SLOT_PRIO_1			1
+#define SLOT_PRIO_2			2
+#define SLOT_PRIO_3			3
+#define SLOT_PRIO_WALL		4
+#define SLOT_PRIO_BONUS		5
+#define SLOT_PRIO_SAFE		6
 
-	uint8_t flags;
-#define SLOT_BONUS			0x01
-#define SLOT_SAFE				0x02
-#define SLOT_WALL				0x04
-#define SLOT_CHECK			0x08
-#define SLOT_CHECK_ONESIDE	0x16
-#define SLOT_BUSY				0x32
-#define SLOT_NEAR_GREEN		0x64
+	uint16_t flags;
+#define SLOT_BONUS				0x01
+#define SLOT_SAFE					0x02
+#define SLOT_WALL					0x04
+#define SLOT_CHECK				0x08
+#define SLOT_CHECK_ONESIDE		0x16
+#define SLOT_BUSY					0x32
+#define SLOT_NEAR_GREEN_RED	0x64
+#define SLOT_NEAR_GREEN_BLUE	0x128
 
-}
+};
 
-/* infos */
+
+
+/* infos about strat */
+#define NB_SLOT_X				6
+#define NB_SLOT_Y				6
+#define NB_SLOT_GREEN		5
+#define NB_GRID_LINES_X 	9
+#define NB_GRID_LINES_Y 	7
+
+
 struct strat_infos {
 	uint8_t dump_enabled;
 	struct conf conf;
 	struct bbox area_bbox;
 
-	struct slot[NB_SLOT_X][NB_SLOT_Y];
-	struct slot_green[]
+	/* playing areas */
+	struct slot_info slot_grid[NB_SLOT_X][NB_SLOT_Y];
+	struct slot_info slot_green[I2C_COLOR_MAX][NB_SLOT_GREEN];
+
+	/* grid lines */
+	uint16_t grid_line_x[NB_GRID_LINES_X];
+	uint16_t grid_line_y[NB_GRID_LINES_Y];
+
+	/* slot position */
+	uint8_t slot_actual;
+	uint8_t slot_next;
+	uint8_t slot_before;
 };
 
 extern struct strat_infos strat_infos;
@@ -140,6 +165,6 @@ void strat_exit(void);
 uint8_t strat_main(void);
 void strat_event(void *dummy);
 
-/* add here more strat files */
+/* add here more strat functions in files */
 
 #endif

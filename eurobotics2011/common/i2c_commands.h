@@ -36,6 +36,8 @@
 
 #define I2C_COLOR_RED 	0
 #define I2C_COLOR_BLUE	1
+#define I2C_COLOR_MAX	2
+
 
 #define I2C_SIDE_REAR	0
 #define I2C_SIDE_FRONT 	1

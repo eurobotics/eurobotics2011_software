@@ -125,11 +125,11 @@ extern parse_pgm_inst_t cmd_goto2;
 extern parse_pgm_inst_t cmd_goto3;
 extern parse_pgm_inst_t cmd_position;
 extern parse_pgm_inst_t cmd_position_set;
-//extern parse_pgm_inst_t cmd_strat_infos;
-//extern parse_pgm_inst_t cmd_strat_conf;
-//extern parse_pgm_inst_t cmd_strat_conf2;
-//extern parse_pgm_inst_t cmd_strat_conf3;
-//extern parse_pgm_inst_t cmd_subtraj;
+extern parse_pgm_inst_t cmd_strat_infos;
+extern parse_pgm_inst_t cmd_strat_conf;
+extern parse_pgm_inst_t cmd_strat_conf2;
+extern parse_pgm_inst_t cmd_strat_conf3;
+extern parse_pgm_inst_t cmd_subtraj;
 
 #endif /* COMPILE_COMMANDS_TRAJ */
 
@@ -212,11 +212,11 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_goto2,
 	(parse_pgm_inst_t *)&cmd_position,
 	(parse_pgm_inst_t *)&cmd_position_set,
-//	(parse_pgm_inst_t *)&cmd_strat_infos,
-//	(parse_pgm_inst_t *)&cmd_strat_conf,
-//	(parse_pgm_inst_t *)&cmd_strat_conf2,
-//	(parse_pgm_inst_t *)&cmd_strat_conf3,
-//	(parse_pgm_inst_t *)&cmd_subtraj,
+	(parse_pgm_inst_t *)&cmd_strat_infos,
+	(parse_pgm_inst_t *)&cmd_strat_conf,
+	(parse_pgm_inst_t *)&cmd_strat_conf2,
+	(parse_pgm_inst_t *)&cmd_strat_conf3,
+	(parse_pgm_inst_t *)&cmd_subtraj,
 
 #endif /* COMPILE_COMMANDS_TRAJ */
 

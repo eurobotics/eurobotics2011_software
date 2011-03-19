@@ -47,7 +47,6 @@
 #include <robot_system.h>
 #include <position_manager.h>
 
-//#include <diagnostic.h>
 
 #include <rdline.h>
 #include <parse.h>
@@ -68,8 +67,69 @@ struct strat_infos strat_infos = {
 	.conf = {
 		.flags = 0,
 	},
-	/* slots */
-	.slot[0][0] = {.x = 0, .y = 0, .color = 0, .weight = 0, .flags = 0, },
+
+	/* grid slots 
+	.slot_grid[X][Y] = {.x  ,   .y ,   .color ,            .prio,   .flags = 0, },  */
+	.slot_grid[0][0] = { 625,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot_grid[0][1] = { 625,	525,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot_grid[0][2] = { 625,	875,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot_grid[0][3] = { 625,	1225,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot_grid[0][4] = { 625,	1575,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot_grid[0][5] = { 625,	1865,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+
+	.slot_grid[1][0] = { 975,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot_grid[1][1] = { 975,	525,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
+	.slot_grid[1][2] = { 975,	875,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot_grid[1][3] = { 975,	1225,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
+	.slot_grid[1][4] = { 975,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot_grid[1][5] = { 975,	1865,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+
+	.slot_grid[2][0] = { 1325,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot_grid[2][1] = { 1325,	525,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot_grid[2][2] = { 1325,	875,	SLOT_RED,	SLOT_PRIO_1,		0 },
+	.slot_grid[2][3] = { 1325,	1225,	SLOT_BLUE,	SLOT_PRIO_1,		0 },
+	.slot_grid[2][4] = { 1325,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot_grid[2][5] = { 1325,	1865,	SLOT_BLUE,	SLOT_PRIO_BONUS,	SLOT_CHECK_ONESIDE },
+
+	.slot_grid[3][0] = { 1675,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot_grid[3][1] = { 1675,	525,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot_grid[3][2] = { 1675,	875,	SLOT_BLUE,	SLOT_PRIO_1,		0 },
+	.slot_grid[3][3] = { 1675,	1225,	SLOT_RED,	SLOT_PRIO_1,		0 },
+	.slot_grid[3][4] = { 1675,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot_grid[3][5] = { 1675,	1865,	SLOT_RED,	SLOT_PRIO_BONUS,	SLOT_CHECK_ONESIDE },
+
+	.slot_grid[4][0] = { 2025,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot_grid[4][1] = { 2025,	525,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
+	.slot_grid[4][2] = { 2025,	875,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot_grid[4][3] = { 2025,	1225,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
+	.slot_grid[4][4] = { 2025,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot_grid[4][5] = { 2025,	1865,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+
+	.slot_grid[5][0] = { 2375,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot_grid[5][1] = { 2375,	525,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot_grid[5][2] = { 2375,	875,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot_grid[5][3] = { 2375,	1225,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot_grid[5][4] = { 2375,	1575,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot_grid[5][5] = { 2375,	1865,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+
+	/* green slots */
+	.slot_green[I2C_COLOR_BLUE][0] = { 200,	690,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_BLUE][1] = { 200,	970,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_BLUE][2] = { 200,	1250,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_BLUE][3] = { 200,	1530,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_BLUE][4] = { 200,	1810,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+
+	.slot_green[I2C_COLOR_RED][0] = { 1800,	690,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_RED][1] = { 1800,	970,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_RED][2] = { 1800,	1250,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_RED][3] = { 1800,	1530,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot_green[I2C_COLOR_RED][4] = { 1800,	1810,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+
+
+	/* grid lines */
+	.grid_line_x = { 0, 450, 800, 1150, 1500, 1850, 2200, 2550, 3000 },
+	.grid_line_y = { 0, 350, 700, 1050, 1400, 1750, 2100 },
+
 };
 
 /*************************************************************/
@@ -111,6 +171,7 @@ void strat_preinit(void)
 	strat_dump_infos(__FUNCTION__);
 }
 
+/* display curret strat configuration */
 void strat_dump_conf(void)
 {
 	if (!strat_infos.dump_enabled)
@@ -136,6 +197,8 @@ void strat_reset_infos(void)
 {
 	strat_set_bounding_box();
 	
+	/* TODO: reset flags of slots */
+	
 }
 
 /* call it just before launching the strat */
@@ -160,21 +223,27 @@ void strat_exit(void)
 {
 	uint8_t flags;
 
+	/* TODO: disable lasers */
+	/* TODO: stop slavespic */
 
-	/* TODO: disable lasers and slavespic */
+	/* stop beacon */
+	beacon_cmd_beacon_off();
 
+	/* stop robot, disable timer */
 	mainboard.flags &= ~(DO_TIMER);
 	strat_hardstop();
 	time_reset();
+
+	/* XXX wait to i2c and UART cmds */
 	wait_ms(1000);
 
+	/* disable CS, and motors */
 	IRQ_LOCK(flags);
 	mainboard.flags &= ~(DO_CS);
 	dac_mc_set(LEFT_MOTOR, 0);
 	dac_mc_set(RIGHT_MOTOR, 0);
 	IRQ_UNLOCK(flags);
 
-	beacon_cmd_beacon_off();
 }
 
 /* called periodically */
@@ -182,10 +251,16 @@ void strat_event(void *dummy)
 {
 	/* limit speed when opponent is close */
 	strat_limit_speed();
+
+	/* TODO: update actual slot position */
+
+	/* TODO: check towers */
+
+	/* TODO: check token in path */
 	
 }
 
-/* dump state (every 5 s max) */
+/* dump state (every 5 s max) XXX */
 #define DUMP_RATE_LIMIT(dump, last_print)		\
 	do {						\
 		if (time_get_s() - last_print > 5) {	\
@@ -200,146 +275,81 @@ void strat_event(void *dummy)
 }while(0)	
 
 
-	
+/* homologation sequence */	
 uint8_t strat_homologation(void)
 {
-	uint8_t err;
-//	uint16_t old_spdd, old_spda;
+	uint8_t err = 0;
 
-//	/* set new speed */
-//	strat_get_speed(&old_spdd, &old_spda);
-//	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
-//
-//	/* show arm */ 
-//	i2c_slavedspic_mode_show_arm();
-//	//i2c_slavedspic_mode_prepare_harvest_ball();
-//	
-//	/* close balls lids */
-//	ball_lids_close();
-//
-//	/* go in area */
-////	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(350), 350);
-////	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-//			
-//	/* main diagonal */
-//	err = strat_goto_and_avoid_harvesting(COLOR_X(X(10)), Y(9),
-//		 STRAT_CONF_HARVEST_TOMATOES);	
-// 	if (!TRAJ_SUCCESS(err))
-//		ERROUT(err);
-//		
-//	/* second diagonal inverse from tomato 9 to 13*/
-//	err = strat_goto_and_avoid_harvesting(COLOR_X(X(8)), Y(7),
-//		 STRAT_CONF_HARVEST_TOMATOES);	
-// 	if (!TRAJ_SUCCESS(err))
-//		ERROUT(err);
-//
-//	err = strat_goto_and_avoid_harvesting(COLOR_X(X(11)), Y(4),
-//		 STRAT_CONF_HARVEST_TOMATOES);	
-// 	if (!TRAJ_SUCCESS(err))
-//		ERROUT(err);
-//
-//	/* go to basket */
-//	err = goto_and_avoid(COLOR_X(X(10)), Y(5), 
-//		TRAJ_FLAGS_STD, TRAJ_FLAGS_NO_NEAR);
-// 	if (!TRAJ_SUCCESS(err))
-//		ERROUT(err);
-//
-//	err = goto_and_avoid(COLOR_X(X(11)), Y(9), 
-//		TRAJ_FLAGS_STD, TRAJ_FLAGS_NO_NEAR);
-// 	if (!TRAJ_SUCCESS(err))
-//		ERROUT(err);
-//		
-//	/* out balls */
-//	ball_lids_open();
-//	
-// 	strat_set_speed(old_spdd, old_spda);
-// 	beacon_cmd_beacon_off();
-		return err;	
-		
+	return err;			
 }
 
+/* begining trajs related with static elements */
 static uint8_t strat_beginning(void)
 {
 	uint8_t err;
-//	uint16_t old_spdd, old_spda;
-//
-//	/* set new speed */
-//	strat_get_speed(&old_spdd, &old_spda);
-//	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
-//
-//	/* show arm */ 
-//	i2c_slavedspic_mode_show_arm();
-//
-//	/* goto near corn 5 */
-//	trajectory_goto_xy_abs(&mainboard.traj, 478, 653);
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-//
-//	/* go to tomato 1 */
-//	trajectory_goto_xy_abs(&mainboard.traj, 342, 789);
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-//	
-//	/* when tomato cached go fordward a bit */
-//	trajectory_d_rel(&mainboard.traj, 10);
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-//		
-//	/* go to read corn 1 */
-//	trajectory_goto_xy_abs(&mainboard.traj, 353, 1010);
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-//	
-//	/* go in angle grid */
-//	trajectory_a_abs(&mainboard.traj, COLOR_A(31));
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-//
-//	/* go backward to read corn 5 */
-//	trajectory_d_rel(&mainboard.traj, -100);
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-//
-//	/* go fordward to get tomato 3 */
-//	trajectory_d_rel(&mainboard.traj, 200);
-//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);	
-//	
-//	/* restore speeds */
-//	strat_set_speed(old_spdd, old_spda);
+	uint16_t old_spdd, old_spda;
+
+	/* set new speed */
+	strat_get_speed(&old_spdd, &old_spda);
+	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+
+	/* pick & place tokens on lines */
+
+	/* pick & place tokens on green area */
+
+
+	/* restore speeds */
+	strat_set_speed(old_spdd, old_spda);
 	
 	return err;
 }
 
-
+/* strat main loop */
 uint8_t strat_main(void)
 {
-//	uint8_t err, i, why=0;
-//
-//	///* go in field of corns or go to harvest oranges */
-//	//err = strat_beginning();
-//	
-//	//wait_ms(20000);
-//	
-//	/* simple homologation */
-//	//err = strat_homologation();
-//	
-//	/* show arm */ 
-//	i2c_slavedspic_mode_show_arm();
-//	//i2c_slavedspic_mode_prepare_harvest_ball();
-//	
-//	/* close balls lids */
-//	ball_lids_close();
-//	
-//	
-//	err = strat_harvest_oranges();
-//	err = strat_goto_diagonal();
-//	
-//	err = strat_goto_basket();
-//	
-//	/* skip error code */
-//
-//	while (1) {
-//		
-//		if (err == END_TIMER) {
-//			DEBUG(E_USER_STRAT, "End of time");
-//			strat_exit();
-//			break;
-//		}
-//
-//	}
+	uint8_t err, i, why=0;
+
+	/* pick & place our static tokens */
+	err = strat_beginning();
+
+#ifdef HOMOLOGATION
+
+	/* pick & place central token */ 
+
+	/* pick & place opponent token on lines */
+
+	/* pick & place opponent token on green area */
+
+#endif
+
+	/* go in opponent slot */
+
+	/* autoplay */
+	while (1) {
+		
+		/* 1. get next slot */
+
+		/* 2. check opponent */
+
+		/* 3. if opponent,  get next slot to avoid */
+
+		/* 4. goto next slot */
+
+		/* 5. wait end traj */
+
+		/* 6. if obstacle ends, goto slot before. Goto step 5 */
+
+		/* 7. if catched tokens, place them */
+
+		/* 8. if near check slots, check, pick and place them */
+		
+		/* check end of match */
+		if (err == END_TIMER) {
+			DEBUG(E_USER_STRAT, "End of time");
+			strat_exit();
+			break;
+		}
+
+	}
 	return END_TRAJ;
 }
