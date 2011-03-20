@@ -44,6 +44,12 @@
 #define CENTER_X 1500
 #define CENTER_Y 1050
 
+#define SIDE_REAR		I2C_SIDE_REAR
+#define SIDE_FRONT 	I2C_SIDE_FRONT 
+#define SIDE_MAX		I2C_SIDE_MAX
+
+#define TOKEN_DIAMETER	200
+
 /* useful traj flags */
 #define TRAJ_SUCCESS(f) 				(f & (END_TRAJ|END_NEAR))
 
@@ -58,8 +64,8 @@
 #define SPEED_ANGLE_FAST 		4000
 #define SPEED_DIST_SLOW 		2000
 #define SPEED_ANGLE_SLOW 		2000
-#define SPEED_DIST_VERY_SLOW 	 500
-#define SPEED_ANGLE_VERY_SLOW  500
+#define SPEED_DIST_VERY_SLOW 	1000
+#define SPEED_ANGLE_VERY_SLOW 1000
 
 /************************************************************* 
  * Strat data structures 
@@ -164,6 +170,9 @@ void strat_exit(void);
 
 uint8_t strat_main(void);
 void strat_event(void *dummy);
+
+/* in strat_tokens.c */
+uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side);
 
 /* add here more strat functions in files */
 

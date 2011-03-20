@@ -27,9 +27,9 @@
  *  obstacle_avoidance_config.h,v 1.4 2009/05/27 20:04:07 zer0 Exp.
  */
 
-#define MAX_POLY 12
-#define MAX_PTS 65
-#define MAX_RAYS 1000
-#define MAX_CHKPOINTS 15
+#define MAX_POLY 5
+#define MAX_PTS 10
+#define MAX_RAYS 10
+#define MAX_CHKPOINTS 5
 
 

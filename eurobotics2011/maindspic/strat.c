@@ -286,7 +286,7 @@ uint8_t strat_homologation(void)
 /* begining trajs related with static elements */
 static uint8_t strat_beginning(void)
 {
-	uint8_t err;
+	uint8_t err = 0;
 	uint16_t old_spdd, old_spda;
 
 	/* set new speed */
@@ -307,7 +307,7 @@ static uint8_t strat_beginning(void)
 /* strat main loop */
 uint8_t strat_main(void)
 {
-	uint8_t err, i, why=0;
+	uint8_t err; //i, why=0;
 
 	/* pick & place our static tokens */
 	err = strat_beginning();

@@ -297,7 +297,6 @@ void strat_limit_speed(void)
 	if (get_opponent_da(&opp_d, &opp_a) != 0)
 		goto update;
 		
-//#define HOMOLOGATION 1
 #ifdef HOMOLOGATION
 	if (opp_d < 600) {
 		lim_d = 150;
@@ -485,10 +484,8 @@ uint8_t test_traj_end(uint8_t why)
 	if ((why & END_TRAJ) && trajectory_finished(&mainboard.traj))
 		return END_TRAJ;
 
-	/* trigger an event at 3 sec before the end of the match if we
-	 * have balls in the barrel */
+	/* trigger an event at 3 sec before the end of the match */
 	cur_timer = time_get_s();
-
 	if ((mainboard.flags & DO_TIMER) && (why & END_TIMER)) {
 		/* end of match */
 		if (cur_timer >= MATCH_TIME)
@@ -500,7 +497,7 @@ uint8_t test_traj_end(uint8_t why)
 	if (why & END_NEAR) {
 		int16_t d_near = 100;	
 		
-		if (mainboard.speed_d > 2000)
+		if (mainboard.speed_d >= 2000)
 			d_near = 150;
 		
 		if (trajectory_in_window(&mainboard.traj, d_near, RAD(5.0)) &&

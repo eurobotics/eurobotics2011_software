@@ -191,13 +191,6 @@ uint8_t robot_is_in_area(int16_t margin)
 			  margin);
 }
 
-///* return true if we are near the disc */
-//uint8_t robot_is_near_disc(void)
-//{
-//	if (distance_from_robot(CENTER_X, CENTER_Y) < DISC_PENTA_DIAG)
-//		return 1;
-//	return 0;
-//}
 
 /* return 1 or 0 depending on which side of a line (y=cste) is the
  * robot. works in red or green color. */
@@ -206,18 +199,11 @@ uint8_t y_is_more_than(int16_t y)
 	int16_t posy;
 	
 	posy = position_get_y_s16(&mainboard.pos);
-	if (mainboard.our_color == I2C_COLOR_RED) {
-		if (posy > y)
-			return 1;
-		else
-			return 0;
-	}
-	else {
-		if (posy < (AREA_Y-y))
-			return 1;
-		else
-			return 0;
-	}
+	if (posy > y)
+		return 1;
+	else
+		return 0;
+
 }
 
 /* return 1 or 0 depending on which side of a line (x=cste) is the
@@ -227,10 +213,18 @@ uint8_t x_is_more_than(int16_t x)
 	int16_t posx;
 	
 	posx = position_get_x_s16(&mainboard.pos);
-	if (posx > x)
-		return 1;
-	else
-		return 0;
+	if (mainboard.our_color == I2C_COLOR_BLUE) {
+		if (posx > x)
+			return 1;
+		else
+			return 0;
+	}
+	else {
+		if (posx < (AREA_X-x))
+			return 1;
+		else
+			return 0;
+	}
 }
 
 int16_t sin_table[] = {
@@ -329,86 +323,11 @@ int8_t get_opponent_xyda(int16_t *x, int16_t *y, int16_t *d, int16_t *a)
 	*d = beaconboard.opponent_d;
 	*a = beaconboard.opponent_a;
 	IRQ_UNLOCK(flags);
+
 	if (*x == I2C_OPPONENT_NOT_THERE)
 		return -1;
 	return 0;
 }
-
-//uint8_t pump_left1_is_full(void)
-//{
-//	return !!( (mechboard.column_flags & I2C_MECHBOARD_COLUMN_L1) &&
-//		   (sensor_get_adc(ADC_CSENSE3) > I2C_MECHBOARD_CURRENT_COLUMN));
-//}
-//
-//uint8_t pump_left2_is_full(void)
-//{
-//	return !!( (mechboard.column_flags & I2C_MECHBOARD_COLUMN_L2) &&
-//		   (sensor_get_adc(ADC_CSENSE4) > I2C_MECHBOARD_CURRENT_COLUMN));
-//}
-//
-//uint8_t pump_right1_is_full(void)
-//{
-//	return !!( (mechboard.column_flags & I2C_MECHBOARD_COLUMN_R1) &&
-//		   (mechboard.pump_right1_current > I2C_MECHBOARD_CURRENT_COLUMN));
-//}
-//
-//uint8_t pump_right2_is_full(void)
-//{
-//	return !!( (mechboard.column_flags & I2C_MECHBOARD_COLUMN_R2) &&
-//		   (mechboard.pump_right2_current > I2C_MECHBOARD_CURRENT_COLUMN));
-//}
-//
-///* number of column owned by the robot */
-//uint8_t get_column_count_left(void)
-//{
-//	uint8_t ret = 0;
-//	ret += pump_left1_is_full();
-//	ret += pump_left2_is_full();
-//	return ret;
-//}
-//
-///* number of column owned by the robot */
-//uint8_t get_column_count_right(void)
-//{
-//	uint8_t ret = 0;
-//	ret += pump_right1_is_full();
-//	ret += pump_right2_is_full();
-//	return ret;
-//}
-//
-///* number of column owned by the robot */
-//uint8_t get_column_count(void)
-//{
-//	uint8_t ret = 0;
-//	ret += pump_left1_is_full();
-//	ret += pump_left2_is_full();
-//	ret += pump_right1_is_full();
-//	ret += pump_right2_is_full();
-//	return ret;
-//}
-//
-//uint8_t get_lintel_count(void)
-//{
-//	return mechboard.lintel_count;
-//}
-//
-//uint8_t get_mechboard_mode(void)
-//{
-//	return mechboard.mode;
-//}
-//
-//uint8_t get_scanner_status(void)
-//{
-//	return sensorboard.scan_status;
-//}
-//
-///* return 0 if timeout, or 1 if cond is true */
-//uint8_t wait_scan_done(uint16_t timeout)
-//{
-//	uint8_t err;
-//	err = WAIT_COND_OR_TIMEOUT(get_scanner_status() & I2C_SCAN_DONE, timeout);
-//	return err;
-//}
 
 uint8_t opponent_is_behind(void)
 {
@@ -419,4 +338,15 @@ uint8_t opponent_is_behind(void)
 	if (opp_there && (opp_a < 215 && opp_a > 145) && opp_d < 600)
 		return 1;
 	return 0;
+}
+
+
+uint8_t token_catched(uint8_t side)
+{
+	return slavedspic.ts[side].token_catched;
+}
+
+uint8_t belts_blocked(uint8_t side)
+{
+	return slavedspic.ts[side].belts_blocked;
 }
