@@ -182,6 +182,23 @@ void i2c_poll_slaves(void *dummy)
 		}	
 		running_op = OP_READY;
 		i2c_errors = 0;
+
+		/* reset slavedspic */
+		set_uart_mux(SLAVEDSPIC_CHANNEL);
+		uart_send(MUX_UART,'\n');
+		uart_send(MUX_UART,'\r');
+		uart_send(MUX_UART,'r');
+		uart_send(MUX_UART,'e');
+		uart_send(MUX_UART,'s');
+		uart_send(MUX_UART,'e');
+		uart_send(MUX_UART,'t');
+		uart_send(MUX_UART,'\n');
+		uart_send(MUX_UART,'\r');
+
+		/* XXX wait send reset */
+		wait_ms(10);
+
+		/* reset local i2c */
 		i2c_reset();
 		return;
 	}
@@ -265,6 +282,22 @@ void i2c_poll_slaves(void *dummy)
 		I2C_ERROR("I2C send is_cmd=%d proto_state=%d " 
 		      "err=%d i2c_status=%x", !!command_size, i2c_state, err, i2c_status());
 		
+		/* reset slavedspic */
+		set_uart_mux(SLAVEDSPIC_CHANNEL);
+		uart_send(MUX_UART,'\n');
+		uart_send(MUX_UART,'\r');
+		uart_send(MUX_UART,'r');
+		uart_send(MUX_UART,'e');
+		uart_send(MUX_UART,'s');
+		uart_send(MUX_UART,'e');
+		uart_send(MUX_UART,'t');
+		uart_send(MUX_UART,'\n');
+		uart_send(MUX_UART,'\r');
+
+		/* XXX wait send reset */
+		wait_ms(10);
+
+		/* reset local i2c */
 		i2c_reset();
 		i2c_errors = 0;
 	}

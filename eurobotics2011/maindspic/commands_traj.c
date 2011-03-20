@@ -921,53 +921,55 @@ parse_pgm_inst_t cmd_strat_conf3 = {
 /**********************************************************/
 /* Subtraj */
 
-/* this structure is filled when cmd_subtraj is parsed successfully */
-struct cmd_subtraj_result {
+/* this structure is filled when cmd_subtraj1 is parsed successfully */
+struct cmd_subtraj1_result {
 	fixed_string_t arg0;
 	fixed_string_t arg1;
-//	int32_t arg2;
-//	int32_t arg3;
+	int32_t arg2;
+	int32_t arg3;
 //	int32_t arg4;
 //	int32_t arg5;
 };
 
-/* function called when cmd_subtraj is parsed successfully */
-static void cmd_subtraj_parsed(void *parsed_result, void *data)
+/* function called when cmd_subtraj1 is parsed successfully */
+static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 {
-	struct cmd_subtraj_result *res = parsed_result;
+	struct cmd_subtraj1_result *res = parsed_result;
 	uint8_t err = 0;
 
 
-
-	if (strcmp_P(res->arg1, PSTR("subtraj_1")) == 0) {
-		/* run subtraj */
+	if (strcmp_P(res->arg1, PSTR("pickup_f")) == 0) {
+		err = strat_pickup_token(res->arg2, res->arg3, SIDE_FRONT);
+	}
+	else if (strcmp_P(res->arg1, PSTR("pickup_r")) == 0) {
+		err = strat_pickup_token(res->arg2, res->arg3, SIDE_REAR);
 	}
 	
 	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
 	trajectory_hardstop(&mainboard.traj);
 }
 
-prog_char str_subtraj_arg0[] = "subtraj";
-parse_pgm_token_string_t cmd_subtraj_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj_result, arg0, str_subtraj_arg0);
-prog_char str_subtraj_arg1[] = "subtraj_1";
-parse_pgm_token_string_t cmd_subtraj_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj_result, arg1, str_subtraj_arg1);
-//parse_pgm_token_num_t cmd_subtraj_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg2, INT32);
-//parse_pgm_token_num_t cmd_subtraj_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg3, INT32);
-//parse_pgm_token_num_t cmd_subtraj_arg4 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg4, INT32);
-//parse_pgm_token_num_t cmd_subtraj_arg5 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj_result, arg5, INT32);
+prog_char str_subtraj1_arg0[] = "subtraj";
+parse_pgm_token_string_t cmd_subtraj1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg0, str_subtraj1_arg0);
+prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r";
+parse_pgm_token_string_t cmd_subtraj1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg1, str_subtraj1_arg1);
+parse_pgm_token_num_t cmd_subtraj1_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg2, INT32);
+parse_pgm_token_num_t cmd_subtraj1_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg3, INT32);
+//parse_pgm_token_num_t cmd_subtraj1_arg4 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg4, INT32);
+//parse_pgm_token_num_t cmd_subtraj1_arg5 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg5, INT32);
 //
-prog_char help_subtraj[] = "Test sub-trajectories (a,b,c,d: specific params)";
-parse_pgm_inst_t cmd_subtraj = {
-	.f = cmd_subtraj_parsed,  /* function to call */
+prog_char help_subtraj1[] = "Test sub-trajectories (a,b,c,d: specific params)";
+parse_pgm_inst_t cmd_subtraj1 = {
+	.f = cmd_subtraj1_parsed,  /* function to call */
 	.data = NULL,      /* 2nd arg of func */
-	.help_str = help_subtraj,
+	.help_str = help_subtraj1,
 	.tokens = {        /* token list, NULL terminated */
-		(prog_void *)&cmd_subtraj_arg0, 
-		(prog_void *)&cmd_subtraj_arg1, 
-//		(prog_void *)&cmd_subtraj_arg2, 
-//		(prog_void *)&cmd_subtraj_arg3, 
-//		(prog_void *)&cmd_subtraj_arg4, 
-//		(prog_void *)&cmd_subtraj_arg5, 
+		(prog_void *)&cmd_subtraj1_arg0, 
+		(prog_void *)&cmd_subtraj1_arg1, 
+		(prog_void *)&cmd_subtraj1_arg2, 
+		(prog_void *)&cmd_subtraj1_arg3, 
+//		(prog_void *)&cmd_subtraj1_arg4, 
+//		(prog_void *)&cmd_subtraj1_arg5, 
 		NULL,
 	},
 };

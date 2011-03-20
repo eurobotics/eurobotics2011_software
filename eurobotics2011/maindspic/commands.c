@@ -129,7 +129,7 @@ extern parse_pgm_inst_t cmd_strat_infos;
 extern parse_pgm_inst_t cmd_strat_conf;
 extern parse_pgm_inst_t cmd_strat_conf2;
 extern parse_pgm_inst_t cmd_strat_conf3;
-extern parse_pgm_inst_t cmd_subtraj;
+extern parse_pgm_inst_t cmd_subtraj1;
 
 #endif /* COMPILE_COMMANDS_TRAJ */
 
@@ -216,7 +216,7 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_strat_conf,
 	(parse_pgm_inst_t *)&cmd_strat_conf2,
 	(parse_pgm_inst_t *)&cmd_strat_conf3,
-	(parse_pgm_inst_t *)&cmd_subtraj,
+	(parse_pgm_inst_t *)&cmd_subtraj1,
 
 #endif /* COMPILE_COMMANDS_TRAJ */
 
