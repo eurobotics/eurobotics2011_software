@@ -944,6 +944,18 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 	else if (strcmp_P(res->arg1, PSTR("pickup_r")) == 0) {
 		err = strat_pickup_token(res->arg2, res->arg3, SIDE_REAR);
 	}
+	else if (strcmp_P(res->arg1, PSTR("place_ff")) == 0) {
+		err = strat_place_token(res->arg2, res->arg3, SIDE_FRONT, GO_FORWARD);
+	}
+	else if (strcmp_P(res->arg1, PSTR("place_fb")) == 0) {
+		err = strat_place_token(res->arg2, res->arg3, SIDE_FRONT, GO_BACKWARD);
+	}
+	else if (strcmp_P(res->arg1, PSTR("place_rf")) == 0) {
+		err = strat_place_token(res->arg2, res->arg3, SIDE_REAR, GO_FORWARD);
+	}
+	else if (strcmp_P(res->arg1, PSTR("place_rb")) == 0) {
+		err = strat_place_token(res->arg2, res->arg3, SIDE_REAR, GO_BACKWARD);
+	}
 	
 	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
 	trajectory_hardstop(&mainboard.traj);
@@ -951,7 +963,7 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 
 prog_char str_subtraj1_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg0, str_subtraj1_arg0);
-prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r";
+prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r#place_ff#place_fb#place_rf#place_rb";
 parse_pgm_token_string_t cmd_subtraj1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg1, str_subtraj1_arg1);
 parse_pgm_token_num_t cmd_subtraj1_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg2, INT32);
 parse_pgm_token_num_t cmd_subtraj1_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg3, INT32);

@@ -48,6 +48,9 @@
 #define SIDE_FRONT 	I2C_SIDE_FRONT 
 #define SIDE_MAX		I2C_SIDE_MAX
 
+#define GO_FORWARD	0
+#define GO_BACKWARD	1
+
 #define TOKEN_DIAMETER	200
 
 /* useful traj flags */
@@ -173,6 +176,7 @@ void strat_event(void *dummy);
 
 /* in strat_tokens.c */
 uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side);
+uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go);
 
 /* add here more strat functions in files */
 

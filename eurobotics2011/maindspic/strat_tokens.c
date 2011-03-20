@@ -98,7 +98,7 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 		d_sign = -1;
 		trajectory_turnto_xy_behind(&mainboard.traj, x, y);
 	}
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	err = wait_traj_end(TRAJ_FLAGS_STD);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 	
@@ -109,13 +109,15 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 		/* go in range */
 		DEBUG(E_USER_STRAT, "go in sensor range");
 		trajectory_d_rel(&mainboard.traj, d_sign*(d_token-PICKUP_D_SENSOR_RANGE));
-		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		err = wait_traj_end(TRAJ_FLAGS_STD);
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
 	}
 
 	/* center token */
 	if(side == SIDE_FRONT) {
+
+		/* center front side */
 
 		if(!sensor_get(S_TOKEN_FRONT_R) && !sensor_get(S_TOKEN_FRONT_L)) {
 			DEBUG(E_USER_STRAT, "token not found");
@@ -142,6 +144,8 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 		}
 	}
 	else {
+
+		/* center rear side */
 
 		if(!sensor_get(S_TOKEN_REAR_R) && !sensor_get(S_TOKEN_REAR_L)) {
 			DEBUG(E_USER_STRAT, "token not found");
@@ -177,7 +181,8 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	while(try < PICKUP_BELTS_TRIES) {
 		err = WAIT_COND_OR_TRAJ_END((token_catched(side)|| belts_blocked(side)),
 											 TRAJ_FLAGS_SMALL_DIST);
-		if(belts_blocked(side)) {
+		
+		if(belts_blocked(side)) { /* XXX not tested */
 			DEBUG(E_USER_STRAT, "belts blocked, try %d", try);
 			i2c_slavedspic_mode_token_take(side);
 			try ++;
@@ -232,3 +237,130 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }
+
+/* place a token */
+#define PLACE_D_TOKEN_OFFSET		((ROBOT_LENGTH/2)+10)
+#define PLACE_D_SAFE					140
+#define PLACE_EJECT_TIME			700
+#define PLACE_SHOW_TIME				100
+#define PLACE_EJECT_TRIES			5
+#define PLACE_SPEED_BACK			300
+
+uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
+{
+	uint8_t err;
+	uint16_t old_spdd, old_spda;
+	int16_t d_token, d_sign;
+	uint8_t try = 0;
+
+	/* check if we have token to place */
+	if(!token_catched(side))
+		ERROUT(END_ERROR);
+
+	/* save speed */
+	strat_get_speed(&old_spdd, &old_spda);
+	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_SLOW);
+
+	/* turn to token */
+	if(side == SIDE_FRONT) {
+		if(go == GO_FORWARD) {
+			d_sign = 1;
+			trajectory_turnto_xy(&mainboard.traj, x, y);
+		
+			/* save time */
+			i2c_slavedspic_mode_token_eject(side);
+		}
+		else {
+			d_sign = -1;
+			trajectory_turnto_xy_behind(&mainboard.traj, x, y);
+		}
+	}
+	else {
+		if(go == GO_FORWARD) {
+			d_sign = -1;
+			trajectory_turnto_xy_behind(&mainboard.traj, x, y);
+
+			/* save time */
+			i2c_slavedspic_mode_token_eject(side);
+		}
+		else {
+			d_sign = 1;
+			trajectory_turnto_xy(&mainboard.traj, x, y);
+		}
+	}
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* go to place */
+	if(go == GO_FORWARD) {
+		
+		/* eject token */
+		i2c_slavedspic_mode_token_eject(side);
+
+		/* go token position */
+		d_token = distance_from_robot(x, y);
+		trajectory_d_rel(&mainboard.traj, d_sign*(d_token-PLACE_D_TOKEN_OFFSET));
+		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		if (!TRAJ_SUCCESS(err))
+			ERROUT(err);
+
+		/* wait token free */
+		WAIT_COND_OR_TIMEOUT(!token_catched(side), PLACE_EJECT_TIME);
+	
+	}
+	else {
+		
+		/* go token position with token at our back */
+		d_token = distance_from_robot(x, y);
+		trajectory_d_rel(&mainboard.traj, d_sign*(d_token+PLACE_D_TOKEN_OFFSET));
+		err = wait_traj_end(TRAJ_FLAGS_STD);
+		if (!TRAJ_SUCCESS(err))
+			ERROUT(err);
+		
+		/* eject token */
+		i2c_slavedspic_mode_token_eject(side);
+
+//		/* when near token position, eject it and set speed to eject in movement */
+//		if(trajectory_in_window(&mainboard.traj, (double)PLACE_D_TOKEN_OFFSET, 5)) {
+//			strat_set_speed(PLACE_SPEED_BACK, PLACE_SPEED_BACK);
+//			i2c_slavedspic_mode_token_eject(side);
+//		}
+//
+//		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//		if (!TRAJ_SUCCESS(err))
+//			ERROUT(err);
+
+		/* wait token free */
+		WAIT_COND_OR_TIMEOUT(!token_catched(side), PLACE_EJECT_TIME);
+
+		/* invert d_sign */	
+		d_sign = -d_sign;
+	}
+
+	/* XXX check eject error and try fixed */
+	while(token_catched(side) && (try < PLACE_EJECT_TRIES)) {
+		i2c_slavedspic_mode_token_show(side);
+		wait_ms(PLACE_SHOW_TIME);
+		i2c_slavedspic_mode_token_eject(side);
+		wait_ms(PLACE_EJECT_TIME);
+		try ++;
+	}
+
+	if(token_catched(side))
+		ERROUT(END_ERROR);
+
+	/* go backward to safe distance from token */
+	i2c_slavedspic_mode_token_eject(side);
+	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_SLOW);
+	trajectory_d_rel(&mainboard.traj, (-d_sign)*PLACE_D_SAFE);
+	err = wait_traj_end(TRAJ_FLAGS_STD);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+
+ end:
+	strat_set_speed(old_spdd, old_spda);
+	return err;
+}
+
