@@ -2,3 +2,4 @@ glob:libs/aversive_b_zer0_9oct09
 glob:*.o
 glob:*.cof
 glob:*.map
+glob:*.hex
