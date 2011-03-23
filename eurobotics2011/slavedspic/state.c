@@ -163,7 +163,7 @@ void token_system_manage(token_system_t *ts)
 {
 #define BELTS_LOAD_TH 						1020
 #define BELTS_BLOCKED_SAMPLE_TIME_US	10000
-#define BELTS_BLOCKING_TIMES_TH			10
+#define BELTS_BLOCKING_TIMES_TH			50
 
 	static uint8_t flag_catched = 0;
 	static microseconds time_us = 0;
@@ -176,6 +176,9 @@ void token_system_manage(token_system_t *ts)
 		ts->speed = ts->speed_rqst;
 		STMCH_DEBUG("%s mode=%d", __FUNCTION__, ts->state);
 	}
+
+	/* XXX update info */
+	ts->token_catched = sensor_get(ts->sensor_catched);
 
 	/* ejecute state */
 	switch(ts->state){
@@ -197,8 +200,8 @@ void token_system_manage(token_system_t *ts)
 
 		case TS_STATE_WAITING_STOP:
 
-			/* XXX update info */
-			ts->token_catched = sensor_get(ts->sensor_catched);
+//			/* XXX update info */
+//			ts->token_catched = sensor_get(ts->sensor_catched);
 
 			if(ts->token_catched && flag_catched==0){
 				flag_catched = 1;
@@ -218,26 +221,32 @@ void token_system_manage(token_system_t *ts)
 			}
 
 			/* stop belts when blocked */
-			//STMCH_ERROR("left load %d", belts_load_get(ts->belts_side));
-			if(belts_load_get(ts->belts_side)>=BELTS_LOAD_TH){
-				
-				/* sample period */
-				if((time_get_us() - time_us) > BELTS_BLOCKED_SAMPLE_TIME_US)
-					blocking_times ++;
+			if(ABS(time_get_us() - time_us) > BELTS_BLOCKED_SAMPLE_TIME_US)	
+			{
 				time_us = time_get_us();	
-			
-				/* belts blocked after N times */
-				if(blocking_times > BELTS_BLOCKING_TIMES_TH) {
-					blocking_times = 0;	
+
+
+				//STMCH_ERROR("left load %d", belts_load_get(ts->belts_side));
+				if(belts_load_get(ts->belts_side)>=BELTS_LOAD_TH) {
 					
+					blocking_times ++;
+						
 					STMCH_ERROR("%s belts BLOCKED!!",
-					 				 ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
-	
-					belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
-					ts->belts_blocked = 1;
-					ts->state = TS_STATE_IDLE;
+						 				 ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
+				
+					/* belts blocked after N times */
+					if(blocking_times > BELTS_BLOCKING_TIMES_TH) {
+						blocking_times = 0;	
+						
+		
+						belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
+						ts->belts_blocked = 1;
+						ts->state = TS_STATE_IDLE;
+					}
 				}
-			} 
+				else
+					blocking_times = 0;
+			}
 			else
 				ts->belts_blocked = 0;
 
@@ -253,8 +262,8 @@ void token_system_manage(token_system_t *ts)
 			break;
 	
 		case TS_STATE_WAITING_FREE:
-			/* XXX update info */
-			ts->token_catched = sensor_get(ts->sensor_catched);
+//			/* XXX update info */
+//			ts->token_catched = sensor_get(ts->sensor_catched);
 
 			/* stop belts when sensor */
 			if(!ts->token_catched){
