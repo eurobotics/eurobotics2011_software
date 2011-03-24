@@ -62,6 +62,9 @@ int8_t i=0;
 /* reset wt11 of robot (mainboard) */
 void beacon_cmd_wt11_local_reset(void)
 {
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
+
 	/* change to cmd mode */
 	wait_ms(1000);
 	uart_send(BEACON_UART,'+');	
@@ -89,6 +92,9 @@ void beacon_cmd_wt11_call(void)
 	const char send_buf[] = "CALL 00:07:80:85:04:70 1 RFCOMM\n";		
 	int16_t i=0;
 
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
+
 	/* send call cmd */
 	for(i=0; i<32; i++){
 		uart_send(BEACON_UART, send_buf[i]);
@@ -98,6 +104,9 @@ void beacon_cmd_wt11_call(void)
 /* close connection with beacon wt11 */
 void beacon_cmd_wt11_close(void)
 {
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
+
 	/* change to cmd mode */
 	wait_ms(1200);
 	uart_send(BEACON_UART,'+');	
@@ -127,6 +136,9 @@ void beacon_cmd_wt11_close(void)
 /* send command to beacon */
 void beacon_send_cmd(int8_t *buff, uint16_t size){
 	int16_t i;
+
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
 	
 	/* check length */
 	if(size > CMD_LINE_SIZE){
@@ -149,7 +161,10 @@ void beacon_send_daemon(void * dummy)
 {
 	int16_t i;
 	static uint8_t a=0;
-		
+	
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
+	
 	/* command on queque, send it */
 	if(cmd_size){
 
@@ -183,6 +198,10 @@ void parse_line(char * buff)
 	int16_t ret;
 	uint8_t flags;
 	int16_t arg0, arg1, arg2, arg3;
+
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
+
 
 	DEBUG(E_USER_BEACON,"from beacon: %s",buff);
 	
@@ -240,7 +259,10 @@ void line_char_in(char c)
 void beacon_recv_daemon(void)
 {
 	char c;
-	
+
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
+
 	c=uart_recv_nowait(BEACON_UART);
 		
 		if(c != -1)
@@ -252,6 +274,9 @@ void beacon_daemon(void * dummy)
 	int16_t i;
 	static uint8_t a=0;
 	char c=0;
+
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
 	
 	/* receive aswers */
 	while(c != -1){	
@@ -332,6 +357,9 @@ void beacon_pull_opponent(void)
 	uint16_t size;
 	int16_t robot_x, robot_y, robot_a;
 	uint8_t flags;
+
+	/* set uart mux */
+	set_uart_mux(BEACON_CHANNEL);
 	
 	IRQ_LOCK(flags);
 	robot_x = position_get_x_s16(&mainboard.pos);

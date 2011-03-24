@@ -176,10 +176,12 @@ void strat_event(void *dummy);
 
 /* in strat_tokens.c */
 uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side);
+uint8_t strat_pickup_token_auto(int16_t x, int16_t y);
 uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go);
 
 /* in strat_static.c */
 uint8_t strat_harvest_line1(void);
+uint8_t strat_harvest_line2(void);
 
 /* add here more strat functions in files */
 

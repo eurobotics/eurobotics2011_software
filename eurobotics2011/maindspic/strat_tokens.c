@@ -68,8 +68,11 @@
 		goto end;		 \
 	} while(0)
 
+
 /* pick up a token */
-#define PICKUP_D_TOKEN_OFFSET		((ROBOT_LENGTH/2)-35)
+/* XXX use it in short distance ranges */
+
+#define PICKUP_D_TOKEN_OFFSET		((ROBOT_LENGTH/2)-15)
 #define PICKUP_D_SENSOR_RANGE		500
 #define PICKUP_D_NOTINPOINT		80
 #define PICKUP_A_CENTER_TOKEN		10.0
@@ -86,7 +89,11 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
-	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_SLOW);
+
+	/* XXX fast angle speed -> problems with centering token */
+	/* XXX fast distance speed -> crash token */ 
+	/* TODO test speed fasters */
+	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
 
 	/* turn to token */
 	if(side == SIDE_FRONT) {
@@ -97,7 +104,7 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 		d_sign = -1;
 		trajectory_turnto_xy_behind(&mainboard.traj, x, y);
 	}
-	err = wait_traj_end(TRAJ_FLAGS_STD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 	
@@ -122,55 +129,65 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 			DEBUG(E_USER_STRAT, "token not found");
 			ERROUT(END_ERROR);
 		}
-		else {
+		else if(sensor_get(S_TOKEN_FRONT_R) != sensor_get(S_TOKEN_FRONT_L)) {
 			DEBUG(E_USER_STRAT, "centering token R = %d L = %d",
  					sensor_get(S_TOKEN_FRONT_R), sensor_get(S_TOKEN_FRONT_L));
-		}
 
-		if(!sensor_get(S_TOKEN_FRONT_R) && sensor_get(S_TOKEN_FRONT_L)){
-			trajectory_a_rel(&mainboard.traj, PICKUP_A_CENTER_TOKEN);
-			err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_FRONT_R), TRAJ_FLAGS_SMALL_DIST);
-			trajectory_stop(&mainboard.traj);
+			if(!sensor_get(S_TOKEN_FRONT_R) && sensor_get(S_TOKEN_FRONT_L)) {
+				trajectory_a_rel(&mainboard.traj, PICKUP_A_CENTER_TOKEN);
+				err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_FRONT_R), TRAJ_FLAGS_SMALL_DIST);
+			}
+			else if(sensor_get(S_TOKEN_FRONT_R) && !sensor_get(S_TOKEN_FRONT_L)) {
+				trajectory_a_rel(&mainboard.traj, -PICKUP_A_CENTER_TOKEN);
+				err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_FRONT_L), TRAJ_FLAGS_SMALL_DIST);
+			}
+
+			/* end of centering */
 			if (TRAJ_SUCCESS(err)) /* we should not reach end */
 				ERROUT(END_ERROR);
-		}
-		else if(sensor_get(S_TOKEN_FRONT_R) && !sensor_get(S_TOKEN_FRONT_L)){
-			trajectory_a_rel(&mainboard.traj, -PICKUP_A_CENTER_TOKEN);
-			err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_FRONT_L), TRAJ_FLAGS_SMALL_DIST);
-			trajectory_stop(&mainboard.traj);
-			if (TRAJ_SUCCESS(err)) /* we should not reach end */
-				ERROUT(END_ERROR);
+			else {
+				/* turnning stop */			
+				trajectory_stop(&mainboard.traj);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+				if (!TRAJ_SUCCESS(err))
+					ERROUT(err);
+			}
 		}
 	}
-	else {
+	else { /* SIDE_REAR */
 
 		/* center rear side */
-
 		if(!sensor_get(S_TOKEN_REAR_R) && !sensor_get(S_TOKEN_REAR_L)) {
 			DEBUG(E_USER_STRAT, "token not found");
 			ERROUT(END_ERROR);
 		}
-		else {
+		else if(sensor_get(S_TOKEN_REAR_R) != sensor_get(S_TOKEN_REAR_L)) {
+
 			DEBUG(E_USER_STRAT, "centering token R = %d L = %d",
  					sensor_get(S_TOKEN_REAR_R), sensor_get(S_TOKEN_REAR_L));
-		}
-
-		if(!sensor_get(S_TOKEN_REAR_R) && sensor_get(S_TOKEN_REAR_L)){
-			trajectory_a_rel(&mainboard.traj, -PICKUP_A_CENTER_TOKEN);
-			err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_REAR_R), TRAJ_FLAGS_SMALL_DIST);
-			trajectory_stop(&mainboard.traj);
+		
+			if(!sensor_get(S_TOKEN_REAR_R) && sensor_get(S_TOKEN_REAR_L)) {
+				trajectory_a_rel(&mainboard.traj, -PICKUP_A_CENTER_TOKEN);
+				err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_REAR_R), TRAJ_FLAGS_SMALL_DIST);
+			}
+			else if(sensor_get(S_TOKEN_REAR_R) && !sensor_get(S_TOKEN_REAR_L)) {
+				trajectory_a_rel(&mainboard.traj, PICKUP_A_CENTER_TOKEN);
+				err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_REAR_L), TRAJ_FLAGS_SMALL_DIST);
+			}
+	
+			/* end of centering */
 			if (TRAJ_SUCCESS(err)) /* we should not reach end */
 				ERROUT(END_ERROR);
-		}
-		else if(sensor_get(S_TOKEN_REAR_R) && !sensor_get(S_TOKEN_REAR_L)){
-			trajectory_a_rel(&mainboard.traj, PICKUP_A_CENTER_TOKEN);
-			err = WAIT_COND_OR_TRAJ_END(sensor_get(S_TOKEN_REAR_L), TRAJ_FLAGS_SMALL_DIST);
-			trajectory_stop(&mainboard.traj);
-			if (TRAJ_SUCCESS(err)) /* we should not reach end */
-				ERROUT(END_ERROR);
+			else {
+				/* turnning stop */			
+				trajectory_stop(&mainboard.traj);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+				if (!TRAJ_SUCCESS(err))
+					ERROUT(err);
+			}
 		}
 	}
-
+	
 	/* go to pick up token */
 	i2c_slavedspic_mode_token_take(side);
 	d_token = distance_from_robot(x, y);
@@ -188,7 +205,9 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 			i2cproto_wait_update();
 		}
 		else if(token_catched(side)) {
+			DEBUG(E_USER_STRAT, "token catched!");
 			trajectory_stop(&mainboard.traj);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 			ERROUT(END_TRAJ);
 		}
 		else if(TRAJ_SUCCESS(err)) {
@@ -207,15 +226,11 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	trajectory_d_rel(&mainboard.traj, d_sign*PICKUP_D_NOTINPOINT);
 	err = WAIT_COND_OR_TRAJ_END(token_catched(side), TRAJ_FLAGS_SMALL_DIST);
 
-	if(token_catched(side)) {
-		trajectory_stop(&mainboard.traj);
-		err = END_TRAJ;
-	}
-
 	/* blocking or end traj, wait token catched at end of traj */
 	WAIT_COND_OR_TIMEOUT(token_catched(side), PICKUP_CATCHED_TIME);
 
 	if(token_catched(side)) {
+		DEBUG(E_USER_STRAT, "token catched!");
 		trajectory_stop(&mainboard.traj);
 		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 		err = END_TRAJ;
@@ -238,7 +253,19 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	return err;
 }
 
-/* place a token */
+/* pickup a token depends tokens catched before */
+uint8_t strat_pickup_token_auto(int16_t x, int16_t y)
+{
+	if(token_catched(SIDE_FRONT))
+		return strat_pickup_token(x, y, SIDE_REAR);
+	else if(token_catched(SIDE_REAR))
+		return strat_pickup_token(x, y, SIDE_FRONT);
+	else
+		return END_ERROR;
+}
+
+/* place a token */	
+/* XXX use it in near range distance */
 #define PLACE_D_TOKEN_OFFSET		((ROBOT_LENGTH/2)+10)
 #define PLACE_D_SAFE					140
 #define PLACE_EJECT_TIME			700
@@ -259,7 +286,10 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
-	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_SLOW);
+
+	/* XXX fast distance speed -> shoot the token */
+	/* TODO test speed fasters */
+	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
 
 	/* turn to token */
 	if(side == SIDE_FRONT) {
@@ -324,7 +354,7 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 		/* wait token free */
 		WAIT_COND_OR_TIMEOUT(!token_catched(side), PLACE_EJECT_TIME);
 
-		/* invert d_sign */	
+		/* invert d_sign for go safe distance after */	
 		d_sign = -d_sign;
 	}
 
@@ -336,13 +366,14 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 		wait_ms(PLACE_EJECT_TIME);
 		try ++;
 	}
-
-	if(token_catched(side))
+	if(token_catched(side)) {
+		DEBUG(E_USER_STRAT, "token eject fail");
 		ERROUT(END_ERROR);
+	}
 
 	/* go backward to safe distance from token */
 	i2c_slavedspic_mode_token_eject(side);
-	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_SLOW);
+	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
 	trajectory_d_rel(&mainboard.traj, (-d_sign)*PLACE_D_SAFE);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
