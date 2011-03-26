@@ -36,6 +36,7 @@
 
 #include "main.h"
 #include "sensor.h"
+#include "strat.h"
 
 /************ ADC */
 
@@ -361,6 +362,16 @@ uint8_t sensor_obstacle_is_disabled(void)
 	return disable;
 }
 
+/************ token sensors utils */
+
+/* return 1 if right and left token sensors of a side are activated */
+uint8_t sensor_token_side(uint8_t side)
+{
+	if(side == SIDE_FRONT)
+		return (sensor_get(S_TOKEN_FRONT_R) && sensor_get(S_TOKEN_FRONT_L));
+	else 
+		return (sensor_get(S_TOKEN_REAR_R) && sensor_get(S_TOKEN_REAR_L));
+}
 
 /************ global sensor init */
 

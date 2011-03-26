@@ -89,4 +89,14 @@ uint8_t opponent_is_behind(void);
 uint8_t token_catched(uint8_t side);
 uint8_t belts_blocked(uint8_t side);
 
+
+/* goto depends on token catched */
+#define NO_MORE_ROOMS	(SIDE_MAX+1)
+
+/* goto with the empty side, prepared to catch token */
+uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm);
+
+/* goto with the empty side and with belts in mode take */
+uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm);
+
 #endif

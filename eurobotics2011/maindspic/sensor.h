@@ -122,3 +122,9 @@ uint8_t sensor_get(uint8_t i);
 void sensor_obstacle_disable(void);
 void sensor_obstacle_enable(void);
 uint8_t sensor_obstacle_is_disabled(void);
+
+/* token sensors utils */
+
+/* return 1 if right and left token 
+ *	sensors of a side are activated */
+uint8_t sensor_token_side(uint8_t side);

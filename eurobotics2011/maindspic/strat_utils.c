@@ -62,8 +62,9 @@
 #include "main.h"
 #include "strat_utils.h"
 #include "strat.h"
+#include "strat_base.h"
 #include "sensor.h"
-//#include "i2c_protocol.h"
+#include "i2c_protocol.h"
 
 /* return the distance between two points */
 int16_t distance_between(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
@@ -349,4 +350,58 @@ uint8_t token_catched(uint8_t side)
 uint8_t belts_blocked(uint8_t side)
 {
 	return slavedspic.ts[side].belts_blocked;
+}
+
+/* goto with the empty side, prepared to catch token */
+uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
+{
+	if(token_catched(SIDE_FRONT)) {
+		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+		return SIDE_REAR;
+	}
+	else if(token_catched(SIDE_REAR)) {
+		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+		return SIDE_FRONT;
+	}
+	else{
+		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+		return NO_MORE_ROOMS;
+	}
+}
+
+
+/* goto with the empty side and with belts in mode take */
+uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
+{
+	if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR)) {
+
+		trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		/* XXX no error check! */		
+
+		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+		i2c_slavedspic_mode_token_take(SIDE_FRONT);
+		return SIDE_FRONT;
+	}
+	else if(token_catched(SIDE_FRONT)) {
+		trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		/* XXX no error check! */		
+
+		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+		i2c_slavedspic_mode_token_take(SIDE_REAR);
+		return SIDE_REAR;
+	}
+	else if(token_catched(SIDE_REAR)) {
+		trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		/* XXX no error check! */		
+
+		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+		i2c_slavedspic_mode_token_take(SIDE_FRONT);
+		return SIDE_FRONT;
+	}
+	else /* no more rooms */
+		return NO_MORE_ROOMS;
+
 }

@@ -248,8 +248,8 @@ void maindspic_cs_init(void)
 
 	/* Blocking detection */
 	bd_init(&mainboard.angle.bd);
-	bd_set_speed_threshold(&mainboard.angle.bd, 500);
-	bd_set_current_thresholds(&mainboard.angle.bd, 100, 3000, 1000000, 30); /* TODO: more margin */
+	bd_set_speed_threshold(&mainboard.angle.bd, 300);
+	bd_set_current_thresholds(&mainboard.angle.bd, 100, 4000, 1000000, 30); /* TODO: more margin */
 
 	/* ---- CS distance */
 	/* PID */

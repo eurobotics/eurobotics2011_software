@@ -71,57 +71,13 @@
 
 
 
-void strat_goto_prepared_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
-{
-	if(token_catched(SIDE_FRONT)) {
-		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-	}
-	else if(token_catched(SIDE_REAR)) {
-		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-	}
-	else
-		trajectory_goto_xy_abs(traj, x_abs_mm,  y_abs_mm);
-}
-
-#define NO_MORE_ROOMS	(SIDE_MAX+1)
-
-uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
-{
-	if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR)) {
-		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		i2c_slavedspic_mode_token_take(SIDE_FRONT);
-		return SIDE_FRONT;
-	}
-	else if(token_catched(SIDE_FRONT)) {
-		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		i2c_slavedspic_mode_token_take(SIDE_REAR);
-		return SIDE_REAR;
-	}
-	else if(token_catched(SIDE_REAR)) {
-		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		i2c_slavedspic_mode_token_take(SIDE_FRONT);
-		return SIDE_FRONT;
-	}
-	else /* no more rooms */
-		return NO_MORE_ROOMS;
-
-}
-
-uint8_t sensor_tokens(uint8_t side)
-{
-	if(side == SIDE_FRONT)
-		return (sensor_get(S_TOKEN_FRONT_R) && sensor_get(S_TOKEN_FRONT_R));
-	else 
-		return (sensor_get(S_TOKEN_REAR_R) && sensor_get(S_TOKEN_REAR_R));
-}
-
 /* pick and place line 1 */
 #define LINE1_START_X			1150
 #define LINE1_START_Y			350
 #define LINE1_END_X				1150
-#define LINE1_END_Y				1400
+#define LINE1_END_Y				(1400-80)
 #define LINE1_LAST_TOKEN_X		1150
-#define LINE1_LAST_TOKEN_Y		1750-50
+#define LINE1_LAST_TOKEN_Y		(1750-50)
 
 #define LINE2_LAST_TOKEN_X		800
 #define LINE2_LAST_TOKEN_Y		350
@@ -152,19 +108,21 @@ uint8_t strat_harvest_line1(void)
 	side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE1_START_X),  LINE1_START_Y);
 
 	/* wait traj end or token detected */
-	err = WAIT_COND_OR_TRAJ_END(sensor_tokens(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+	err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
 
-	/* down speed */
-	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
-
-	err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+	/* token detected */
+	if(sensor_token_side(side)) {
+		/* down speed and wait end traj */
+		strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
+		err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+	}
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
 	/* restore speed */
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
-	/* check token catched  */
+	/* check token catched at first position */
 	WAIT_COND_OR_TIMEOUT(token_catched(side), LINE_CATCHED_TIME);
 	if(token_catched(side)) { 
 		nb_tokens_catched ++;
@@ -181,7 +139,6 @@ uint8_t strat_harvest_line1(void)
 			ERROUT(err);
 	}
 
-
 	/* do straight line harvesting */
 	do {
 
@@ -192,30 +149,33 @@ uint8_t strat_harvest_line1(void)
 		side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE1_END_X),  LINE1_END_Y);
 
 		/* wait traj end or token catched */
-		err = WAIT_COND_OR_TRAJ_END(sensor_tokens(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+		err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
 	
-		/* down speed */
-		strat_set_speed(SPEED_DIST_VERY_SLOW, SPEED_ANGLE_FAST);
+		/* token detected */
+		if(sensor_token_side(side)) {
 
-		/* wait token catche */
-		err = WAIT_COND_OR_TRAJ_END(token_catched(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+			/* down speed */
+			strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
 
-		/* inconditionaly stop */
-		trajectory_stop(&mainboard.traj);
-		err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+			/* wait token catched or end traj */
+			err = WAIT_COND_OR_TRAJ_END(token_catched(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+	
+			/* if token catched */
+			if(token_catched(side)) {
+		
+				trajectory_stop(&mainboard.traj);
+				err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+		
+				nb_tokens_catched ++;
+				DEBUG(E_USER_STRAT, "token catched in line (%d)", nb_tokens_catched);
+			}
+			else if (TRAJ_SUCCESS(err))
+				break;
+			else
+				ERROUT(END_ERROR);
+		}
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
-	
-		/* if token catched during the traj */
-		WAIT_COND_OR_TIMEOUT(token_catched(side), LINE_CATCHED_TIME);
-		if(token_catched(side)) {
-			nb_tokens_catched ++;
-			DEBUG(E_USER_STRAT, "token catched in line (%d)", nb_tokens_catched);
-		}
-		else if (TRAJ_SUCCESS(err))
-			break;
-		else
-			ERROUT(END_ERROR);
 
 		/* TODO: opponent management */
 
@@ -301,15 +261,17 @@ uint8_t strat_harvest_line2(void)
 		side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE2_START_X),  LINE2_START_Y);
 
 		/* wait traj end or token detected */
-		err = WAIT_COND_OR_TRAJ_END(sensor_tokens(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
-	
-		/* down speed */
-		strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
+		err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
 
-		err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+		/* token detected */
+		if(sensor_token_side(side)) {
+			/* down speed and wait end traj */
+			strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
+			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+		}
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
-
+	
 		/* restore speed */
 		strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);	
 
@@ -330,30 +292,33 @@ uint8_t strat_harvest_line2(void)
 			side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE2_END_X),  LINE2_END_Y);
 	
 			/* wait traj end or token catched */
-			err = WAIT_COND_OR_TRAJ_END(sensor_tokens(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+			err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
 		
-			/* speed */
-			strat_set_speed(SPEED_DIST_VERY_SLOW, SPEED_ANGLE_FAST);
+			/* token detected */
+			if(sensor_token_side(side)) {
 	
-			/* wait token catche */
-			err = WAIT_COND_OR_TRAJ_END(token_catched(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
-
-			/* inconditionaly stop */
-			trajectory_stop(&mainboard.traj);
-			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+				/* down speed */
+				strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
+	
+				/* wait token catched or end traj */
+				err = WAIT_COND_OR_TRAJ_END(token_catched(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+		
+				/* if token catched */
+				if(token_catched(side)) {
+			
+					trajectory_stop(&mainboard.traj);
+					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+			
+					nb_tokens_catched ++;
+					DEBUG(E_USER_STRAT, "token catched in line (%d)", nb_tokens_catched);
+				}
+				else if (TRAJ_SUCCESS(err))
+					break;
+				else
+					ERROUT(END_ERROR);
+			}
 			if (!TRAJ_SUCCESS(err))
 				ERROUT(err);
-		
-			/* if token catched during the traj */
-			WAIT_COND_OR_TIMEOUT(token_catched(side), LINE_CATCHED_TIME);
-			if(token_catched(side)) {
-				nb_tokens_catched ++;
-				DEBUG(E_USER_STRAT, "token catched in line (%d)", nb_tokens_catched);
-			}
-			else if (TRAJ_SUCCESS(err))
-				break;
-			else
-				ERROUT(END_ERROR);
 	
 			/* TODO: opponent management */
 		}
@@ -395,3 +360,30 @@ uint8_t strat_harvest_line2(void)
 	return err;
 }
 
+#define LINE2_START_X			800
+#define LINE2_START_Y			1400
+#define LINE2_END_X				800
+#define LINE2_END_Y				700
+	
+#define LINE2_FIRST_TOKEN_X	800
+#define LINE2_FIRST_TOKEN_Y	1750
+
+uint8_t strat_harvest_green_area(void)
+{
+	uint8_t err;
+	uint16_t old_spdd, old_spda;
+	uint8_t side = SIDE_FRONT;
+	uint8_t nb_tokens_catched = 0;
+
+	/* save speed */
+	strat_get_speed(&old_spdd, &old_spda);
+	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+
+
+
+ end:
+	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
+	i2c_slavedspic_mode_token_stop(SIDE_REAR);
+	strat_set_speed(old_spdd, old_spda);
+	return err;
+}
