@@ -132,7 +132,7 @@ void strat_hardstop(void)
  * times. */
 uint8_t strat_goto_xy_force(int16_t x, int16_t y)
 {
-	uint8_t i, err;
+	int8_t i, err;
 	
 #ifdef HOMOLOGATION
 	uint8_t hardstop = 0;
@@ -299,8 +299,8 @@ void strat_limit_speed(void)
 		
 #ifdef HOMOLOGATION
 	if (opp_d < 600) {
-		lim_d = 150;
-		lim_a = 200;
+		lim_d = 300;
+		lim_a = 300;
 	}
 #else
 	if (opp_d < 500) {

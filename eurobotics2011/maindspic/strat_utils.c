@@ -352,6 +352,11 @@ uint8_t belts_blocked(uint8_t side)
 	return slavedspic.ts[side].belts_blocked;
 }
 
+uint8_t token_inside(uint8_t side)
+{
+	return (slavedspic.ts[side].state == 0);
+}
+
 /* goto with the empty side, prepared to catch token */
 uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
 {
@@ -404,4 +409,122 @@ uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, d
 	else /* no more rooms */
 		return NO_MORE_ROOMS;
 
+}
+
+/* turn to pickup token, return side used to pickup */
+uint8_t strat_turnto_pickup_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm)
+{
+	double d_rel;
+	double a_rel_rad;
+
+	/* get angle to token xy */
+	abs_xy_to_rel_da(x_abs_mm, y_abs_mm, &d_rel, &a_rel_rad);
+
+	if(ABS(a_rel_rad) < (M_PI/2)) {
+		if(!token_catched(SIDE_FRONT)) {
+			trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+			return SIDE_FRONT;
+		}
+		else if(!token_catched(SIDE_REAR)){
+			trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+			return SIDE_REAR;
+		}
+		return SIDE_FRONT;
+	}	
+	else {
+		if(!token_catched(SIDE_REAR)) {
+			trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+			return SIDE_REAR;
+		}
+		else if(!token_catched(SIDE_FRONT)) {
+			trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+			return SIDE_FRONT;
+		}
+		return SIDE_FRONT;
+	}
+}
+
+/* turn to place token automaticaly, return side used to place */
+uint8_t strat_turnto_place_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm, uint8_t go)
+{
+	double d_rel;
+	double a_rel_rad;
+
+	/* get angle to token xy */
+	abs_xy_to_rel_da(x_abs_mm, y_abs_mm, &d_rel, &a_rel_rad);
+
+	if(go == GO_FORWARD) {
+		if(ABS(a_rel_rad) < (M_PI/2)) {
+			if(token_catched(SIDE_FRONT)) {
+				trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+				return SIDE_FRONT;
+			}
+			else if(token_catched(SIDE_REAR)) {
+				trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+				return SIDE_REAR;
+			}
+			return SIDE_FRONT;
+		}	
+		else {
+			if(token_catched(SIDE_REAR)) {
+				trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+				return SIDE_REAR;
+			}
+			else if(token_catched(SIDE_FRONT)) {
+				trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+				return SIDE_FRONT;
+			}
+			return SIDE_REAR;
+		}
+	}
+	else {
+		if(ABS(a_rel_rad) < (M_PI/2)) {
+			if(token_catched(SIDE_FRONT)) {
+				trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+				return SIDE_FRONT;
+			}
+			else if(token_catched(SIDE_REAR)) {
+				trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+				return SIDE_REAR;
+			}
+			return SIDE_FRONT;
+		}	
+		else {
+			if(token_catched(SIDE_REAR)) {
+				trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+				return SIDE_REAR;
+			}
+			else if(token_catched(SIDE_FRONT)) {
+				trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+				return SIDE_FRONT;
+			}
+			return SIDE_REAR;
+		}
+	}
+}
+
+/* return 1 if the opponent is near */
+uint8_t wait_until_opponent_is_far(void)
+{
+#ifdef HOMOLOGATION
+	int16_t opp_x, opp_y, opp_d, opp_a;
+
+	if (get_opponent_xyda(&opp_x, &opp_y,
+				      &opp_d, &opp_a))
+		return 1;
+
+	if(opp_d < 600 ) {
+		DEBUG(E_USER_STRAT, "waiting opponent far");
+
+		do {
+			if (get_opponent_xyda(&opp_x, &opp_y,
+					      &opp_d, &opp_a))
+				return 1;
+	
+		} while(opp_d < 600);
+	}
+
+	return 1;
+
+#endif
 }

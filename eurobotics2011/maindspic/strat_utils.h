@@ -87,6 +87,7 @@ int8_t get_opponent_xyda(int16_t *x, int16_t *y, int16_t *d, int16_t *a);
 uint8_t opponent_is_behind(void);
 
 uint8_t token_catched(uint8_t side);
+uint8_t token_inside(uint8_t side);
 uint8_t belts_blocked(uint8_t side);
 
 
@@ -98,5 +99,14 @@ uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, d
 
 /* goto with the empty side and with belts in mode take */
 uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm);
+
+/* turn to pickup token, return side used to pickup */
+uint8_t strat_turnto_pickup_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm);
+
+/* turn to place token automaticaly, return side used to place */
+uint8_t strat_turnto_place_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm, uint8_t go);
+
+/* return 1 if the opponent is near */
+uint8_t wait_until_opponent_is_far(void);
 
 #endif

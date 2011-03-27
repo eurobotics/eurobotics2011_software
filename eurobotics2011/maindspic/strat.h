@@ -63,8 +63,13 @@
 #define TRAJ_FLAGS_SMALL_DIST 		(END_TRAJ|END_BLOCKING|END_INTR)
 
 /* default speeds */
+#ifdef HOMOLOGATION
+#define SPEED_DIST_FAST 		1000
+#define SPEED_ANGLE_FAST 		1000
+#else
 #define SPEED_DIST_FAST 		4000
 #define SPEED_ANGLE_FAST 		4000
+#endif
 #define SPEED_DIST_SLOW 		2000
 #define SPEED_ANGLE_SLOW 		2000
 #define SPEED_DIST_VERY_SLOW 	1000
@@ -172,16 +177,19 @@ void strat_init(void);
 void strat_exit(void);
 
 uint8_t strat_main(void);
+uint8_t strat_beginning(void);
 void strat_event(void *dummy);
 
 /* in strat_tokens.c */
 uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side);
 uint8_t strat_pickup_token_auto(int16_t x, int16_t y);
 uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go);
+uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t go);
 
 /* in strat_static.c */
 uint8_t strat_harvest_line1(void);
 uint8_t strat_harvest_line2(void);
+uint8_t strat_harvest_green_area(void);
 
 /* add here more strat functions in files */
 

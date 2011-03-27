@@ -98,23 +98,26 @@ uint8_t strat_harvest_line1(void)
 	strat_get_speed(&old_spdd, &old_spda);
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
+
 	/* try to pick up last token of line 2 */
+	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(LINE2_LAST_TOKEN_X), LINE2_LAST_TOKEN_Y, SIDE_FRONT);
 	if (TRAJ_SUCCESS(err)) {
 		line2_only_one_token = 1;
 	}
 
 	/* goto line start */
+	wait_until_opponent_is_far();
 	side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE1_START_X),  LINE1_START_Y);
 
 	/* wait traj end or token detected */
-	err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+	err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_SMALL_DIST);
 
 	/* token detected */
 	if(sensor_token_side(side)) {
 		/* down speed and wait end traj */
 		strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
-		err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	}
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
@@ -146,6 +149,7 @@ uint8_t strat_harvest_line1(void)
 		strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
 		/* go to line end harvesting tokens	*/
+		wait_until_opponent_is_far();
 		side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE1_END_X),  LINE1_END_Y);
 
 		/* wait traj end or token catched */
@@ -171,10 +175,14 @@ uint8_t strat_harvest_line1(void)
 			}
 			else if (TRAJ_SUCCESS(err))
 				break;
-			else
-				ERROUT(END_ERROR);
+			//else
+			//	ERROUT(END_ERROR);
 		}
-		if (!TRAJ_SUCCESS(err))
+		if (err&END_OBSTACLE) {
+			wait_ms(5000);
+			continue;
+		}
+		else if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
 
 		/* TODO: opponent management */
@@ -184,6 +192,7 @@ uint8_t strat_harvest_line1(void)
 
 	/* need one more token? */
 	if( nb_tokens_catched < 2) {
+		wait_until_opponent_is_far();
 		err = strat_pickup_token_auto(COLOR_X(LINE1_LAST_TOKEN_X), LINE1_LAST_TOKEN_Y);
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
@@ -192,15 +201,20 @@ uint8_t strat_harvest_line1(void)
 	/* restore speed */
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
+ place_origin:
 	/* go to place origin */
+	wait_until_opponent_is_far();
 	trajectory_goto_xy_abs(&mainboard.traj,
 								 COLOR_X(strat_infos.slot_grid[2][4].x),  
 								 strat_infos.slot_grid[2][4].y);
 	err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
-	if (!TRAJ_SUCCESS(err))
+	if (err & END_OBSTACLE)
+		goto place_origin;
+	else if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
 	/* place tokens */
+	wait_until_opponent_is_far();
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[2][5].x),
 						 strat_infos.slot_grid[2][5].y, 
 						 side, GO_FORWARD);
@@ -210,6 +224,7 @@ uint8_t strat_harvest_line1(void)
 	/* invert side */
 	side ^= 0x01;
 
+	wait_until_opponent_is_far();
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[2][3].x),
 						 strat_infos.slot_grid[2][3].y, 
 						 side, GO_FORWARD);
@@ -249,6 +264,7 @@ uint8_t strat_harvest_line2(void)
 		nb_tokens_catched = 1;
 
 	/* try to pick up token */
+	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(LINE2_FIRST_TOKEN_X), LINE2_FIRST_TOKEN_Y, SIDE_FRONT);
 	if (TRAJ_SUCCESS(err)) {
 		nb_tokens_catched ++;
@@ -258,16 +274,17 @@ uint8_t strat_harvest_line2(void)
 	if(nb_tokens_catched < 2) {
 
 		/* goto line start */
+		wait_until_opponent_is_far();
 		side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE2_START_X),  LINE2_START_Y);
 
 		/* wait traj end or token detected */
-		err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+		err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_SMALL_DIST);
 
 		/* token detected */
 		if(sensor_token_side(side)) {
 			/* down speed and wait end traj */
 			strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
-			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 		}
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
@@ -289,6 +306,7 @@ uint8_t strat_harvest_line2(void)
 			strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 	
 			/* go to line end harvesting tokens	*/
+			wait_until_opponent_is_far();
 			side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE2_END_X),  LINE2_END_Y);
 	
 			/* wait traj end or token catched */
@@ -314,10 +332,14 @@ uint8_t strat_harvest_line2(void)
 				}
 				else if (TRAJ_SUCCESS(err))
 					break;
-				else
-					ERROUT(END_ERROR);
+				//else
+				//	ERROUT(END_ERROR);
 			}
-			if (!TRAJ_SUCCESS(err))
+			if (err&END_OBSTACLE) {
+				wait_ms(5000);
+				continue;
+			}
+			else if (!TRAJ_SUCCESS(err))
 				ERROUT(err);
 	
 			/* TODO: opponent management */
@@ -327,16 +349,23 @@ uint8_t strat_harvest_line2(void)
 	/* restore speed */
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
+ place_origin:
 	/* go to place origin */
+	wait_until_opponent_is_far();
 	trajectory_goto_xy_abs(&mainboard.traj,
 								 COLOR_X(strat_infos.slot_grid[1][1].x),  
 								 strat_infos.slot_grid[1][1].y);
 	err = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER);
-	if (!TRAJ_SUCCESS(err))
+	if (err&END_OBSTACLE) {
+		wait_ms(5000);
+		goto place_origin;		
+	}
+	else if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
 	/* place tokens */
 	if(!line2_only_one_token) {
+		wait_until_opponent_is_far();
 		err = strat_place_token(COLOR_X(strat_infos.slot_grid[1][0].x),
 							 strat_infos.slot_grid[1][0].y, 
 							 side, GO_FORWARD);
@@ -347,6 +376,7 @@ uint8_t strat_harvest_line2(void)
 		side ^= 0x01;
 	}
 
+	wait_until_opponent_is_far();
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[2][1].x),
 						 strat_infos.slot_grid[2][1].y, 
 						 side, GO_FORWARD);
@@ -360,26 +390,272 @@ uint8_t strat_harvest_line2(void)
 	return err;
 }
 
-#define LINE2_START_X			800
-#define LINE2_START_Y			1400
-#define LINE2_END_X				800
-#define LINE2_END_Y				700
-	
-#define LINE2_FIRST_TOKEN_X	800
-#define LINE2_FIRST_TOKEN_Y	1750
+/* pick up and place tokens of green area */
+#define TOKENS_GREEN_START_X 			625
+#define TOKENS_GREEN_START_Y 			700
+#define TOKENS_GREEN_D_AVOID_WALL	150
+#define TOKEN_INSIDE_TIME				800
 
 uint8_t strat_harvest_green_area(void)
 {
 	uint8_t err;
 	uint16_t old_spdd, old_spda;
-	uint8_t side = SIDE_FRONT;
-	uint8_t nb_tokens_catched = 0;
+	uint8_t side;
 
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
+	/* goto init possition */
+	wait_until_opponent_is_far();
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(TOKENS_GREEN_START_X), TOKENS_GREEN_START_Y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
 
+	/* pick token 1 */
+	wait_until_opponent_is_far();
+	side = strat_turnto_pickup_token(&mainboard.traj,
+									 COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][0].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][0].y );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][0].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][0].y, side );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* wait token inside */
+	WAIT_COND_OR_TIMEOUT(token_inside(side), TOKEN_INSIDE_TIME);
+
+	/* go backwards to avoid wall */
+	wait_until_opponent_is_far();
+	if(side == SIDE_FRONT)
+		trajectory_d_rel(&mainboard.traj, -TOKENS_GREEN_D_AVOID_WALL);
+	else
+		trajectory_d_rel(&mainboard.traj, TOKENS_GREEN_D_AVOID_WALL);
+
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* place token 1 */
+	wait_until_opponent_is_far();
+ 	side = strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot_grid[0][1].x),
+									 strat_infos.slot_grid[0][1].y, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+	
+	wait_until_opponent_is_far();
+	err = strat_place_token(COLOR_X(strat_infos.slot_grid[0][1].x),
+									 strat_infos.slot_grid[0][1].y, side, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* pick token 2 */
+	wait_until_opponent_is_far();
+	side = strat_turnto_pickup_token(&mainboard.traj,
+									 COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][1].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][1].y );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][1].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][1].y, side );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* wait token inside */ 
+	WAIT_COND_OR_TIMEOUT(token_inside(side), TOKEN_INSIDE_TIME);
+
+	/* go backwards to avoid wall */
+	wait_until_opponent_is_far();
+	if(side == SIDE_FRONT)
+		trajectory_d_rel(&mainboard.traj, -(TOKENS_GREEN_D_AVOID_WALL-50));
+	else
+		trajectory_d_rel(&mainboard.traj, (TOKENS_GREEN_D_AVOID_WALL-50));
+
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* goto previous possition */
+	wait_until_opponent_is_far();
+	trajectory_goto_xy_abs(&mainboard.traj, 
+									COLOR_X(strat_infos.slot_grid[0][2].x),
+									strat_infos.slot_grid[0][2].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* place token 2 */
+	wait_until_opponent_is_far();
+ 	side = strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot_grid[1][2].x),
+									 strat_infos.slot_grid[1][2].y, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_place_token(COLOR_X(strat_infos.slot_grid[1][2].x),
+									 strat_infos.slot_grid[1][2].y, side, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* pick token 3 */
+	wait_until_opponent_is_far();
+	side = strat_turnto_pickup_token(&mainboard.traj,
+									 COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][2].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][2].y );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][2].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][2].y, side );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* wait token inside */
+	WAIT_COND_OR_TIMEOUT(token_inside(side), TOKEN_INSIDE_TIME);
+
+	/* go backwards to avoid wall */
+	wait_until_opponent_is_far();
+	if(side == SIDE_FRONT)
+		trajectory_d_rel(&mainboard.traj, -TOKENS_GREEN_D_AVOID_WALL);
+	else
+		trajectory_d_rel(&mainboard.traj, TOKENS_GREEN_D_AVOID_WALL);
+
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* pick token 4 */
+	wait_until_opponent_is_far();
+	side = strat_turnto_pickup_token(&mainboard.traj,
+									 COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][3].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][3].y );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][3].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][3].y, side );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+
+	/* wait token inside */
+	WAIT_COND_OR_TIMEOUT(token_inside(side), TOKEN_INSIDE_TIME);
+
+	/* go backwards to avoid wall */
+	wait_until_opponent_is_far();
+	if(side == SIDE_FRONT)
+		trajectory_d_rel(&mainboard.traj, -TOKENS_GREEN_D_AVOID_WALL);
+	else
+		trajectory_d_rel(&mainboard.traj, TOKENS_GREEN_D_AVOID_WALL);
+
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+
+	/* place token 3 */
+	wait_until_opponent_is_far();
+ 	side = strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot_grid[0][3].x),
+									 strat_infos.slot_grid[0][3].y, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_place_token(COLOR_X(strat_infos.slot_grid[0][3].x),
+									 strat_infos.slot_grid[0][3].y, side, GO_FORWARD);
+
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* go to intermediate possition */
+	wait_until_opponent_is_far();
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(450), 1575);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+	
+
+	/* pick token 5 */
+	wait_until_opponent_is_far();
+	side = strat_turnto_pickup_token(&mainboard.traj,
+									 COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][4].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][4].y );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][4].x),
+									 strat_infos.slot_green[I2C_COLOR_BLUE][4].y, side );
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* wait token inside */
+	WAIT_COND_OR_TIMEOUT(token_inside(side), TOKEN_INSIDE_TIME);
+
+	/* go backwards to avoid wall */
+	wait_until_opponent_is_far();
+	if(side == SIDE_FRONT)
+		trajectory_d_rel(&mainboard.traj, -TOKENS_GREEN_D_AVOID_WALL);
+	else
+		trajectory_d_rel(&mainboard.traj, TOKENS_GREEN_D_AVOID_WALL);
+
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* place token 4 */
+	wait_until_opponent_is_far();
+ 	side = strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot_grid[1][4].x),
+									 strat_infos.slot_grid[1][4].y, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+	wait_until_opponent_is_far();
+	err = strat_place_token(COLOR_X(strat_infos.slot_grid[1][4].x),
+									 strat_infos.slot_grid[1][4].y, side, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* place token 5 */
+	wait_until_opponent_is_far();
+ 	side = strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot_grid[0][5].x),
+									 strat_infos.slot_grid[0][5].y, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	wait_until_opponent_is_far();
+	err = strat_place_token(COLOR_X(strat_infos.slot_grid[0][5].x),
+									 strat_infos.slot_grid[0][5].y, side, GO_FORWARD);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
 
  end:
 	i2c_slavedspic_mode_token_stop(SIDE_FRONT);

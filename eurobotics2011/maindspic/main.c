@@ -266,14 +266,14 @@ int main(void)
 	scheduler_add_periodical_event_priority(i2c_poll_slaves, NULL,
 						EVENT_PERIOD_I2C_POLL / SCHEDULER_UNIT, EVENT_PRIORITY_I2C_POLL);
 
-//	/* beacon polling */
-//	scheduler_add_periodical_event_priority(beacon_daemon, NULL,
-//					EVENT_PERIOD_BEACON_PULL / SCHEDULER_UNIT, EVENT_PRIORITY_BEACON_POLL);
-//
+	/* beacon polling */
+	scheduler_add_periodical_event_priority(beacon_daemon, NULL,
+					EVENT_PERIOD_BEACON_PULL / SCHEDULER_UNIT, EVENT_PRIORITY_BEACON_POLL);
+
 
 	/* strat-related event */
-//	scheduler_add_periodical_event_priority(strat_event, NULL,
-//						EVENT_PERIOD_STRAT / SCHEDULER_UNIT, EVENT_PRIORITY_STRAT);
+	scheduler_add_periodical_event_priority(strat_event, NULL,
+						EVENT_PERIOD_STRAT / SCHEDULER_UNIT, EVENT_PRIORITY_STRAT);
 
 
 	/* log setup */

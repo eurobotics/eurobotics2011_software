@@ -75,14 +75,14 @@ struct strat_infos strat_infos = {
 	.slot_grid[0][2] = { 625,	875,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
 	.slot_grid[0][3] = { 625,	1225,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
 	.slot_grid[0][4] = { 625,	1575,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
-	.slot_grid[0][5] = { 625,	1865,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot_grid[0][5] = { 625,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	.slot_grid[1][0] = { 975,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
 	.slot_grid[1][1] = { 975,	525,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
 	.slot_grid[1][2] = { 975,	875,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
 	.slot_grid[1][3] = { 975,	1225,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
 	.slot_grid[1][4] = { 975,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
-	.slot_grid[1][5] = { 975,	1865,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot_grid[1][5] = { 975,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	.slot_grid[2][0] = { 1325,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
 	.slot_grid[2][1] = { 1325,	525,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
@@ -103,14 +103,14 @@ struct strat_infos strat_infos = {
 	.slot_grid[4][2] = { 2025,	875,	SLOT_RED,	SLOT_PRIO_2,		0 },
 	.slot_grid[4][3] = { 2025,	1225,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
 	.slot_grid[4][4] = { 2025,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
-	.slot_grid[4][5] = { 2025,	1865,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot_grid[4][5] = { 2025,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	.slot_grid[5][0] = { 2375,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
 	.slot_grid[5][1] = { 2375,	525,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
 	.slot_grid[5][2] = { 2375,	875,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
 	.slot_grid[5][3] = { 2375,	1225,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
 	.slot_grid[5][4] = { 2375,	1575,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
-	.slot_grid[5][5] = { 2375,	1865,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot_grid[5][5] = { 2375,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	/* green slots */
 	.slot_green[I2C_COLOR_BLUE][0] = { 200,	690,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
@@ -250,7 +250,7 @@ void strat_exit(void)
 void strat_event(void *dummy)
 {
 	/* limit speed when opponent is close */
-	strat_limit_speed();
+	//strat_limit_speed();
 
 	/* TODO: update actual slot position */
 
@@ -270,9 +270,10 @@ void strat_event(void *dummy)
 	} while (0)
 
 
-#define ERROUT(e) do{\
-	err = e;\
-}while(0)	
+#define ERROUT(e) do {\
+		err = e;			 \
+		goto end;		 \
+	} while(0)	
 
 
 /* homologation sequence */	
@@ -284,7 +285,7 @@ uint8_t strat_homologation(void)
 }
 
 /* begining trajs related with static elements */
-static uint8_t strat_beginning(void)
+uint8_t strat_beginning(void)
 {
 	uint8_t err = 0;
 	uint16_t old_spdd, old_spda;
@@ -293,14 +294,30 @@ static uint8_t strat_beginning(void)
 	strat_get_speed(&old_spdd, &old_spda);
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
-	/* pick & place tokens on lines */
+	/* go out of start position */
+	wait_until_opponent_is_far();
+	trajectory_d_rel(&mainboard.traj, 200);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* pick & place tokens on line 1 */
+	err = strat_harvest_line1();
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* pick & place tokens on line 2 */
+	err = strat_harvest_line2();
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
 
 	/* pick & place tokens on green area */
+	err = strat_harvest_green_area();
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
 
-
-	/* restore speeds */
+ end:
 	strat_set_speed(old_spdd, old_spda);
-	
 	return err;
 }
 

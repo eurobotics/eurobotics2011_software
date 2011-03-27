@@ -72,13 +72,15 @@
 /* pick up a token */
 /* XXX use it in short distance ranges */
 
-#define PICKUP_D_TOKEN_OFFSET		((ROBOT_LENGTH/2)-15)
+#define PICKUP_D_TOKEN_OFFSET			((ROBOT_LENGTH/2)-35)
+#define PICKUP_D_NEAR_TOKEN_OFFSET	((ROBOT_LENGTH/2)+70)
 #define PICKUP_D_SENSOR_RANGE		500
 #define PICKUP_D_NOTINPOINT		80
 #define PICKUP_A_CENTER_TOKEN		10.0
 #define PICKUP_BELTS_TRIES			5
 #define PICKUP_CATCHED_TIME		100
 #define PICKUP_SPEED_NOTINPOINT	300
+#define PICKUP_SPEED_PICKUP		1000
 
 uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 {
@@ -188,7 +190,18 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 		}
 	}
 	
+
+	/* go to near token */
+	i2c_slavedspic_mode_token_take(side);
+	d_token = distance_from_robot(x, y);
+	trajectory_d_rel(&mainboard.traj, d_sign*(d_token-PICKUP_D_NEAR_TOKEN_OFFSET));
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+
 	/* go to pick up token */
+	strat_set_speed(PICKUP_SPEED_PICKUP, SPEED_ANGLE_FAST);
 	i2c_slavedspic_mode_token_take(side);
 	d_token = distance_from_robot(x, y);
 	trajectory_d_rel(&mainboard.traj, d_sign*(d_token-PICKUP_D_TOKEN_OFFSET));
@@ -253,16 +266,42 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	return err;
 }
 
-/* pickup a token depends tokens catched before */
+
+/* pickup token chossing side automaticaly */
 uint8_t strat_pickup_token_auto(int16_t x, int16_t y)
 {
-	if(token_catched(SIDE_FRONT))
-		return strat_pickup_token(x, y, SIDE_REAR);
-	else if(token_catched(SIDE_REAR))
-		return strat_pickup_token(x, y, SIDE_FRONT);
-	else
-		return END_ERROR;
+	double d_rel;
+	double a_rel_rad;
+
+	/* get angle to token xy */
+	abs_xy_to_rel_da(x, y, &d_rel, &a_rel_rad);
+
+	if(ABS(a_rel_rad) < (M_PI/2)) {
+		if(!token_catched(SIDE_FRONT))
+			return strat_pickup_token(x, y, SIDE_FRONT);
+		else
+			return strat_pickup_token(x, y, SIDE_REAR);
+	}	
+	else {
+		if(!token_catched(SIDE_REAR))
+			return strat_pickup_token(x, y, SIDE_REAR);
+		else
+			return strat_pickup_token(x, y, SIDE_FRONT);
+	}
 }
+
+
+
+///* pickup a token depends tokens catched before */
+//uint8_t strat_pickup_token_auto(int16_t x, int16_t y)
+//{
+//	if(token_catched(SIDE_FRONT))
+//		return strat_pickup_token(x, y, SIDE_REAR);
+//	else if(token_catched(SIDE_REAR))
+//		return strat_pickup_token(x, y, SIDE_FRONT);
+//	else
+//		return END_ERROR;
+//}
 
 /* place a token */	
 /* XXX use it in near range distance */
@@ -282,7 +321,7 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 
 	/* check if we have token to place */
 	if(!token_catched(side))
-		ERROUT(END_ERROR);
+		ERROUT(END_TRAJ);
 
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
@@ -385,3 +424,41 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	return err;
 }
 
+/* place token automaticaly */
+uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t go)
+{
+	double d_rel;
+	double a_rel_rad;
+
+	/* get angle to token xy */
+	abs_xy_to_rel_da(x, y, &d_rel, &a_rel_rad);
+
+	if(go == GO_FORWARD) {
+		if(ABS(a_rel_rad) < (M_PI/2)) {
+			if(token_catched(SIDE_FRONT))
+				return strat_place_token(x, y, SIDE_FRONT, GO_FORWARD);
+			else
+				return strat_place_token(x, y, SIDE_REAR, GO_FORWARD);
+		}	
+		else {
+			if(token_catched(SIDE_REAR))
+				return strat_place_token(x, y, SIDE_REAR, GO_FORWARD);
+			else
+				return strat_place_token(x, y, SIDE_FRONT, GO_FORWARD);
+		}
+	}
+	else {
+		if(ABS(a_rel_rad) < (M_PI/2)) {
+			if(token_catched(SIDE_FRONT))
+				return strat_place_token(x, y, SIDE_REAR, GO_BACKWARD);
+			else
+				return strat_place_token(x, y, SIDE_FRONT, GO_BACKWARD);
+		}	
+		else {
+			if(token_catched(SIDE_REAR))
+				return strat_place_token(x, y, SIDE_FRONT, GO_BACKWARD);
+			else
+				return strat_place_token(x, y, SIDE_REAR, GO_BACKWARD);
+		}
+	}
+}
