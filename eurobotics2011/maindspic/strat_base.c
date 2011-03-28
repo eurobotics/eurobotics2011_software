@@ -64,7 +64,7 @@
 #include "strat_base.h"
 #include "strat.h"
 #include "sensor.h"
-//#include "i2c_protocol.h"
+#include "i2c_protocol.h"
 #include "beacon.h"
 
 /* true if we want to interrupt a trajectory */
@@ -79,7 +79,7 @@ static volatile int16_t strat_speed_d = SPEED_ANGLE_FAST;
 static volatile uint16_t strat_limit_speed_a = 0; /* no limit */
 static volatile uint16_t strat_limit_speed_d = 0;
 
-static volatile uint8_t strat_limit_speed_enabled = 1;
+static volatile uint8_t strat_limit_speed_enabled = 0;
 
 
 /* Strings that match the end traj cause */

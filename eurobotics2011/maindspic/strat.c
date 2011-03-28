@@ -250,7 +250,7 @@ void strat_exit(void)
 void strat_event(void *dummy)
 {
 	/* limit speed when opponent is close */
-	//strat_limit_speed();
+	strat_limit_speed();
 
 	/* TODO: update actual slot position */
 
@@ -272,17 +272,8 @@ void strat_event(void *dummy)
 
 #define ERROUT(e) do {\
 		err = e;			 \
-		goto end;		 \
 	} while(0)	
 
-
-/* homologation sequence */	
-uint8_t strat_homologation(void)
-{
-	uint8_t err = 0;
-
-	return err;			
-}
 
 /* begining trajs related with static elements */
 uint8_t strat_beginning(void)
@@ -293,6 +284,13 @@ uint8_t strat_beginning(void)
 	/* set new speed */
 	strat_get_speed(&old_spdd, &old_spda);
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+
+	/* initial speed limit */
+#if HOMOLOGATION
+	strat_limit_speed_enable();
+#else
+	strat_limit_speed_disable();
+#endif
 
 	/* go out of start position */
 	wait_until_opponent_is_far();
@@ -311,12 +309,15 @@ uint8_t strat_beginning(void)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
+	/* enable speed limit */
+	strat_limit_speed_enable();
+
 	/* pick & place tokens on green area */
 	err = strat_harvest_green_area();
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
- end:
+// end:
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }
@@ -328,18 +329,6 @@ uint8_t strat_main(void)
 
 	/* pick & place our static tokens */
 	err = strat_beginning();
-
-#ifdef HOMOLOGATION
-
-	/* pick & place central token */ 
-
-	/* pick & place opponent token on lines */
-
-	/* pick & place opponent token on green area */
-
-#endif
-
-	/* go in opponent slot */
 
 	/* autoplay */
 	while (1) {

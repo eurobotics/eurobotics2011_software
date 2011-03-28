@@ -64,12 +64,14 @@
 #include "cmdline.h"
 
 
+#if 0
 #define ERROUT(e) do {\
 		err = e;			 \
 		goto end;		 \
 	} while(0)
-
-
+#else
+#define ERROUT(e) do {} while(0) /* XXX no interrups trajs are possible */
+#endif
 
 /* pick and place tokens on line 1 */
 
@@ -103,7 +105,7 @@ uint8_t strat_harvest_line1(void)
 	/* try to pick up last token of line 2 */
 	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(LINE2_LAST_TOKEN_X), LINE2_LAST_TOKEN_Y, SIDE_FRONT);
-	if (TRAJ_SUCCESS(err)) {
+	if (token_catched(SIDE_FRONT)) {
 		line2_only_one_token = 1;
 	}
 
@@ -122,7 +124,7 @@ uint8_t strat_harvest_line1(void)
 		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	}
 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+		ERROUT(err);			
 
 	/* restore speed */
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
@@ -141,7 +143,7 @@ uint8_t strat_harvest_line1(void)
 							 strat_infos.slot_grid[1][0].y, 
 							 SIDE_FRONT, GO_FORWARD);
 		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
+			ERROUT(err);			
 	}
 
 	/* do straight line harvesting */
@@ -181,14 +183,12 @@ uint8_t strat_harvest_line1(void)
 			//else
 			//	ERROUT(END_ERROR);
 		}
-		if (err&END_OBSTACLE) {
-			wait_ms(5000);
-			continue;
+		else if (err&END_OBSTACLE) {
+			wait_ms(5000);	/* wait to sensor re-enable, we not avoid the opponent */
+			continue;		/* TODO: second way / scape sequence */
 		}
 		else if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
-
-		/* TODO: opponent management */
+			ERROUT(err);	
 
 	} while( (nb_tokens_catched < 2) );
 
@@ -198,7 +198,7 @@ uint8_t strat_harvest_line1(void)
 		wait_until_opponent_is_far();
 		err = strat_pickup_token_auto(COLOR_X(LINE1_LAST_TOKEN_X), LINE1_LAST_TOKEN_Y);
 		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
+			ERROUT(err);			
 	}
 
 	/* restore speed */
@@ -214,7 +214,7 @@ uint8_t strat_harvest_line1(void)
 	if (err & END_OBSTACLE)
 		goto place_origin;
 	else if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+		ERROUT(err);	
 
 	/* place tokens */
 	wait_until_opponent_is_far();
@@ -222,7 +222,7 @@ uint8_t strat_harvest_line1(void)
 						 strat_infos.slot_grid[2][5].y, 
 						 side, GO_FORWARD);
 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+		ERROUT(err);	
 
 	/* invert side */
 	side ^= 0x01;
@@ -232,9 +232,9 @@ uint8_t strat_harvest_line1(void)
 						 strat_infos.slot_grid[2][3].y, 
 						 side, GO_FORWARD);
 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+		ERROUT(err);	
 
- end:
+// end:
 	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
 	i2c_slavedspic_mode_token_stop(SIDE_REAR);
 	strat_set_speed(old_spdd, old_spda);
@@ -270,7 +270,7 @@ uint8_t strat_harvest_line2(void)
 	/* try to pick up token */
 	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(LINE2_FIRST_TOKEN_X), LINE2_FIRST_TOKEN_Y, SIDE_FRONT);
-	if (TRAJ_SUCCESS(err)) {
+	if (token_catched(SIDE_FRONT)) {
 		nb_tokens_catched ++;
 	}
 
@@ -292,7 +292,7 @@ uint8_t strat_harvest_line2(void)
 			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 		}
 		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
+			ERROUT(err);	
 	
 		/* restore speed */
 		strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);	
@@ -338,17 +338,13 @@ uint8_t strat_harvest_line2(void)
 				}
 				else if (TRAJ_SUCCESS(err))
 					break;
-				//else
-				//	ERROUT(END_ERROR);
 			}
 			if (err&END_OBSTACLE) {
-				wait_ms(5000);
-				continue;
+				wait_ms(5000);		/* wait to sensor re-enable, we not avoid the opponent */
+				continue;			/* TODO: sencond way / scape sequence */
 			}
 			else if (!TRAJ_SUCCESS(err))
-				ERROUT(err);
-	
-			/* TODO: opponent management */
+				ERROUT(err);		
 		}
 	}
 
@@ -367,7 +363,7 @@ uint8_t strat_harvest_line2(void)
 		goto place_origin;		
 	}
 	else if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+		ERROUT(err);	
 
 	/* place tokens */
 	if(!line2_only_one_token) {
@@ -387,9 +383,9 @@ uint8_t strat_harvest_line2(void)
 						 strat_infos.slot_grid[2][1].y, 
 						 side, GO_FORWARD);
 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+		ERROUT(err);	
 
- end:
+// end:
 	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
 	i2c_slavedspic_mode_token_stop(SIDE_REAR);
 	strat_set_speed(old_spdd, old_spda);
@@ -418,7 +414,7 @@ uint8_t strat_harvest_green_area(void)
 	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(TOKENS_GREEN_START_X), TOKENS_GREEN_START_Y);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+		ERROUT(err);	
 
 	/* pick token 1 */
 	wait_until_opponent_is_far();
@@ -432,7 +428,7 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][0].x),
 									 strat_infos.slot_green[I2C_COLOR_BLUE][0].y, side );
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -461,7 +457,7 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[0][1].x),
 									 strat_infos.slot_grid[0][1].y, side, GO_FORWARD);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -477,7 +473,7 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][1].x),
 									 strat_infos.slot_green[I2C_COLOR_BLUE][1].y, side );
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -495,7 +491,7 @@ uint8_t strat_harvest_green_area(void)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
-	/* goto previous possition */
+	/* goto intermediate possition */
 	wait_until_opponent_is_far();
 	trajectory_goto_xy_abs(&mainboard.traj, 
 									COLOR_X(strat_infos.slot_grid[0][2].x),
@@ -515,7 +511,7 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[1][2].x),
 									 strat_infos.slot_grid[1][2].y, side, GO_FORWARD);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -531,7 +527,7 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][2].x),
 									 strat_infos.slot_green[I2C_COLOR_BLUE][2].y, side );
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -561,10 +557,9 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][3].x),
 									 strat_infos.slot_green[I2C_COLOR_BLUE][3].y, side );
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
-
 
 	/* wait token inside */
 	WAIT_COND_OR_TIMEOUT(token_inside(side), TOKEN_INSIDE_TIME);
@@ -593,7 +588,7 @@ uint8_t strat_harvest_green_area(void)
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[0][3].x),
 									 strat_infos.slot_grid[0][3].y, side, GO_FORWARD);
 
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -617,7 +612,7 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_pickup_token(COLOR_X(strat_infos.slot_green[I2C_COLOR_BLUE][4].x),
 									 strat_infos.slot_green[I2C_COLOR_BLUE][4].y, side );
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -642,10 +637,11 @@ uint8_t strat_harvest_green_area(void)
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
+
 	wait_until_opponent_is_far();
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[1][4].x),
 									 strat_infos.slot_grid[1][4].y, side, GO_FORWARD);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -660,11 +656,11 @@ uint8_t strat_harvest_green_area(void)
 	wait_until_opponent_is_far();
 	err = strat_place_token(COLOR_X(strat_infos.slot_grid[0][5].x),
 									 strat_infos.slot_grid[0][5].y, side, GO_FORWARD);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
- end:
+// end:
 	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
 	i2c_slavedspic_mode_token_stop(SIDE_REAR);
 	strat_set_speed(old_spdd, old_spda);

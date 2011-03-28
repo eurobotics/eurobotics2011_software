@@ -125,7 +125,7 @@ struct slot_info {
 #define SLOT_WALL					0x04
 #define SLOT_CHECK				0x08
 #define SLOT_CHECK_ONESIDE		0x16
-#define SLOT_BUSY					0x32
+#define SLOT_VISITED				0x32
 #define SLOT_NEAR_GREEN_RED	0x64
 #define SLOT_NEAR_GREEN_BLUE	0x128
 
@@ -179,6 +179,7 @@ void strat_exit(void);
 uint8_t strat_main(void);
 uint8_t strat_beginning(void);
 void strat_event(void *dummy);
+
 
 /* in strat_tokens.c */
 
