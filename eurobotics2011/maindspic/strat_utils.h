@@ -91,22 +91,22 @@ uint8_t token_inside(uint8_t side);
 uint8_t belts_blocked(uint8_t side);
 
 
-/* goto depends on token catched */
-#define NO_MORE_ROOMS	(SIDE_MAX+1)
-
-/* goto with the empty side, prepared to catch token */
+/* goto with the empty side, prepared to catch token, return goto side */
 uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm);
 
-/* goto with the empty side and with belts in mode take */
+/* goto with the empty side and with belts in mode take, return goto side */
 uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm);
 
-/* turn to pickup token, return side used to pickup */
+/* turn to pickup token, return side in front of token */
+/* XXX suppose that there is at least one side empty */
 uint8_t strat_turnto_pickup_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm);
 
-/* turn to place token automaticaly, return side used to place */
+/* turn to place token automaticaly, return side used to place token */
+/* XXX suppose that there is at least one token catched */
 uint8_t strat_turnto_place_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm, uint8_t go);
 
 /* return 1 if the opponent is near */
-uint8_t wait_until_opponent_is_far(void);
+/* XXX only compile with HOMOLOGATION define */
+void wait_until_opponent_is_far(void);
 
 #endif

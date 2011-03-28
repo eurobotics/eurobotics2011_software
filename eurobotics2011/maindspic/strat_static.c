@@ -71,7 +71,8 @@
 
 
 
-/* pick and place line 1 */
+/* pick and place tokens on line 1 */
+
 #define LINE1_START_X			1150
 #define LINE1_START_Y			350
 #define LINE1_END_X				1150
@@ -107,6 +108,7 @@ uint8_t strat_harvest_line1(void)
 	}
 
 	/* goto line start */
+	/* TODO: divide in two steps, turn and go */
 	wait_until_opponent_is_far();
 	side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE1_START_X),  LINE1_START_Y);
 
@@ -149,6 +151,7 @@ uint8_t strat_harvest_line1(void)
 		strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
 		/* go to line end harvesting tokens	*/
+		/* TODO: divide in two steps, turn and go */
 		wait_until_opponent_is_far();
 		side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE1_END_X),  LINE1_END_Y);
 
@@ -239,6 +242,7 @@ uint8_t strat_harvest_line1(void)
 }
 
 
+/* pick and place tokens on line 2 */
 
 #define LINE2_START_X			800
 #define LINE2_START_Y			1400
@@ -274,6 +278,7 @@ uint8_t strat_harvest_line2(void)
 	if(nb_tokens_catched < 2) {
 
 		/* goto line start */
+		/* TODO: divide in two steps, turn and go */
 		wait_until_opponent_is_far();
 		side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE2_START_X),  LINE2_START_Y);
 
@@ -306,6 +311,7 @@ uint8_t strat_harvest_line2(void)
 			strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 	
 			/* go to line end harvesting tokens	*/
+			/* TODO: divide in two steps, turn and go */
 			wait_until_opponent_is_far();
 			side = strat_goto_harvesting_xy_abs(&mainboard.traj, COLOR_X(LINE2_END_X),  LINE2_END_Y);
 	
@@ -390,7 +396,8 @@ uint8_t strat_harvest_line2(void)
 	return err;
 }
 
-/* pick up and place tokens of green area */
+/* pick and place tokens on green area */
+
 #define TOKENS_GREEN_START_X 			625
 #define TOKENS_GREEN_START_Y 			700
 #define TOKENS_GREEN_D_AVOID_WALL	150

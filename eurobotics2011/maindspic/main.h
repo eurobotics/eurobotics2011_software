@@ -47,7 +47,7 @@
 
 /* SOME USEFUL MACROS AND VALUES  *********************************************/
 
-#define HOMOLOGATION
+//#define HOMOLOGATION
 
 /* uart 0 is for cmds and uart 1 is 
  * multiplexed between beacon and slavedspic */
