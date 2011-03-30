@@ -108,7 +108,9 @@ struct slot_info {
 	uint8_t color;
 #define SLOT_BLUE			I2C_COLOR_BLUE
 #define SLOT_RED			I2C_COLOR_RED
-#define SLOT_GREEN_AREA	I2C_COLOR_MAX
+#define SLOT_GREEN_BLUE	I2C_COLOR_MAX
+#define SLOT_GREEN_RED	(I2C_COLOR_MAX+1)
+
 	
 	uint8_t prio;
 #define SLOT_PRIO_0			0
@@ -123,20 +125,21 @@ struct slot_info {
 #define SLOT_BONUS				0x01
 #define SLOT_SAFE					0x02
 #define SLOT_WALL					0x04
-#define SLOT_CHECK				0x08
-#define SLOT_CHECK_ONESIDE		0x16
-#define SLOT_VISITED				0x32
-#define SLOT_NEAR_GREEN_RED	0x64
-#define SLOT_NEAR_GREEN_BLUE	0x128
+#define SLOT_CHECK_ONESIDE		0x08
+#define SLOT_VISITED				0x16
 
 };
 
+struct slot_position {
+	uint8_t x_index;
+	uint8_t y_index;
+};
 
 
 /* infos about strat */
-#define NB_SLOT_X				6
+#define NB_SLOT_X				8
 #define NB_SLOT_Y				6
-#define NB_SLOT_GREEN		5
+//#define NB_SLOT_GREEN		5
 #define NB_GRID_LINES_X 	9
 #define NB_GRID_LINES_Y 	7
 
@@ -147,17 +150,28 @@ struct strat_infos {
 	struct bbox area_bbox;
 
 	/* playing areas */
-	struct slot_info slot_grid[NB_SLOT_X][NB_SLOT_Y];
-	struct slot_info slot_green[I2C_COLOR_MAX][NB_SLOT_GREEN];
+	struct slot_info slot[NB_SLOT_X][NB_SLOT_Y];
+	//struct slot_info slot_green[I2C_COLOR_MAX][NB_SLOT_GREEN];
 
 	/* grid lines */
 	uint16_t grid_line_x[NB_GRID_LINES_X];
 	uint16_t grid_line_y[NB_GRID_LINES_Y];
 
 	/* slot position */
-	uint8_t slot_actual;
-	uint8_t slot_next;
-	uint8_t slot_before;
+	struct slot_position slot_actual;
+	struct slot_position slot_before;
+	struct slot_position slot_target;
+
+	/* movement direction */
+	uint8_t go_direction;
+#define GO_XPOS			0
+#define GO_XNEG			1
+#define GO_XPOS_YPOS		2
+#define GO_XPOS_YNEG		3
+#define GO_XNEG_YNEG		4
+#define GO_XNEG_YPOS		5
+
+
 };
 
 extern struct strat_infos strat_infos;
@@ -203,6 +217,9 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t go);
 uint8_t strat_harvest_line1(void);
 uint8_t strat_harvest_line2(void);
 uint8_t strat_harvest_green_area(void);
+
+/* in strat_navigation.c */
+void strat_update_slot_position(void);
 
 /* add here more strat functions in files */
 

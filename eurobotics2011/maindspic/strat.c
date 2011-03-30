@@ -69,62 +69,62 @@ struct strat_infos strat_infos = {
 	},
 
 	/* grid slots 
-	.slot_grid[X][Y] = {.x  ,   .y ,   .color ,            .prio,   .flags = 0, },  */
-	.slot_grid[0][0] = { 625,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
-	.slot_grid[0][1] = { 625,	525,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
-	.slot_grid[0][2] = { 625,	875,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
-	.slot_grid[0][3] = { 625,	1225,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
-	.slot_grid[0][4] = { 625,	1575,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
-	.slot_grid[0][5] = { 625,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[X][Y] = {.x  ,   .y ,   .color ,            .prio,   .flags = 0, },  */
+	.slot[0][0] = { 200,	200,	SLOT_BLUE,			SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[0][1] = { 200,	690,	SLOT_GREEN_BLUE,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[0][2] = { 200,	970,	SLOT_GREEN_BLUE,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[0][3] = { 200,	1250,	SLOT_GREEN_BLUE,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[0][4] = { 200,	1530,	SLOT_GREEN_BLUE,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[0][5] = { 200,	1810,	SLOT_GREEN_BLUE,	SLOT_PRIO_0,	SLOT_CHECK },
 
-	.slot_grid[1][0] = { 975,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
-	.slot_grid[1][1] = { 975,	525,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
-	.slot_grid[1][2] = { 975,	875,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
-	.slot_grid[1][3] = { 975,	1225,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
-	.slot_grid[1][4] = { 975,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
-	.slot_grid[1][5] = { 975,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[1][0] = { 625,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot[1][1] = { 625,	525,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot[1][2] = { 625,	875,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot[1][3] = { 625,	1225,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot[1][4] = { 625,	1575,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_BLUE },
+	.slot[1][5] = { 625,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
-	.slot_grid[2][0] = { 1325,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
-	.slot_grid[2][1] = { 1325,	525,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
-	.slot_grid[2][2] = { 1325,	875,	SLOT_RED,	SLOT_PRIO_1,		0 },
-	.slot_grid[2][3] = { 1325,	1225,	SLOT_BLUE,	SLOT_PRIO_1,		0 },
-	.slot_grid[2][4] = { 1325,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
-	.slot_grid[2][5] = { 1325,	1925,	SLOT_BLUE,	SLOT_PRIO_BONUS,	SLOT_CHECK_ONESIDE },
+	.slot[2][0] = { 975,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot[2][1] = { 975,	525,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
+	.slot[2][2] = { 975,	875,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot[2][3] = { 975,	1225,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
+	.slot[2][4] = { 975,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot[2][5] = { 975,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
-	.slot_grid[3][0] = { 1675,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
-	.slot_grid[3][1] = { 1675,	525,	SLOT_RED,	SLOT_PRIO_2,		0 },
-	.slot_grid[3][2] = { 1675,	875,	SLOT_BLUE,	SLOT_PRIO_1,		0 },
-	.slot_grid[3][3] = { 1675,	1225,	SLOT_RED,	SLOT_PRIO_1,		0 },
-	.slot_grid[3][4] = { 1675,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
-	.slot_grid[3][5] = { 1675,	1925,	SLOT_RED,	SLOT_PRIO_BONUS,	SLOT_CHECK_ONESIDE },
+	.slot[3][0] = { 1325,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot[3][1] = { 1325,	525,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot[3][2] = { 1325,	875,	SLOT_RED,	SLOT_PRIO_1,		0 },
+	.slot[3][3] = { 1325,	1225,	SLOT_BLUE,	SLOT_PRIO_1,		0 },
+	.slot[3][4] = { 1325,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot[3][5] = { 1325,	1925,	SLOT_BLUE,	SLOT_PRIO_BONUS,	SLOT_CHECK_ONESIDE },
 
-	.slot_grid[4][0] = { 2025,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
-	.slot_grid[4][1] = { 2025,	525,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
-	.slot_grid[4][2] = { 2025,	875,	SLOT_RED,	SLOT_PRIO_2,		0 },
-	.slot_grid[4][3] = { 2025,	1225,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
-	.slot_grid[4][4] = { 2025,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
-	.slot_grid[4][5] = { 2025,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[4][0] = { 1675,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot[4][1] = { 1675,	525,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot[4][2] = { 1675,	875,	SLOT_BLUE,	SLOT_PRIO_1,		0 },
+	.slot[4][3] = { 1675,	1225,	SLOT_RED,	SLOT_PRIO_1,		0 },
+	.slot[4][4] = { 1675,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
+	.slot[4][5] = { 1675,	1925,	SLOT_RED,	SLOT_PRIO_BONUS,	SLOT_CHECK_ONESIDE },
 
-	.slot_grid[5][0] = { 2375,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
-	.slot_grid[5][1] = { 2375,	525,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
-	.slot_grid[5][2] = { 2375,	875,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
-	.slot_grid[5][3] = { 2375,	1225,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
-	.slot_grid[5][4] = { 2375,	1575,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
-	.slot_grid[5][5] = { 2375,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[5][0] = { 2025,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot[5][1] = { 2025,	525,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
+	.slot[5][2] = { 2025,	875,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot[5][3] = { 2025,	1225,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
+	.slot[5][4] = { 2025,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
+	.slot[5][5] = { 2025,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
-	/* green slots */
-	.slot_green[I2C_COLOR_BLUE][0] = { 200,	690,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_BLUE][1] = { 200,	970,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_BLUE][2] = { 200,	1250,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_BLUE][3] = { 200,	1530,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_BLUE][4] = { 200,	1810,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[6][0] = { 2375,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
+	.slot[6][1] = { 2375,	525,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot[6][2] = { 2375,	875,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot[6][3] = { 2375,	1225,	SLOT_RED,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot[6][4] = { 2375,	1575,	SLOT_BLUE,	SLOT_PRIO_3,		SLOT_NEAR_GREEN_RED },
+	.slot[6][5] = { 2375,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
-	.slot_green[I2C_COLOR_RED][0] = { 1800,	690,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_RED][1] = { 1800,	970,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_RED][2] = { 1800,	1250,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_RED][3] = { 1800,	1530,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-	.slot_green[I2C_COLOR_RED][4] = { 1800,	1810,	SLOT_GREEN_AREA,	SLOT_PRIO_0,	SLOT_CHECK },
-
+	.slot[7][0] = { 2800,	200,	SLOT_RED,			SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[7][1] = { 2800,	690,	SLOT_GREEN_RED,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[7][2] = { 2800,	970,	SLOT_GREEN_RED,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[7][3] = { 2800,	1250,	SLOT_GREEN_RED,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[7][4] = { 2800,	1530,	SLOT_GREEN_RED,	SLOT_PRIO_0,	SLOT_CHECK },
+	.slot[7][5] = { 2800,	1810,	SLOT_GREEN_RED,	SLOT_PRIO_0,	SLOT_CHECK },
 
 	/* grid lines */
 	.grid_line_x = { 0, 450, 800, 1150, 1500, 1850, 2200, 2550, 3000 },
@@ -253,6 +253,7 @@ void strat_event(void *dummy)
 	strat_limit_speed();
 
 	/* TODO: update actual slot position */
+	strat_update_slot_position();	
 
 	/* TODO: check towers */
 

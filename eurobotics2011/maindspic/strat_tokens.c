@@ -73,7 +73,7 @@
 /* XXX use it in short distance ranges */
 
 #define PICKUP_D_TOKEN_OFFSET			((ROBOT_LENGTH/2)-35)
-#define PICKUP_D_NEAR_TOKEN_OFFSET	((ROBOT_LENGTH/2)+70)
+//#define PICKUP_D_NEAR_TOKEN_OFFSET	((ROBOT_LENGTH/2)+100)
 #define PICKUP_D_NEAR_TOKEN_NEAR		(70)
 #define PICKUP_D_SENSOR_RANGE		500
 #define PICKUP_D_NOTINPOINT		80
@@ -81,7 +81,7 @@
 #define PICKUP_BELTS_TRIES			5
 #define PICKUP_CATCHED_TIME		100
 #define PICKUP_SPEED_NOTINPOINT	300
-#define PICKUP_SPEED_PICKUP		1000
+#define PICKUP_SPEED_PICKUP		1200
 
 uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 {
@@ -96,7 +96,7 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	/* XXX fast angle speed -> problems with centering token */
 	/* XXX fast distance speed -> crash token */ 
 	/* TODO test speed fasters */
-	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
+	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
 	/* turn to token */
 	if(side == SIDE_FRONT) {
@@ -208,14 +208,17 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	d_token = distance_from_robot(x, y);
 	trajectory_d_rel(&mainboard.traj, d_sign*(d_token-PICKUP_D_TOKEN_OFFSET));
 
-	/* set down speed when near */
-	err = WAIT_COND_OR_TRAJ_END( token_catched(side) || 
-										  (((int32_t)distance_from_robot(x, y)- PICKUP_D_NEAR_TOKEN_OFFSET) <= 0),
-										  TRAJ_FLAGS_SMALL_DIST);
+//	/* set down speed when near */
+//	err = WAIT_COND_OR_TRAJ_END( token_catched(side) || 
+//										  //(((int32_t)distance_from_robot(x, y)- PICKUP_D_NEAR_TOKEN_OFFSET) <= 0),
+//										  (distance_from_robot(x, y) < 300),
+//										  TRAJ_FLAGS_SMALL_DIST);
 
-	/* down speed */
-	strat_set_speed(PICKUP_SPEED_PICKUP, SPEED_ANGLE_FAST);
-	i2c_slavedspic_mode_token_take(side);
+	//DEBUG(E_USER_STRAT, "down speed at d = %d", (int16_t)distance_from_robot(x, y));
+
+//	/* down speed */
+//	strat_set_speed(PICKUP_SPEED_PICKUP, SPEED_ANGLE_FAST);
+//	i2c_slavedspic_mode_token_take(side);
 
 	/* wait for token catched, prevent belts blocking */
 	while(try < PICKUP_BELTS_TRIES) {
