@@ -127,6 +127,7 @@ void strat_update_slot_position(void)
 
 
 /* return next slot depends on direction */ 
+#if 0
 struct slot_position strat_calculate_next_slot(uint8_t direction)
 {
 	struct slot_position slot_ret;
@@ -186,24 +187,30 @@ void strat_get_next_slot_target(void)
 	struct slot_position slot;
 	
 	/* calculate next slot */
-	slot = strat_calculate_next_slot(strat_infos.slot_actual);
+	slot = strat_calculate_next_slot(strat_infos.slot_actual.direction);
 
-	/* turn if next slot has flag wall */
+	/* end of straight line */
 	if(strat_infos.slot[slot.x_index][slot.y_index].flag & SLOT_WALL) {
 
 		DEBUG(E_USER_STRAT, "wall slot found");
 
-		/* try right slot, if is a wall also calculate left slot */
+		/* try right or left */
 		slot = strat_calculate_slot_right(strat_infos.slot);
 
 		if(strat_infos.slot[slot.x_index][slot.y_index].flag & SLOT_WALL) {
 			slot = strat_calculate_slot_left(strat_infos.go_direction);
 		}
 	 
-	}
+		/* check opponent */
 
-	/* check opponent */
+	}
+	else { /* on straight line */
+
+		/* check opponent */
+
+	}
 
 	/* update target slot and direction */
 	strat_infos.slot_target = slot_position;
 }
+#endif

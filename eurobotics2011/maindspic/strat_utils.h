@@ -85,6 +85,8 @@ int8_t get_opponent_da(int16_t *d, int16_t *a);
 int8_t get_opponent_xyda(int16_t *x, int16_t *y, int16_t *d, int16_t *a);
 
 uint8_t opponent_is_behind(void);
+uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
+									 int16_t x_down, int16_t y_down);
 
 uint8_t token_catched(uint8_t side);
 uint8_t token_inside(uint8_t side);

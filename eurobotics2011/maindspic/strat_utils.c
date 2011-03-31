@@ -341,6 +341,28 @@ uint8_t opponent_is_behind(void)
 	return 0;
 }
 
+uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
+									 int16_t x_down, int16_t y_down)
+{
+	int8_t opp_there;
+	int16_t opp_x, opp_y;
+
+	opp_there = get_opponent_xy(&opp_x, &opp_y);
+
+	if (mainboard.our_color == I2C_COLOR_BLUE) {
+		if (opp_there && (opp_x > x_up && opp_x < x_down)
+					     && (opp_y < y_up && opp_y > y_down) )
+			return 1;
+	}
+	else {
+		if (opp_there && (opp_x < x_up && opp_x > x_down)
+					     && (opp_y < y_up && opp_y > y_down) )
+			return 1;
+	}
+
+	return 0;
+}
+
 
 uint8_t token_catched(uint8_t side)
 {

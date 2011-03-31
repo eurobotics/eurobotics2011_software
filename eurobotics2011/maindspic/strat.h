@@ -127,6 +127,7 @@ struct slot_info {
 #define SLOT_WALL					0x04
 #define SLOT_CHECK_ONESIDE		0x08
 #define SLOT_VISITED				0x16
+#define SLOT_CHECK				0x32
 
 };
 
