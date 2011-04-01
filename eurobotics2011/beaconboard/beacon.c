@@ -427,7 +427,7 @@ static int32_t get_angle(int32_t middle, int32_t period, int32_t offset)
 	ret_angle = (int32_t)(middle * 360.0 * MDEG / period);
 	ret_angle = (ret_angle + offset*MDEG)%(360*MDEG);
 	
-	return (int32_t)(ret_angle/MDEG);
+	return (int32_t)(-ret_angle/MDEG); /* XXX angle is -ret_angle because beacon turns clockwise */
 }
 
 /* calculate absolute (x,y) coordinates from angle and distance measures */
