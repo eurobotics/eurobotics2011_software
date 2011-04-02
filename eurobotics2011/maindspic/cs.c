@@ -222,7 +222,7 @@ void maindspic_cs_init(void)
 	/* d, a */
 	trajectory_set_speed(&mainboard.traj, SPEED_DIST_FAST, SPEED_ANGLE_FAST); 		
 	/* distance window, angle window, angle start */
-	trajectory_set_windows(&mainboard.traj, 100., 5.0, 5.0);
+	trajectory_set_windows(&mainboard.traj, 50., 5.0, 5.0);
 
 	/* ---- CS angle */
 	/* PID */
@@ -248,8 +248,8 @@ void maindspic_cs_init(void)
 
 	/* Blocking detection */
 	bd_init(&mainboard.angle.bd);
-	bd_set_speed_threshold(&mainboard.angle.bd, 300);
-	bd_set_current_thresholds(&mainboard.angle.bd, 100, 5000, 1000000, 30); /* TODO: more margin */
+	bd_set_speed_threshold(&mainboard.angle.bd, 100);
+	bd_set_current_thresholds(&mainboard.angle.bd, 20, 8000, 1000000, 50); /* TODO: more margin */
 
 	/* ---- CS distance */
 	/* PID */
@@ -274,8 +274,8 @@ void maindspic_cs_init(void)
 
 	/* Blocking detection */
 	bd_init(&mainboard.distance.bd);
-	bd_set_speed_threshold(&mainboard.distance.bd, 500);
-	bd_set_current_thresholds(&mainboard.distance.bd, 120, 5500, 1000000, 30); /* TODO: more margin */
+	bd_set_speed_threshold(&mainboard.distance.bd, 100);
+	bd_set_current_thresholds(&mainboard.distance.bd, 20, 8000, 1000000, 50); /* TODO: more margin */
 
 	/* set them on !! */
 	mainboard.angle.on = 1;

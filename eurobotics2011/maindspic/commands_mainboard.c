@@ -388,6 +388,8 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 	struct vt100 vt100;
 	if(!strcmp_P(res->arg1, "raw"))
 	{
+		
+
 		/* remap UART */
 		set_uart_mux(SLAVEDSPIC_CHANNEL);
 		

@@ -275,6 +275,9 @@ void beacon_daemon(void * dummy)
 	static uint8_t a=0;
 	char c=0;
 
+	if((mainboard.flags & DO_OPP) == 0)
+		return;
+
 	/* set uart mux */
 	set_uart_mux(BEACON_CHANNEL);
 	
