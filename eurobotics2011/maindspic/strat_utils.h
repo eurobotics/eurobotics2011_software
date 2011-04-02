@@ -107,6 +107,9 @@ uint8_t strat_turnto_pickup_token(struct trajectory*traj, double x_abs_mm, doubl
 /* suppose that there is at least one token catched */
 uint8_t strat_turnto_place_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm, uint8_t go);
 
+/* go straight forward with no side dependence (d is in mm) */
+void strat_d_rel_side(struct trajectory*traj, double d_mm, uint8_t side);
+
 /* return 1 if the opponent is near */
 /* only compile with HOMOLOGATION define */
 void wait_until_opponent_is_far(void);

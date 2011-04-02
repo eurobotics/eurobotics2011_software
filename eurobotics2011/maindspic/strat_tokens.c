@@ -316,7 +316,7 @@ uint8_t strat_pickup_token_auto(int16_t x, int16_t y, uint8_t *side)
 /* place a token */	
 /* use it in near range distance */
 #define PLACE_D_TOKEN_OFFSET		((ROBOT_LENGTH/2)+10)
-#define PLACE_D_SAFE					150 //140
+#define PLACE_D_SAFE					140
 #define PLACE_EJECT_TIME			700
 #define PLACE_SHOW_TIME				100
 #define PLACE_EJECT_TRIES			5
