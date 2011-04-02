@@ -51,5 +51,6 @@ int8_t i2c_slavedspic_mode_token_take(uint8_t side);
 int8_t i2c_slavedspic_mode_token_eject(uint8_t side);
 int8_t i2c_slavedspic_mode_token_stop(uint8_t side);
 int8_t i2c_slavedspic_mode_token_show(uint8_t side);
+int8_t i2c_slavedspic_mode_token_out(uint8_t side);
 
 #endif

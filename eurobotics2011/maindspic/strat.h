@@ -199,20 +199,20 @@ void strat_event(void *dummy);
 /* in strat_tokens.c */
 
 /* pick up a token */
-/* XXX use it in short distance ranges */
+/* use it in short distance ranges */
 uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side);
 
 /* pick up token chossing side automaticaly */
-/* XXX suppose that at least one side is empty */
-uint8_t strat_pickup_token_auto(int16_t x, int16_t y);
+/* we suppose that at least one side is empty */
+uint8_t strat_pickup_token_auto(int16_t x, int16_t y, uint8_t *side);
 
 /* place a token */	
-/* XXX use it in near range distance */
+/* use it in near range distance */
 uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go);
 
 /* place token automaticaly */
-/* XXX suppose that there is at least one token catched */
-uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t go);
+/* we suppose that there is at least one token catched */
+uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go);
 
 /* in strat_static.c */
 uint8_t strat_harvest_line1(void);

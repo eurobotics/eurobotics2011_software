@@ -96,6 +96,7 @@ struct i2c_cmd_slavedspic_set_mode {
 #define I2C_SLAVEDSPIC_MODE_TOKEN_EJECT	0x03
 #define I2C_SLAVEDSPIC_MODE_TOKEN_STOP		0x04
 #define I2C_SLAVEDSPIC_MODE_TOKEN_SHOW		0x05
+#define I2C_SLAVEDSPIC_MODE_TOKEN_OUT		0x06
 	uint8_t mode;
 	union{
 		struct{

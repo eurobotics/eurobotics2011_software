@@ -82,14 +82,14 @@ struct strat_infos strat_infos = {
 	.slot[1][2] = { 625,	875,	SLOT_RED,	SLOT_PRIO_3,		0 },
 	.slot[1][3] = { 625,	1225,	SLOT_BLUE,	SLOT_PRIO_3,		0 },
 	.slot[1][4] = { 625,	1575,	SLOT_RED,	SLOT_PRIO_3,		0 },
-	.slot[1][5] = { 625,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[1][5] = { 625,	1865,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	.slot[2][0] = { 975,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
 	.slot[2][1] = { 975,	525,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
 	.slot[2][2] = { 975,	875,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
 	.slot[2][3] = { 975,	1225,	SLOT_RED,	SLOT_PRIO_BONUS,	0 },
 	.slot[2][4] = { 975,	1575,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
-	.slot[2][5] = { 975,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[2][5] = { 975,	1865,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	.slot[3][0] = { 1325,	175,	SLOT_RED, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
 	.slot[3][1] = { 1325,	525,	SLOT_BLUE,	SLOT_PRIO_2,		0 },
@@ -110,14 +110,14 @@ struct strat_infos strat_infos = {
 	.slot[5][2] = { 2025,	875,	SLOT_RED,	SLOT_PRIO_2,		0 },
 	.slot[5][3] = { 2025,	1225,	SLOT_BLUE,	SLOT_PRIO_BONUS,	0 },
 	.slot[5][4] = { 2025,	1575,	SLOT_RED,	SLOT_PRIO_2,		0 },
-	.slot[5][5] = { 2025,	1875,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[5][5] = { 2025,	1865,	SLOT_BLUE,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	.slot[6][0] = { 2375,	175,	SLOT_BLUE, 	SLOT_PRIO_WALL,	SLOT_CHECK|SLOT_WALL },
 	.slot[6][1] = { 2375,	525,	SLOT_RED,	SLOT_PRIO_3,		0 },
 	.slot[6][2] = { 2375,	875,	SLOT_BLUE,	SLOT_PRIO_3,		0 },
 	.slot[6][3] = { 2375,	1225,	SLOT_RED,	SLOT_PRIO_3,		0 },
 	.slot[6][4] = { 2375,	1575,	SLOT_BLUE,	SLOT_PRIO_3,		0 },
-	.slot[6][5] = { 2375,	1875,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
+	.slot[6][5] = { 2375,	1865,	SLOT_RED,	SLOT_PRIO_SAFE,	SLOT_SAFE },
 
 	.slot[7][0] = { 2800,	200,	SLOT_RED,			SLOT_PRIO_0,	SLOT_CHECK },
 	.slot[7][1] = { 2800,	690,	SLOT_GREEN_RED,	SLOT_PRIO_0,	SLOT_CHECK },

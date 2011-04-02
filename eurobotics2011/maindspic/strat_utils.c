@@ -379,62 +379,61 @@ uint8_t token_inside(uint8_t side)
 	return (slavedspic.ts[side].state == 0);
 }
 
-/* goto with the empty side, prepared to catch token */
-/* XXX suppose that there is at leas one side empty */
-uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
-{
-	if(token_catched(SIDE_FRONT)) {
-		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		return SIDE_REAR;
-	}
-	else if(token_catched(SIDE_REAR)) {
-		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		return SIDE_FRONT;
-	}
-	else{ /* XXX never should be reached */
-		return SIDE_FRONT;
-	}
-}
+///* goto with the empty side, prepared to catch token */
+///* suppose that there is at leas one side empty */
+//uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
+//{
+//	if(token_catched(SIDE_FRONT)) {
+//		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+//		return SIDE_REAR;
+//	}
+//	else if(token_catched(SIDE_REAR)) {
+//		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+//		return SIDE_FRONT;
+//	}
+//	else{ /* XXX never should be reached */
+//		return SIDE_FRONT;
+//	}
+//}
 
-
-/* goto with the empty side and with belts in mode take */
-uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
-{
-	if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR)) {
-
-		trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
-		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		/* HACK no error check! */		
-
-		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		i2c_slavedspic_mode_token_take(SIDE_FRONT);
-		return SIDE_FRONT;
-	}
-	else if(token_catched(SIDE_FRONT)) {
-		trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
-		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		/* HACK no error check! */		
-
-		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		i2c_slavedspic_mode_token_take(SIDE_REAR);
-		return SIDE_REAR;
-	}
-	else if(token_catched(SIDE_REAR)) {
-		trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
-		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		/* HACK no error check! */		
-
-		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
-		i2c_slavedspic_mode_token_take(SIDE_FRONT);
-		return SIDE_FRONT;
-	}
-	else /* XXX never should be reached */
-		return SIDE_FRONT;
-
-}
+///* goto with the empty side and with belts in mode take */
+//uint8_t strat_goto_harvesting_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm)
+//{
+//	if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR)) {
+//
+//		trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+//		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//		/* HACK no error check! */		
+//
+//		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+//		i2c_slavedspic_mode_token_take(SIDE_FRONT);
+//		return SIDE_FRONT;
+//	}
+//	else if(token_catched(SIDE_FRONT)) {
+//		trajectory_turnto_xy_behind(traj, x_abs_mm, y_abs_mm);
+//		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//		/* HACK no error check! */		
+//
+//		trajectory_goto_backward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+//		i2c_slavedspic_mode_token_take(SIDE_REAR);
+//		return SIDE_REAR;
+//	}
+//	else if(token_catched(SIDE_REAR)) {
+//		trajectory_turnto_xy(traj, x_abs_mm, y_abs_mm);
+//		wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//		/* HACK no error check! */		
+//
+//		trajectory_goto_forward_xy_abs(traj, x_abs_mm,  y_abs_mm);
+//		i2c_slavedspic_mode_token_take(SIDE_FRONT);
+//		return SIDE_FRONT;
+//	}
+//	else /* XXX never should be reached */
+//		return SIDE_FRONT;
+//
+//}
 
 /* turn to pickup token, return side used to pickup */
-/* XXX suppose that there is at least one side empty */
+/* suppose that there is at least one side empty */
 uint8_t strat_turnto_pickup_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm)
 {
 	double d_rel;
@@ -470,7 +469,7 @@ uint8_t strat_turnto_pickup_token(struct trajectory*traj, double x_abs_mm, doubl
 }
 
 /* turn to place token automaticaly, return side used to place */
-/* XXX suppose that there is at least one token catched */
+/* suppose that there is at least one token catched */
 uint8_t strat_turnto_place_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm, uint8_t go)
 {
 	double d_rel;

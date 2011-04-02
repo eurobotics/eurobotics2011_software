@@ -489,11 +489,13 @@ static void cmd_slavedspic_ts_parsed(void *parsed_result,
 		i2c_slavedspic_mode_token_stop(side);
 	else if (!strcmp(res->arg1, "show"))
 		i2c_slavedspic_mode_token_show(side);
+	else if (!strcmp(res->arg1, "out"))
+		i2c_slavedspic_mode_token_out(side);
 }
 
 prog_char str_slavedspic_ts_arg0[] = "slavedspic";
 parse_pgm_token_string_t cmd_slavedspic_ts_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_ts_result, arg0, str_slavedspic_ts_arg0);
-prog_char str_slavedspic_ts_arg1[] = "take#eject#stop#show";
+prog_char str_slavedspic_ts_arg1[] = "take#eject#stop#show#out";
 parse_pgm_token_string_t cmd_slavedspic_ts_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_ts_result, arg1, str_slavedspic_ts_arg1);
 prog_char str_slavedspic_ts_arg2[] = "front#rear";
 parse_pgm_token_string_t cmd_slavedspic_ts_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_ts_result, arg2, str_slavedspic_ts_arg2);

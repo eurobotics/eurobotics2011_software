@@ -418,7 +418,7 @@ uint8_t strat_obstacle(void)
 	y_rel = sin(RAD(opp_a)) * (double)opp_d;
 
 	/* opponent too far */
-	if (opp_d > 800)
+	if (opp_d > 600)
 		return 0;
 
 	/* opponent is in front of us */

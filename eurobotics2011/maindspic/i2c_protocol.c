@@ -586,6 +586,20 @@ int8_t i2c_slavedspic_mode_token_show(uint8_t side)
 	return i2c_send_command(I2C_SLAVEDSPIC_ADDR, (uint8_t*)&buf, sizeof(buf));
 }
 
+int8_t i2c_slavedspic_mode_token_out(uint8_t side)
+{
+	struct i2c_cmd_slavedspic_set_mode buf;
+
+	/* fill cmd structure */
+	buf.hdr.cmd = I2C_CMD_SLAVEDSPIC_SET_MODE;
+	buf.mode = I2C_SLAVEDSPIC_MODE_TOKEN_OUT;
+	buf.ts.side = side;
+	buf.ts.speed_div4 = TOKEN_SYSTEM_SPEED;
+
+	/* send command and return */
+	return i2c_send_command(I2C_SLAVEDSPIC_ADDR, (uint8_t*)&buf, sizeof(buf));
+}
+
 
 /*******************************************************************************
  * Debug functions
