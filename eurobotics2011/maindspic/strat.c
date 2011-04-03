@@ -250,7 +250,7 @@ void strat_exit(void)
 void strat_event(void *dummy)
 {
 	/* limit speed when opponent is close */
-	strat_limit_speed();
+	//strat_limit_speed();
 
 	/* TODO: update actual slot position */
 	strat_update_slot_position();	
@@ -329,27 +329,21 @@ uint8_t strat_main(void)
 	uint8_t err; //i, why=0;
 
 	/* pick & place our static tokens */
-	err = strat_beginning();
+	//err = strat_beginning();
+
+	/* DEBUG */
+	trajectory_d_rel(&mainboard.traj, 300);
+	wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(975), 1575);
+	wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 
 	/* autoplay */
 	while (1) {
 		
-		/* 1. get next slot */
+		err = strat_fsm_bonus_point();
+		if (TRAJ_SUCCESS(err))
+			while(1);	/* XXX*/
 
-		/* 2. check opponent */
-
-		/* 3. if opponent,  get next slot to avoid */
-
-		/* 4. goto next slot */
-
-		/* 5. wait end traj */
-
-		/* 6. if obstacle ends, goto slot before. Goto step 5 */
-
-		/* 7. if catched tokens, place them */
-
-		/* 8. if near check slots, check, pick and place them */
-		
 		/* check end of match */
 		if (err == END_TIMER) {
 			DEBUG(E_USER_STRAT, "End of time");

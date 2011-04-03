@@ -222,6 +222,10 @@ uint8_t strat_harvest_green_area(void);
 /* in strat_navigation.c */
 void strat_update_slot_position(void);
 
+/* place two tokens in bonus points,
+	return END_TRAJ if sucess o END_TIMER (only one token in bonus */
+uint8_t strat_fsm_bonus_point(void);
+
 /* add here more strat functions in files */
 
 #endif

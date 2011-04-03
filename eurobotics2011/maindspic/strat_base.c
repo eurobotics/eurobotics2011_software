@@ -328,6 +328,8 @@ void strat_limit_speed(void)
 			lim_a = SPEED_ANGLE_SLOW;
 		}
 	}
+	else
+		return;
 
  update:
 	if (lim_d != strat_limit_speed_d ||

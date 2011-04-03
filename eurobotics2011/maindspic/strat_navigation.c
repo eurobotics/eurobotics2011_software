@@ -214,3 +214,181 @@ void strat_get_next_slot_target(void)
 	strat_infos.slot_target = slot_position;
 }
 #endif
+
+
+/* place two tokens in bonus points,
+	return END_TRAJ if sucess o END_TIMER (only one token in bonus */
+uint8_t strat_fsm_bonus_point(void)
+{
+	uint8_t err;
+	uint16_t old_spdd, old_spda;
+	uint8_t side;
+	int8_t opp_there;
+	int16_t opp_d, opp_a, opp_x, opp_y;
+	static uint8_t path;
+
+#define CHECK_OPPONENT						0
+#define GO_LEFT_PATH							1
+#define GO_RIGHT_PATH						2
+#define WAIT_OPP_IN_OUR_AREA				3
+#define PLACE_TWO_ON_BONUS_POINT			4
+#define PLACE_ONE_ON_BONUS_POINT_UP		5
+#define PLACE_ONE_ON_BONUS_POINT_DOWN	6
+	static uint8_t state = CHECK_OPPONENT;
+
+#define WAIT_OPP_TIMEOUT 30
+
+	switch(state) {
+		case CHECK_OPPONENT:		
+			/* save speed */
+			strat_get_speed(&old_spdd, &old_spda);
+			strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+
+			/* turnto angle decision */
+			trajectory_a_abs(&mainboard.traj, COLOR_A_ABS(-45));
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			/* chech opponent */
+			time_wait_ms(200);
+			opp_there = get_opponent_da(&opp_d, &opp_a);
+
+			if(opp_there != -1) {
+				/* decide path */
+				if(opp_a < 0) {
+					state = GO_LEFT_PATH;
+					path = GO_LEFT_PATH;
+				}
+				else {
+					state = GO_RIGHT_PATH;
+					path = GO_RIGHT_PATH;
+				}
+			}
+			else {
+				/* TODO */
+			}
+			break;
+
+		case GO_LEFT_PATH:
+			/* position 1 */
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[3][4].x),
+										 strat_infos.slot[3][4].y);
+			err = wait_traj_end(TRAJ_FLAGS_STD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			/* position 2 */
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][3].x),
+										 strat_infos.slot[4][3].y);
+			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			state = WAIT_OPP_IN_OUR_AREA;		
+			break;
+
+		case GO_RIGHT_PATH:
+			/* position 1 */
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][3].x),
+										 strat_infos.slot[2][3].y);
+			err = wait_traj_end(TRAJ_FLAGS_STD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			/* position 2 */
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][1].x),
+										 strat_infos.slot[4][1].y);
+			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			state = WAIT_OPP_IN_OUR_AREA;		
+			break;
+
+		case WAIT_OPP_IN_OUR_AREA:
+			
+			/* test opponent xy */
+			time_wait_ms(200);
+			opp_there = get_opponent_xy(&opp_x, &opp_y);
+			if(opp_there != -1) {
+				if((mainboard.our_color == I2C_COLOR_BLUE)
+					 && (opp_x < 1500)) {
+					state = PLACE_TWO_ON_BONUS_POINT;
+				}
+				else if((mainboard.our_color == I2C_COLOR_RED)
+					 && (opp_x > 1500)) {
+					state = PLACE_TWO_ON_BONUS_POINT;
+				}
+			}
+				
+			/* test time */
+			if(time_get_s() >= WAIT_OPP_TIMEOUT) {
+				if(path == GO_LEFT_PATH) {
+					state = PLACE_ONE_ON_BONUS_POINT_UP;
+				}
+			 	else {	
+					state = PLACE_ONE_ON_BONUS_POINT_DOWN;
+				}
+			}
+			break;
+
+		case PLACE_TWO_ON_BONUS_POINT:
+		
+			/* go in the middle */
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
+										 strat_infos.slot[5][2].y);
+			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			/* place one token */
+		 	err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][3].x),
+											 strat_infos.slot[5][3].y, &side, GO_FORWARD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			/* place the other */
+		 	err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][1].x),
+											 strat_infos.slot[5][1].y, &side, GO_FORWARD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			return END_TRAJ;
+
+		case PLACE_ONE_ON_BONUS_POINT_UP:
+			/* place one token */
+		 	err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][3].x),
+											 strat_infos.slot[5][3].y, &side, GO_BACKWARD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			/* place the other */
+		 	err = strat_place_token_auto( COLOR_X(strat_infos.slot[6][4].x),
+											 strat_infos.slot[6][4].y, &side, GO_FORWARD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			return END_TIMER;
+
+		case PLACE_ONE_ON_BONUS_POINT_DOWN:
+			/* place one token */
+		 	err = strat_place_token_auto( COLOR_X(strat_infos.slot[5][1].x),
+											 strat_infos.slot[5][1].y, &side, GO_BACKWARD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			/* place the other */
+		 	err = strat_place_token_auto( COLOR_X(strat_infos.slot[6][0].x),
+											 strat_infos.slot[6][0].y, &side, GO_FORWARD);
+			if (!TRAJ_SUCCESS(err))
+				break;
+
+			return END_TIMER;
+
+		default:
+			return 0;
+	}
+	
+	return 0;
+}
