@@ -684,14 +684,14 @@ uint8_t strat_harvest_green_area(void)
 	/* pick token 1 */
 	wait_until_opponent_is_far();
 	side = strat_turnto_pickup_token(&mainboard.traj,
-									 COLOR_X(strat_infos.slot[0][1].x),
+									 COLOR_X(strat_infos.slot[0][1].x-100),
 									 strat_infos.slot[0][1].y );
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
 	wait_until_opponent_is_far();
-	err = strat_pickup_token(COLOR_X(strat_infos.slot[0][1].x),
+	err = strat_pickup_token(COLOR_X(strat_infos.slot[0][1].x-100),
 									 strat_infos.slot[0][1].y, side );
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
@@ -928,9 +928,17 @@ uint8_t strat_harvest_green_area(void)
 
 #else /* GREEN_AREA_V2 */
 	
+	/* go in front of token 2 */
+	wait_until_opponent_is_far();
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(625),
+								  strat_infos.slot[0][2].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
 	/* pick token 2 */
 	wait_until_opponent_is_far();
-	err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[0][2].x),
+	err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[0][2].x-100),
 									 strat_infos.slot[0][2].y, &side );
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
@@ -942,9 +950,17 @@ uint8_t strat_harvest_green_area(void)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);	
 
+	/* go in front of token 3 */
+	wait_until_opponent_is_far();
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(625),
+								  strat_infos.slot[0][3].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
 	/* pick token 3 */
 	wait_until_opponent_is_far();
-	err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[0][3].x),
+	err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[0][3].x-100),
 									 strat_infos.slot[0][3].y, &side );
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
@@ -958,14 +974,14 @@ uint8_t strat_harvest_green_area(void)
 
 	/* goto place point */
 	wait_until_opponent_is_far();
-	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[1][4].x),
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[1][4].x+25),
 								  strat_infos.slot[1][4].y);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
 	/* place pion (if there is one) on safe zone */
-	side = strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot[1][5].x),
+	side = strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot[1][5].x+25),
 									  strat_infos.slot[1][5].y, GO_FORWARD);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
@@ -1018,18 +1034,25 @@ uint8_t strat_harvest_green_area(void)
 
 	/* pick token 4 */
 	wait_until_opponent_is_far();
-	err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[0][4].x),
+	err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[0][4].x-100),
 									 strat_infos.slot[0][4].y, &side );
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
-	/* go backwards to avoid wall */
+	/* avoid wall and crash with token 5 */
 	wait_until_opponent_is_far();
-	strat_d_rel_side(&mainboard.traj, -(TOKENS_GREEN_D_AVOID_WALL-50), side);
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(450),
+								  strat_infos.slot[1][4].y-27);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
+	wait_until_opponent_is_far();
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(400),
+								  1510);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
 
 	/* pick token 5 */
 	wait_until_opponent_is_far();
@@ -1038,9 +1061,10 @@ uint8_t strat_harvest_green_area(void)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
-	/* go backwards to avoid wall */
+	/* go backwards to avoid wall and crash */
 	wait_until_opponent_is_far();
-	strat_d_rel_side(&mainboard.traj, -(TOKENS_GREEN_D_AVOID_WALL-50), side);
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(400),
+								  1510);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
