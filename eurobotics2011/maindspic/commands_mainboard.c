@@ -185,10 +185,15 @@ static void cmd_opponent_parsed(void *parsed_result, void *data)
 {
 	int16_t x,y,d,a;
 
+	do {
+
 	if (get_opponent_xyda(&x, &y, &d, &a))
 		printf_P(PSTR("No opponent\r\n"));
 	else
 		printf_P(PSTR("x=%d y=%d, d=%d a=%d\r\n"), x, y, d, a);
+
+	wait_ms(50);
+	} while (!cmdline_keypressed());
 }
 
 prog_char str_opponent_arg0[] = "opponent";
@@ -564,7 +569,7 @@ static void cmd_beacon_parsed(void * parsed_result, void * data)
 	else if(!strcmp_P(res->arg1, "wt11_reset")){
 		beacon_cmd_wt11_local_reset();
 	}
-	else if(!strcmp_P(res->arg1, "wt11_call")){
+	else if(!strcmp_P(res->arg1, "call")){
 		beacon_cmd_wt11_call();
 	}
 	else if(!strcmp_P(res->arg1, "wt11_close")){
@@ -588,7 +593,7 @@ static void cmd_beacon_parsed(void * parsed_result, void * data)
 
 prog_char str_beacon_arg0[] = "beacon";
 parse_pgm_token_string_t cmd_beacon_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_beacon_result, arg0, str_beacon_arg0);
-prog_char str_beacon_arg1[] = "raw#wt11_reset#wt11_call#wt11_close#on#off#color#opponent";
+prog_char str_beacon_arg1[] = "raw#wt11_reset#call#wt11_close#on#off#color#opponent";
 parse_pgm_token_string_t cmd_beacon_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_beacon_result, arg1, str_beacon_arg1);
 
 prog_char help_beacon[] = "beacon commads";

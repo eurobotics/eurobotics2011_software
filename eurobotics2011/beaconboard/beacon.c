@@ -331,6 +331,7 @@ void beacon_start(void)
 
 	/* enable cs */
 	beacon_reset_pos();
+	pid_reset(&beaconboard.speed.pid);
 	beaconboard.speed.on = 1;
 	cs_set_consign(&beaconboard.speed.cs, 80/4);
 }

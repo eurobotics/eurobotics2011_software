@@ -198,6 +198,8 @@ void parse_line(char * buff)
 	int16_t ret;
 	uint8_t flags;
 	int16_t arg0, arg1, arg2, arg3;
+	int32_t arg4;
+	int32_t checksum;
 
 	/* set uart mux */
 	set_uart_mux(BEACON_CHANNEL);
@@ -226,15 +228,27 @@ void parse_line(char * buff)
 	/* beacon wt11 lossed conection */
 	
 	/* opponent */
- 	ret = sscanf(buff, "opponent is %d %d %d %d",
- 							 &arg0, &arg1, &arg2, &arg3);
-	if(ret == 4){
-		IRQ_LOCK(flags);
-		beaconboard.opponent_x = arg0;
-		beaconboard.opponent_y = arg1;		
-		beaconboard.opponent_a = arg2;
-		beaconboard.opponent_d = arg3;
-		IRQ_UNLOCK(flags);					
+ 	ret = sscanf(buff, "opponent is %d %d %d %d %lx",
+ 							 &arg0, &arg1, &arg2, &arg3, &arg4);
+	if(ret == 5){
+
+		/* check checksum */
+		checksum  = arg0;
+		checksum += arg1;
+		checksum += arg2;
+		checksum += arg3;
+
+		if(checksum == arg4) {
+			IRQ_LOCK(flags);
+			beaconboard.opponent_x = (int16_t)arg0;
+			beaconboard.opponent_y = (int16_t)arg1;		
+			beaconboard.opponent_a = (int16_t)arg2;
+			beaconboard.opponent_d = (int16_t)arg3;
+			IRQ_UNLOCK(flags);		
+		}		
+		else
+			NOTICE(E_USER_BEACON, "checksum error: %d %d %d %d %lx",
+ 					arg0, arg1, arg2, arg3, arg4);		
 	}
 	
 }
@@ -272,8 +286,8 @@ void beacon_recv_daemon(void)
 void beacon_daemon(void * dummy)
 {
 	int16_t i;
-	static uint8_t a=0;
-	char c=0;
+	static uint8_t a = 0;
+	volatile char c = 0;
 
 //	if((mainboard.flags & DO_OPP) == 0)
 //		return;
@@ -287,6 +301,7 @@ void beacon_daemon(void * dummy)
 		if(c != -1)
 			line_char_in(c);	
 	}
+
 	
 	/* pulling and send commands */
 	if(cmd_size){
