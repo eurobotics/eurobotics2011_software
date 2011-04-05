@@ -67,11 +67,11 @@
 #define SPEED_DIST_FAST 		1000
 #define SPEED_ANGLE_FAST 		1000
 #else
-#define SPEED_DIST_FAST 		4000
-#define SPEED_ANGLE_FAST 		4000
+#define SPEED_DIST_FAST 		1000
+#define SPEED_ANGLE_FAST 		1000
 #endif
-#define SPEED_DIST_SLOW 		2000
-#define SPEED_ANGLE_SLOW 		2000
+#define SPEED_DIST_SLOW 		1000
+#define SPEED_ANGLE_SLOW 		1000
 #define SPEED_DIST_VERY_SLOW 	1000
 #define SPEED_ANGLE_VERY_SLOW 1000
 
@@ -99,6 +99,8 @@ struct conf {
 #define STRAT_CONF_B			0x02
 #define STRAT_CONF_C 		0x04
 };
+
+
 
 /* slot of token */
 struct slot_info {
@@ -135,7 +137,6 @@ struct slot_position {
 	uint8_t x_index;
 	uint8_t y_index;
 };
-
 
 /* infos about strat */
 #define NB_SLOT_X				8

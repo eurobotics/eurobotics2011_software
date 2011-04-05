@@ -329,20 +329,13 @@ uint8_t strat_main(void)
 	uint8_t err; //i, why=0;
 
 	/* pick & place our static tokens */
-	//err = strat_beginning();
+	err = strat_beginning();
 
-	/* DEBUG */
-	trajectory_d_rel(&mainboard.traj, 300);
-	wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(975), 1575);
-	wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	/* place two token on the other side */
+	err = strat_fsm_bonus_point();
 
 	/* autoplay */
 	while (1) {
-		
-		err = strat_fsm_bonus_point();
-		if (TRAJ_SUCCESS(err))
-			while(1);	/* XXX*/
 
 		/* check end of match */
 		if (err == END_TIMER) {

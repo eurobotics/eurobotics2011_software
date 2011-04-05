@@ -246,9 +246,9 @@ void parse_line(char * buff)
 			beaconboard.opponent_d = (int16_t)arg3;
 			IRQ_UNLOCK(flags);		
 		}		
-		else
-			NOTICE(E_USER_BEACON, "checksum error: %d %d %d %d %lx",
- 					arg0, arg1, arg2, arg3, arg4);		
+//		else
+//			NOTICE(E_USER_BEACON, "checksum error: %d %d %d %d %lx",
+// 					arg0, arg1, arg2, arg3, arg4);		
 	}
 	
 }
