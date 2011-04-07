@@ -297,6 +297,7 @@ uint8_t strat_pickup_token_auto(int16_t x, int16_t y, uint8_t *side)
 			*side = SIDE_REAR;
 			return strat_pickup_token(x, y, SIDE_REAR);
 		}
+		DEBUG(E_USER_STRAT, "no free side");	
 	}	
 	else {
 		if(!token_catched(SIDE_REAR))  {
@@ -307,6 +308,7 @@ uint8_t strat_pickup_token_auto(int16_t x, int16_t y, uint8_t *side)
 			*side = SIDE_FRONT;
 			return strat_pickup_token(x, y, SIDE_FRONT);
 		}
+		DEBUG(E_USER_STRAT, "no free side");
 	}
 	/* never shoult be reached */
 	return END_TRAJ;
@@ -454,31 +456,34 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go)
 				*side = SIDE_REAR;
 				return strat_place_token(x, y, SIDE_REAR, GO_FORWARD);
 			}
+			DEBUG(E_USER_STRAT, "no token to place");				
 		}	
 		else {
 			if(token_catched(SIDE_REAR)) {
 				*side = SIDE_REAR;
 				return strat_place_token(x, y, SIDE_REAR, GO_FORWARD);
 			}
-			else if(token_catched(SIDE_REAR)) {
+			else if(token_catched(SIDE_FRONT)) {
 				*side = SIDE_FRONT;
 				return strat_place_token(x, y, SIDE_FRONT, GO_FORWARD);
 			}
+			DEBUG(E_USER_STRAT, "no token to place");	
 		}
 	}
 	else {
 		if(ABS(a_rel_rad) < (M_PI/2)) {
-			if(token_catched(SIDE_FRONT)) {
+			if(token_catched(SIDE_REAR)) {
 				*side = SIDE_REAR;
 				return strat_place_token(x, y, SIDE_REAR, GO_BACKWARD);
 			}
-			else if(token_catched(SIDE_REAR)) {
+			else if(token_catched(SIDE_FRONT)) {
 				*side = SIDE_FRONT;
 				return strat_place_token(x, y, SIDE_FRONT, GO_BACKWARD);
 			}
+			DEBUG(E_USER_STRAT, "no token to place");	
 		}	
 		else {
-			if(token_catched(SIDE_REAR)) {
+			if(token_catched(SIDE_FRONT)) {
 				*side = SIDE_FRONT;
 				return strat_place_token(x, y, SIDE_FRONT, GO_BACKWARD);
 			}
@@ -486,6 +491,7 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go)
 				*side = SIDE_REAR;
 				return strat_place_token(x, y, SIDE_REAR, GO_BACKWARD);
 			}
+			DEBUG(E_USER_STRAT, "no token to place");	
 		}
 	}
 	/* never shoult be reached */

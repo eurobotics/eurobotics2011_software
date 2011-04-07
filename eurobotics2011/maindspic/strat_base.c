@@ -389,7 +389,6 @@ uint8_t strat_obstacle(void)
 	int16_t x_rel, y_rel;
 	int16_t opp_x, opp_y, opp_d, opp_a;
 
-
 	/* too slow */
 	if (ABS(mainboard.speed_d) < 150)
 		return 0;
@@ -404,6 +403,10 @@ uint8_t strat_obstacle(void)
 	if (get_opponent_xyda(&opp_x, &opp_y,
 			      &opp_d, &opp_a))
 		return 0;
+
+//	DEBUG(E_USER_STRAT, "opponent: d=%d, a=%d "
+//	                    "x=%d y=%d (speed_d=%d)", 
+//	      					opp_d, opp_a, opp_x, opp_y, mainboard.speed_d);
 
 	/* save obstacle position */
 	opponent_obstacle.x = opp_x;

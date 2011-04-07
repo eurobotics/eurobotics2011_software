@@ -20,7 +20,13 @@
  *  Olivier MATZ <zer0@droids-corp.org> 
  */
 
-/*   *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011) *  Javier Baliñas Santos <javier@arc-robots.org> * *  Code ported to family of microcontrollers dsPIC from *  commands_sensorboard.c,v 1.2 2009/04/24 19:30:42 zer0 Exp. */
+/*  
+ *  Copyright Robotics Association of Coslada, Eurobotics Engineering (2011)
+ *  Javier Baliñas Santos <javier@arc-robots.org>
+ *
+ *  Code ported to family of microcontrollers dsPIC from
+ *  commands_sensorboard.c,v 1.2 2009/04/24 19:30:42 zer0 Exp.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -240,7 +246,7 @@ static void cmd_opponent_parsed(void * parsed_result, void *data)
 	int32_t opponent_x, opponent_y, opponent_dist, opponent_angle;
 	uint8_t flags;
 	//static int16_t i=0;
-	int32_t checksum;
+	int16_t checksum;
 	
 	IRQ_LOCK(flags);
 	beacon.robot_x = res->robot_x;
@@ -265,15 +271,49 @@ static void cmd_opponent_parsed(void * parsed_result, void *data)
 		beacon_angle_dist_to_x_y(opponent_angle, opponent_dist, &opponent_x, &opponent_y);
 	}
 
-	printf("opponent is %d %d %d %d %lx \n\r",
-	 			(int16_t)opponent_x, (int16_t)opponent_y,
-			   (int16_t)opponent_angle, (int16_t)opponent_dist, checksum);
+//	printf("opponent is %d %d %d %d %lx \n\r",
+//	 			(int16_t)opponent_x, (int16_t)opponent_y,
+//			   (int16_t)opponent_angle, (int16_t)opponent_dist, checksum);
 
 //	printf("opponent is %d %d %d %d %lx \n\r",
 //	 			(int16_t)i, (int16_t)i,
 //			   (int16_t)i, (int16_t)i, (int32_t)(i*4));
-//	i++;
+
 	
+//	/* debug */
+//	opponent_x = i;
+//	opponent_y = i;
+//	opponent_angle = i;
+//	opponent_dist = i;
+//	checksum = i*4;
+//	i++;
+//	if(i > 4000)
+//		i = 0;
+
+	/* send header */
+	uart_send(CMDLINE_UART,'t');
+	uart_send(CMDLINE_UART,'n');
+	uart_send(CMDLINE_UART,'e');
+	uart_send(CMDLINE_UART,'n');
+	uart_send(CMDLINE_UART,'o');
+	uart_send(CMDLINE_UART,'p');
+	uart_send(CMDLINE_UART,'p');
+	uart_send(CMDLINE_UART,'o');
+
+	/* send data */
+	uart_send(CMDLINE_UART,(int8_t)(opponent_x & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)((opponent_x>>8) & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)(opponent_y & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)((opponent_y>>8) & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)(opponent_angle & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)((opponent_angle>>8) & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)(opponent_dist & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)((opponent_dist>>8) & 0x00FF));
+
+	/* send checksum */
+	uart_send(CMDLINE_UART,(int8_t)(checksum & 0x00FF));
+	uart_send(CMDLINE_UART,(int8_t)((checksum>>8) & 0x00FF));
+
 }
 
 prog_char str_opponent_arg0[] = "opponent";

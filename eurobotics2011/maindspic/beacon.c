@@ -36,7 +36,7 @@
 #include "main.h"
 #include "beacon.h"
 
-#define BEACON_UART		1
+#define BEACON_UART		MUX_UART
 #define LINE_BUFF_SIZE 	64
 #define CMD_LINE_SIZE 	16
 
@@ -196,13 +196,10 @@ void beacon_send_daemon(void * dummy)
 void parse_line(char * buff) 
 {
 	int16_t ret;
-	uint8_t flags;
-	int16_t arg0, arg1, arg2, arg3;
-	int32_t arg4;
-	int32_t checksum;
-
-	/* set uart mux */
-	set_uart_mux(BEACON_CHANNEL);
+	//uint8_t flags;
+	//int16_t arg0, arg1, arg2, arg3;
+	//int32_t arg4;
+	//int32_t checksum;
 
 
 	DEBUG(E_USER_BEACON,"from beacon: %s",buff);
@@ -223,10 +220,7 @@ void parse_line(char * buff)
 		ERROR(E_USER_STRAT, "beacon wt11 link open FAIL(%d,%d)", error_id, link_id);						
 	}
 	
-	/* beacon wt11 closed conection */
-	
-	/* beacon wt11 lossed conection */
-	
+#if 0
 	/* opponent */
  	ret = sscanf(buff, "opponent is %d %d %d %d %lx",
  							 &arg0, &arg1, &arg2, &arg3, &arg4);
@@ -250,7 +244,84 @@ void parse_line(char * buff)
 //			NOTICE(E_USER_BEACON, "checksum error: %d %d %d %d %lx",
 // 					arg0, arg1, arg2, arg3, arg4);		
 	}
+#endif
 	
+}
+
+/* parse beacon opponent command answer */
+void beacon_parse_opponent_answer(int16_t c)
+{
+	static uint8_t state = 0, i = 0;
+	static int16_t opp_x=0, opp_y=0, opp_d=0, opp_a=0, checksum=0;
+	uint8_t flags;
+	
+	switch(state) {
+		case 0:
+			/* parse header */
+			if ((i == 0 && c == 't') ||
+				 (i == 1 && c == 'n') ||
+				 (i == 2 && c == 'e') ||
+				 (i == 3 && c == 'n') ||
+				 (i == 4 && c == 'o') ||
+				 (i == 5 && c == 'p') ||
+				 (i == 6 && c == 'p') ||
+				 (i == 7 && c == 'o')) {
+			
+				i++;
+			}
+			else
+				i = 0;
+			
+			if(i==8) {
+				state = 1;
+				//DEBUG(E_USER_STRAT,"header detected");
+			}
+			break;
+
+		case 1:
+			/* read data */
+			if(i==8)  { opp_x  = ((uint16_t)c); 		}
+			if(i==9)  { opp_x |= ((uint16_t)c << 8);	}
+			if(i==10) {	opp_y  = ((uint16_t)c); 		}
+			if(i==11) { opp_y |= ((uint16_t)c << 8); }
+			if(i==12) {	opp_a  = ((uint16_t)c); 		}
+			if(i==13) {	opp_a |= ((uint16_t)c << 8); }
+			if(i==14) {	opp_d  = ((uint16_t)c); 		}
+			if(i==15) {	opp_d |= ((uint16_t)c << 8); }
+
+			if(i==16) {	checksum  = ((uint16_t)c); 		}
+			if(i==17) {	checksum |= ((uint16_t)c << 8); }
+
+			i++;
+
+			if(i==18) {
+
+				//printf("data: %d %d %d %d %d\n\r", (int16_t)opp_x, (int16_t)opp_y, (int16_t)opp_a, (int16_t)opp_d, (int16_t)checksum);
+
+				/* save data */
+				if(checksum == (opp_x + opp_y + opp_a + opp_d)) {
+					IRQ_LOCK(flags);
+					beaconboard.opponent_x = (int16_t)opp_x;
+					beaconboard.opponent_y = (int16_t)opp_y;		
+					beaconboard.opponent_a = (int16_t)opp_a;
+					beaconboard.opponent_d = (int16_t)opp_d;
+					IRQ_UNLOCK(flags);		
+				}		
+				else {
+					//NOTICE(E_USER_STRAT, "opponent checksum fails");		
+					//printf("opponent answer checksum fails\n\r");	
+				}
+
+				i=0;
+				state = 0;
+			}
+			break;	
+
+		default:
+			i=0;
+			state = 0;
+			break;
+	}
 }
 
 
@@ -287,43 +358,55 @@ void beacon_daemon(void * dummy)
 {
 	int16_t i;
 	static uint8_t a = 0;
-	volatile char c = 0;
+	int16_t c = 0;
 
 //	if((mainboard.flags & DO_OPP) == 0)
 //		return;
 
 	/* set uart mux */
-	set_uart_mux(BEACON_CHANNEL);
+	//set_uart_mux(BEACON_CHANNEL);
 	
-	/* receive aswers */
-	while(c != -1){	
-		c=uart_recv_nowait(BEACON_UART);
-		if(c != -1)
-			line_char_in(c);	
-	}
-
-	
-	/* pulling and send commands */
-	if(cmd_size){
-
-		for(i=0; i<cmd_size; i++){
-			uart_send(BEACON_UART, cmd_buff[i]);	
-		}	
-		cmd_size = 0;
-
-		uart_send(BEACON_UART, '\n');
-		uart_send(BEACON_UART, '\r');		
-	}
-	else{
-
-		if(mainboard.flags & DO_OPP){
-			a++;
-			if (a & 0x4)
-				LED3_TOGGLE();
-
-			beacon_pull_opponent();	
+	/* commands parsed with sscanf */
+	if((mainboard.flags & DO_OPP) == 0) {
+		/* receive aswers */
+		while(c != -1){	
+			c=uart_recv_nowait(BEACON_UART);
+			if(c != -1)
+				line_char_in(c);	
 		}
+
+		/* send commands */
+		if(cmd_size){
+	
+			//DEBUG(E_USER_STRAT,"cmd");
+	
+			for(i=0; i<cmd_size; i++){
+				uart_send(BEACON_UART, cmd_buff[i]);	
+			}	
+			cmd_size = 0;
+	
+			uart_send(BEACON_UART, '\n');
+			uart_send(BEACON_UART, '\r');		
+		}
+	}
+	else {
+
+		/* beacon opponent answer */
+		while(c != -1){	
+			c = uart_recv_nowait(BEACON_UART);
+			if(c != -1)
+				beacon_parse_opponent_answer(c);
+		}
+
+		/* beacon opponent cmd */
+		a++;
+		if (a & 0x4)
+			LED3_TOGGLE();
+
+		beacon_pull_opponent();	
 	}	
+
+
 }
 
 
