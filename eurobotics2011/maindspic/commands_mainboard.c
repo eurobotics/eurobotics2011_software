@@ -192,7 +192,7 @@ static void cmd_opponent_parsed(void *parsed_result, void *data)
 	else
 		printf_P(PSTR("x=%d y=%d, d=%d a=%d\r\n"), x, y, d, a);
 
-	wait_ms(50);
+	wait_ms(100);
 	} while (!cmdline_keypressed());
 }
 

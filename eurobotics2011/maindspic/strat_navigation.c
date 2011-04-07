@@ -247,7 +247,7 @@ uint8_t strat_bonus_point(void)
 
 	uint8_t state = CHECK_OPPONENT;
 
-#define WAIT_OPP_TIMEOUT 30
+#define WAIT_OPP_TIMEOUT (90-15)
 
 	while(1) {
 
@@ -281,32 +281,34 @@ uint8_t strat_bonus_point(void)
 				/* position 1 */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[3][4].x),
 											 strat_infos.slot[3][4].y);
-				err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err)) {
-					/* escape 1 */
-					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][3].x),
-											 strat_infos.slot[2][3].y);
-					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
-
-					state = GO_RIGHT_PATH;
+//					/* escape 1 */
+//					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][3].x),
+//											 strat_infos.slot[2][3].y);
+//					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+//
+//					path = GO_RIGHT_PATH;
+//					state = GO_RIGHT_PATH;
 					break;
 				}
 	
 				/* position 2 */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][3].x),
 											 strat_infos.slot[4][3].y);
-				err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err)) {
 					/* escape 2 */
-					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[3][4].x),
-											 strat_infos.slot[3][4].y);
-					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
-
-					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][3].x),
-											 strat_infos.slot[2][3].y);
-					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
-
-					state = GO_RIGHT_PATH;	
+//					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[3][4].x),
+//											 strat_infos.slot[3][4].y);
+//					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+//
+//					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][3].x),
+//											 strat_infos.slot[2][3].y);
+//					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+//
+//					path = GO_RIGHT_PATH;
+//					state = GO_RIGHT_PATH;	
 					break;			
 				}
 	
@@ -316,18 +318,36 @@ uint8_t strat_bonus_point(void)
 			case GO_RIGHT_PATH:
 				DEBUG(E_USER_STRAT, "GO_RIGHT_PATH");
 				/* position 1 */
-				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][1].x),
-											 strat_infos.slot[4][1].y);
-				err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][1].x-175),
+											 strat_infos.slot[4][1].y+175);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err)) {
 					/* escape 1 */
-					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][3].x),
-											 strat_infos.slot[2][3].y);
-					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
-					state = GO_LEFT_PATH;
+//					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][3].x),
+//											 strat_infos.slot[2][3].y);
+//					err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+//					path = GO_LEFT_PATH;
+//					state = GO_LEFT_PATH;
 					break;
 				}
 	
+				/* position 2 */
+				strat_limit_speed_disable();
+				strat_get_speed(&old_spdd, &old_spda);
+				strat_set_speed(SPEED_DIST_VERY_SLOW, SPEED_ANGLE_VERY_SLOW);
+
+				strat_turnto_place_token(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
+											 strat_infos.slot[5][2].y, GO_FORWARD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+				strat_set_speed(old_spdd, old_spda);
+				strat_limit_speed_enable();
+
+				if (!TRAJ_SUCCESS(err)) {
+					break;
+				}
+
+
 				state = WAIT_OPP;		
 				break;
 	
@@ -476,7 +496,7 @@ uint8_t strat_bonus_point(void)
 				/* back */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
 											 strat_infos.slot[5][2].y);
-				err = wait_traj_end(TRAJ_FLAGS_STD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err))
 					break;
 
@@ -492,7 +512,7 @@ uint8_t strat_bonus_point(void)
 				/* back */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
 											 strat_infos.slot[5][2].y);
-				err = wait_traj_end(TRAJ_FLAGS_STD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err))
 					break;
 
@@ -514,7 +534,7 @@ uint8_t strat_bonus_point(void)
 				/* back */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
 											 strat_infos.slot[5][2].y);
-				err = wait_traj_end(TRAJ_FLAGS_STD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err))
 					break;
 
@@ -537,7 +557,7 @@ uint8_t strat_bonus_point(void)
 				/* back */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
 											 strat_infos.slot[5][2].y);
-				err = wait_traj_end(TRAJ_FLAGS_STD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err))
 					break;
 
@@ -550,7 +570,7 @@ uint8_t strat_bonus_point(void)
 					/* back */
 					trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
 												 strat_infos.slot[5][2].y);
-					err = wait_traj_end(TRAJ_FLAGS_STD);
+					err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 					if (!TRAJ_SUCCESS(err))
 						break;
 
@@ -565,7 +585,7 @@ uint8_t strat_bonus_point(void)
 				/* back */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[5][2].x),
 											 strat_infos.slot[5][2].y);
-				err = wait_traj_end(TRAJ_FLAGS_STD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err))
 					break;
 
@@ -595,13 +615,13 @@ uint8_t strat_bonus_point(void)
 				/* go near */
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][3].x),
 						 						strat_infos.slot[4][3].y);
-				err = wait_traj_end(TRAJ_FLAGS_STD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err))
 					break;
 
 				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][4].x),
 						 						strat_infos.slot[4][4].y);
-				err = wait_traj_end(TRAJ_FLAGS_STD);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 				if (!TRAJ_SUCCESS(err))
 					break;
 
@@ -609,10 +629,20 @@ uint8_t strat_bonus_point(void)
 				err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x),
 							 strat_infos.slot[4][5].y, &side);
 
+				/* go near */
+				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[4][3].x),
+						 						strat_infos.slot[4][3].y);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+				if (!TRAJ_SUCCESS(err))
+					break;
+
+				/* wait time */
+				while(time_get_s() < 85);
+
 				/* place */
 				WAIT_COND_OR_TIMEOUT(token_catched(side), DATA_UPDATE_TIME);
 				err = strat_place_token(COLOR_X(strat_infos.slot[4][4].x),
-									 strat_infos.slot[4][4].y, side, GO_BACKWARD);
+									 strat_infos.slot[4][4].y, side, GO_FORWARD);
 	
 				return END_TRAJ;
 

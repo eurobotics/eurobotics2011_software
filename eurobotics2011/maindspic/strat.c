@@ -248,6 +248,12 @@ void strat_exit(void)
 	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
 	i2c_slavedspic_mode_token_stop(SIDE_REAR);
 
+	/* stop beacon */
+	beacon_cmd_beacon_off();
+	beacon_cmd_beacon_off();
+	beacon_cmd_beacon_off();
+	beacon_cmd_beacon_off();
+
 }
 
 /* called periodically */

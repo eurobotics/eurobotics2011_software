@@ -553,7 +553,7 @@ place_origin:
 
 	/* choose location of tokens depends on opponent */
 	time_wait_ms(200);
-	if(opponent_is_in_area(COLOR_X(1150), (525+30), COLOR_X(2025), 0)) {
+	if(opponent_is_in_area(COLOR_X(1500), 700, COLOR_X(1850), 0)) {
 
 		/* place token in right slot */
 		wait_until_opponent_is_far();
