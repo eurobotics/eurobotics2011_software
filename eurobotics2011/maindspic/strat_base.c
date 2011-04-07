@@ -393,11 +393,22 @@ uint8_t strat_obstacle(void)
 	if (ABS(mainboard.speed_d) < 150)
 		return 0;
 
-//	/* dectct opponent with sensor */
-//	if(sensor_get(S_OBSTACLE_FRONT)){
-//		sensor_obstacle_disable();
-//		return 1;
-//	}
+
+#ifdef HOMOLOGATION
+	/* opponent is in front of us */
+	if (mainboard.speed_d > 0 && (sensor_get(S_OPPONENT_FRONT_R) || sensor_get(S_OPPONENT_FRONT_L))) {
+		DEBUG(E_USER_STRAT, "opponent front");
+		//sensor_obstacle_disable();
+		return 1;
+	}
+	/* opponent is behind us */
+	if (mainboard.speed_d < 0 && (sensor_get(S_OPPONENT_REAR_R) || sensor_get(S_OPPONENT_REAR_L))) {
+		DEBUG(E_USER_STRAT, "opponent behind");
+		//sensor_obstacle_disable();
+		return 1;
+	}
+
+#endif
 
 	/* no opponent detected */
 	if (get_opponent_xyda(&opp_x, &opp_y,

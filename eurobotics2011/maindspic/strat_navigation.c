@@ -224,7 +224,7 @@ void strat_get_next_slot_target(void)
 	return END_TRAJ if sucess o END_TIMER (only one token in bonus */
 
 #define DATA_UPDATE_TIME 50
-uint8_t strat_fsm_bonus_point(void)
+uint8_t strat_bonus_point(void)
 {
 	uint8_t err;
 	uint16_t old_spdd, old_spda;
@@ -423,7 +423,7 @@ uint8_t strat_fsm_bonus_point(void)
 				if (!TRAJ_SUCCESS(err))
 					break;
 
-				return END_TIMER;
+				return END_TRAJ;
 	
 			case PLACE_ONE_ON_BONUS_POINT_DOWN:
 				DEBUG(E_USER_STRAT, "PLACE_ONE_ON_BONUS_POINT_DOWN");
@@ -460,7 +460,7 @@ uint8_t strat_fsm_bonus_point(void)
 				if (!TRAJ_SUCCESS(err))
 					break;
 	
-				return END_TIMER;
+				return END_TRAJ;
 	
 
 			case PICK_AND_PLACE_NEAR_TOKENS:

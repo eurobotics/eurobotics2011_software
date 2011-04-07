@@ -196,7 +196,7 @@ void i2c_poll_slaves(void *dummy)
 		uart_send(MUX_UART,'\r');
 
 		/* XXX wait send reset */
-		wait_ms(10);
+		//wait_ms(10);
 
 		/* reset local i2c */
 		i2c_reset();
@@ -295,7 +295,7 @@ void i2c_poll_slaves(void *dummy)
 		uart_send(MUX_UART,'\r');
 
 		/* XXX wait send reset */
-		wait_ms(10);
+		//wait_ms(10);
 
 		/* reset local i2c */
 		i2c_reset();
@@ -365,7 +365,7 @@ void i2c_read_event(uint8_t * buf, uint16_t size)
 		
 		/* error */
 		/* XXX read even is called on every data received,
-       * wil zero size be managed as error  ??         */
+       * will zero size be managed as error  ??         */
 		if (size != sizeof (*ans))
 			goto *p_error_recv;
 

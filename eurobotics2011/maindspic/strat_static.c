@@ -280,9 +280,11 @@ place_origin:
 	else if (!TRAJ_SUCCESS(err))
 		ERROUT(err);	
 
+#ifndef HOMOLOGATION
 	/* choose location of tokens depends on opponent */
+	time_wait_ms(200);
 	if(opponent_is_in_area(COLOR_X(1500), 2100, COLOR_X(2025), 1400)) {
-	
+#endif	
 		/* place one token on bonus slot */
 		wait_until_opponent_is_far();
 		err = strat_place_token(COLOR_X(strat_infos.slot[3][5].x),
@@ -300,10 +302,11 @@ place_origin:
 							 strat_infos.slot[3][3].y, 
 							 side, GO_FORWARD);
 		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);	
-
+			ERROUT(err);
+	
+#ifndef HOMOLOGATION
 	}
-	else { /* place two tokens in bonus slot */
+	else	{ /* place two tokens in bonus slot */
 
 		/* goto near place slot */
 place_near:
@@ -373,6 +376,7 @@ place_near:
 		//	ERROUT(err);
 	
 	}
+#endif
 
 	/* back to place origin */		
 back_origin:
@@ -548,6 +552,7 @@ place_origin:
 	}
 
 	/* choose location of tokens depends on opponent */
+	time_wait_ms(200);
 	if(opponent_is_in_area(COLOR_X(1150), (525+30), COLOR_X(2025), 0)) {
 
 		/* place token in right slot */
@@ -997,12 +1002,12 @@ uint8_t strat_harvest_green_area(void)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 	
-	wait_until_opponent_is_far();
-	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][4].x),
-								  strat_infos.slot[2][4].y);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+//	wait_until_opponent_is_far();
+//	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[2][4].x),
+//								  strat_infos.slot[2][4].y);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
 
 #endif
 

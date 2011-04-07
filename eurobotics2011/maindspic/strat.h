@@ -62,13 +62,16 @@
 #define TRAJ_FLAGS_NO_NEAR_NO_TIMER (END_TRAJ|END_BLOCKING|END_OBSTACLE|END_INTR)
 #define TRAJ_FLAGS_SMALL_DIST 		(END_TRAJ|END_BLOCKING|END_INTR)
 
+/* homologation compilation */
+//#define HOMOLOGATION
+
 /* default speeds */
 #ifdef HOMOLOGATION
 #define SPEED_DIST_FAST 		2000
 #define SPEED_ANGLE_FAST 		2000
 #else
-#define SPEED_DIST_FAST 		2000
-#define SPEED_ANGLE_FAST 		2000
+#define SPEED_DIST_FAST 		4000
+#define SPEED_ANGLE_FAST 		4000
 #endif
 #define SPEED_DIST_SLOW 		1000
 #define SPEED_ANGLE_SLOW 		1000
@@ -223,9 +226,8 @@ uint8_t strat_harvest_green_area(void);
 /* in strat_navigation.c */
 void strat_update_slot_position(void);
 
-/* place two tokens in bonus points,
-	return END_TRAJ if sucess o END_TIMER (only one token in bonus */
-uint8_t strat_fsm_bonus_point(void);
+/* in strat_navigation.c */
+uint8_t strat_bonus_point(void);
 
 /* add here more strat functions in files */
 

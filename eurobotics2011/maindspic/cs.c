@@ -134,20 +134,13 @@ static void do_cs(void *dummy)
 			dac_mc_set(LEFT_MOTOR, 0);
 			dac_mc_set(RIGHT_MOTOR, 0);
 
-			/* power off lasers */
-			lasers_set_off();
-
-			/* TODO: stop slavedspic actuators */		
-	
-			/* TODO: stop beacon */
-
 			/* kill strat */
 			strat_exit();
 
 			printf_P(PSTR("END OF TIME\r\n"));
 	
 			/* never returns */
-			while(1);
+			//while(1);
 		}
 	}
 	
@@ -249,7 +242,7 @@ void maindspic_cs_init(void)
 	/* Blocking detection */
 	bd_init(&mainboard.angle.bd);
 	bd_set_speed_threshold(&mainboard.angle.bd, 100);
-	bd_set_current_thresholds(&mainboard.angle.bd, 20, 8000, 1000000, 50); /* TODO: more margin */
+	bd_set_current_thresholds(&mainboard.angle.bd, 20, 8000, 1000000, 50);
 
 	/* ---- CS distance */
 	/* PID */
@@ -275,7 +268,7 @@ void maindspic_cs_init(void)
 	/* Blocking detection */
 	bd_init(&mainboard.distance.bd);
 	bd_set_speed_threshold(&mainboard.distance.bd, 100);
-	bd_set_current_thresholds(&mainboard.distance.bd, 20, 8000, 1000000, 50); /* TODO: more margin */
+	bd_set_current_thresholds(&mainboard.distance.bd, 20, 8000, 1000000, 50);
 
 	/* set them on !! */
 	mainboard.angle.on = 1;

@@ -971,7 +971,7 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 
 	}
 	else if (strcmp_P(res->arg1, PSTR("bonus")) == 0) {
-		err = strat_fsm_bonus_point();
+		err = strat_bonus_point();
 
 	}
 

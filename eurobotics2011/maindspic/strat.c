@@ -223,19 +223,10 @@ void strat_exit(void)
 {
 	uint8_t flags;
 
-	/* TODO: disable lasers */
-	/* TODO: stop slavespic */
-
-	/* stop beacon */
-	beacon_cmd_beacon_off();
-
 	/* stop robot, disable timer */
 	mainboard.flags &= ~(DO_TIMER);
 	strat_hardstop();
 	time_reset();
-
-	/* XXX wait to i2c and UART cmds */
-	wait_ms(1000);
 
 	/* disable CS, and motors */
 	IRQ_LOCK(flags);
@@ -243,6 +234,19 @@ void strat_exit(void)
 	dac_mc_set(LEFT_MOTOR, 0);
 	dac_mc_set(RIGHT_MOTOR, 0);
 	IRQ_UNLOCK(flags);
+
+	/* stop beacon */
+	IRQ_LOCK(flags);
+	mainboard.flags &= ~(DO_OPP);
+	IRQ_UNLOCK(flags);
+	beacon_cmd_beacon_off();
+
+	/* power off lasers */
+	lasers_set_off();
+
+	/* stop slavespic */
+	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
+	i2c_slavedspic_mode_token_stop(SIDE_REAR);
 
 }
 
@@ -252,7 +256,7 @@ void strat_event(void *dummy)
 	/* limit speed when opponent is close */
 	//strat_limit_speed();
 
-	/* TODO: update actual slot position */
+	/* update actual slot position */
 	strat_update_slot_position();	
 
 	/* TODO: check towers */
@@ -286,13 +290,6 @@ uint8_t strat_beginning(void)
 	strat_get_speed(&old_spdd, &old_spda);
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
-	/* initial speed limit */
-#if HOMOLOGATION
-	strat_limit_speed_enable();
-#else
-	strat_limit_speed_disable();
-#endif
-
 	/* go out of start position */
 	wait_until_opponent_is_far();
 	trajectory_d_rel(&mainboard.traj, 200);
@@ -305,18 +302,17 @@ uint8_t strat_beginning(void)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
+#ifndef HOMOLOGATION
 	/* pick & place tokens on line 2 */
 	err = strat_harvest_line2();
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
-	/* enable speed limit */
-	strat_limit_speed_enable();
-
 	/* pick & place tokens on green area */
 	err = strat_harvest_green_area();
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
+#endif
 
 // end:
 	strat_set_speed(old_spdd, old_spda);
@@ -331,11 +327,21 @@ uint8_t strat_main(void)
 	/* pick & place our static tokens */
 	err = strat_beginning();
 
+#ifndef HOMOLOGATION
 	/* place two token on the other side */
-	err = strat_fsm_bonus_point();
+	err = strat_bonus_point();
+#endif
+
+#ifdef TEST_EXIT
+	i2c_slavedspic_mode_token_take(SIDE_FRONT);
+	i2c_slavedspic_mode_token_take(SIDE_REAR);
+	lasers_set_on();
+#endif
 
 	/* autoplay */
 	while (1) {
+
+		err = wait_traj_end(TRAJ_FLAGS_STD);
 
 		/* check end of match */
 		if (err == END_TIMER) {
