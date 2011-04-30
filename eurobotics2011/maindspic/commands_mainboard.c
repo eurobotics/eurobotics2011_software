@@ -184,6 +184,7 @@ struct cmd_opponent_result {
 static void cmd_opponent_parsed(void *parsed_result, void *data)
 {
 	int16_t x,y,d,a;
+//	microseconds us;
 
 	do {
 
@@ -192,7 +193,13 @@ static void cmd_opponent_parsed(void *parsed_result, void *data)
 	else
 		printf_P(PSTR("x=%d y=%d, d=%d a=%d\r\n"), x, y, d, a);
 
+//	us = time_get_us2();
+//	while(time_get_us2()-us < 200000L) {
+//		beacon_opponent_pulling();
+//	}
+
 	wait_ms(100);
+
 	} while (!cmdline_keypressed());
 }
 

@@ -412,12 +412,9 @@ uint8_t strat_obstacle(void)
 
 	/* no opponent detected */
 	if (get_opponent_xyda(&opp_x, &opp_y,
-			      &opp_d, &opp_a))
+			      &opp_d, &opp_a)) {
 		return 0;
-
-//	DEBUG(E_USER_STRAT, "opponent: d=%d, a=%d "
-//	                    "x=%d y=%d (speed_d=%d)", 
-//	      					opp_d, opp_a, opp_x, opp_y, mainboard.speed_d);
+	}
 
 	/* save obstacle position */
 	opponent_obstacle.x = opp_x;
@@ -426,7 +423,7 @@ uint8_t strat_obstacle(void)
 	opponent_obstacle.a = opp_a;
 
 	/* sensor are temporarily disabled */
-	if (sensor_obstacle_is_disabled())
+	if (sensor_obstacle_is_disabled()) 
 		return 0;
 
 	/* relative position */

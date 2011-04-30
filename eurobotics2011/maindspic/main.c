@@ -268,8 +268,8 @@ int main(void)
 	scheduler_add_periodical_event_priority(i2c_poll_slaves, NULL,
 						EVENT_PERIOD_I2C_POLL / SCHEDULER_UNIT, EVENT_PRIORITY_I2C_POLL);
 
-	/* beacon polling */
-	scheduler_add_periodical_event_priority(beacon_daemon, NULL,
+	/* beacon commnads and polling */
+	scheduler_add_periodical_event_priority(beacon_protocol, NULL,
 					EVENT_PERIOD_BEACON_PULL / SCHEDULER_UNIT, EVENT_PRIORITY_BEACON_POLL);
 
 

@@ -23,24 +23,20 @@
 #ifndef _BEACON_H_
 #define _BEACON_H_
 
+#define BEACON_UART		MUX_UART
 
 void beacon_cmd_wt11_local_reset(void);
 void beacon_cmd_wt11_call(void);
 void beacon_cmd_wt11_close(void);
 
-void beacon_parse_opponent_answer(int16_t c);
-
-void beacon_daemon(void * dummy);
-void beacon_send_daemon(void * dummy);
-void beacon_recv_daemon(void);
-
 void beacon_init(void);
+void beacon_protocol(void * dummy);
 
 void beacon_cmd_color(void);
 void beacon_cmd_opponent(void);
 void beacon_cmd_beacon_on(void);
 void beacon_cmd_beacon_off(void);
 
-void beacon_pull_opponent(void);
+void beacon_opponent_pulling(void);
 
 #endif

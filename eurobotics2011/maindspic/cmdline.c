@@ -41,6 +41,7 @@
 #include <uart.h>
 
 #include "main.h"
+#include "beacon.h"
 #include "cmdline.h"
 #include "strat_base.h"
 
