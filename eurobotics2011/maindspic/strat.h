@@ -182,6 +182,8 @@ struct strat_infos {
 extern struct strat_infos strat_infos;
 
 
+#ifndef TEST_OA_HOST
+
 /************************************************************* 
  * Functions headers of strat files
  ************************************************************/
@@ -230,5 +232,7 @@ void strat_update_slot_position(void);
 uint8_t strat_bonus_point(void);
 
 /* add here more strat functions in files */
+
+#endif /* TEST_OA_HOST */
 
 #endif

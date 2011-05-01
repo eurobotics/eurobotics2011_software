@@ -159,6 +159,9 @@ void strat_set_bounding_box(void)
 				strat_infos.area_bbox.y2);
 }
 
+
+#ifdef TEST_OA
+
 /* called before each strat, and before the start switch */
 void strat_preinit(void)
 {
@@ -359,3 +362,7 @@ uint8_t strat_main(void)
 	}
 	return END_TRAJ;
 }
+
+#endif /* TEST_OA */
+
+
