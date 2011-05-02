@@ -19,7 +19,7 @@
  *
  */
 
-#define MAX_POLY 12  //10 (sin rampa)
-#define MAX_PTS 65  //38 (sin rampa)
-#define MAX_RAYS 1000 //388
-#define MAX_CHKPOINTS 20   
+#define MAX_POLY 			(15+1+1)  //10 (sin rampa)
+#define MAX_PTS 			1000//(MAX_POLY*4)  //38 (sin rampa)
+#define MAX_RAYS 			1000 //388
+#define MAX_CHKPOINTS 	20   

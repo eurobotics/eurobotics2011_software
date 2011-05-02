@@ -36,6 +36,7 @@
 #include <aversive/wait.h>
 #include <aversive/error.h>
 
+#ifndef HOST_VERSION
 #include <uart.h>
 #include <dac_mc.h>
 #include <pwm_servo.h>
@@ -62,223 +63,77 @@
 #include "strat_utils.h"
 #include "sensor.h"
 
-#define PLAYGROUND_Y_MAX	strat_infos.area_bbox.y2
-#define PLAYGROUND_Y_MIN 	strat_infos.area_bbox.y1
+#else
 
-#define N_CORNS            18
-#define CORN_EDGE_NUMBER   6
-#define CORN_RADIUS        (243)
-#define OFFSET_AVOID_RAMPE 50
+#define E_USER_STRAT 200
 
-struct corn_t{
-   int16_t x;
-   int16_t y;
-   uint8_t oa_flag;
-   uint8_t special_poly;
-};
+#define END_TRAJ       1 /* traj successful */
+#define END_BLOCKING   2 /* blocking during traj */
+#define END_NEAR       4 /* we are near destination */
+#define END_OBSTACLE   8 /* There is an obstacle in front of us */
+#define END_ERROR     16 /* Cannot do the command */
+#define END_INTR      32 /* interrupted by user */
+#define END_TIMER     64 /* we don't a lot of time */
+#define END_RESERVED 128 /* reserved */
 
-struct corn_t corn[18] = {
-#if 1	
-	[0] = { 150+450*0, 2100-(128+250*1), 0, 0},
-	[1] = { 150+450*0, 2100-(128+250*3), 0, 0},
-	[2] = { 150+450*0, 2100-(128+250*5), 0, 0},
-
-	[3] = { 150+450*1, 2100-(128+250*0), 0, 0},
-	[4] = { 150+450*1, 2100-(128+250*2), 1, 0},
-	[5] = { 150+450*1, 2100-(128+250*4), 1, 2},
-
-	[6] = { 150+450*2, 2100-(128+250*1), 1, 1},
-	[7] = { 150+450*2, 2100-(128+250*3), 1, 0},
-
-	[8] = { 150+450*3, 2100-(128+250*0), 0, 0},
-	[9] = { 150+450*3, 2100-(128+250*2), 1, 0},
-
-	[10] = { 3000-(150+450*2), 2100-(128+250*1), 1, 1},
-	[11] = { 3000-(150+450*2), 2100-(128+250*3), 1, 0},
-
-	[12] = { 3000-(150+450*1), 2100-(128+250*0), 0, 0},
-	[13] = { 3000-(150+450*1), 2100-(128+250*2), 1, 0},
-	[14] = { 3000-(150+450*1), 2100-(128+250*4), 1, 3},
-
-	[15] = { 3000-(150+450*0), 2100-(128+250*1), 0, 0},
-	[16] = { 3000-(150+450*0), 2100-(128+250*3), 0, 0},
-	[17] = { 3000-(150+450*0), 2100-(128+250*5), 0, 0},
 #endif
 
-#if 0
-//	[0] = { 150+450*0, 2100-(128+250*1)}, /* 0 */
-//	[1] = { 150+450*0, 2100-(128+250*3)}, /* 0 */
-//	[2] = { 150+450*0, 2100-(128+250*5)}, /* 0 */
 
-//	[3] = { 150+450*1, 2100-(128+250*0)}, /* 0 */
-	[0] = { 150+450*1, 2100-(128+250*2)}, /* 0 */
-	[1] = { 150+450*1, 2100-(128+250*4)}, /* 0 */
+#define SLOT_NUMBER			((NB_SLOT_X-2)*(NB_SLOT_Y-1))	/* all less green areas and safe zones */
+#define SLOT_EDGE_NUMBER   4
+#define SLOT_RADIUS        340
 
-	[2] = { 150+450*2, 2100-(128+250*1)}, /* 0 */
-	[3] = { 150+450*2, 2100-(128+250*3)}, /* 0 */
-
-//	[8] = { 150+450*3, 2100-(128+250*0)}, /* 0 */
-	[4] = { 150+450*3, 2100-(128+250*2)}, /* 0 */
-
-	[5] = { 3000-(150+450*2), 2100-(128+250*1)}, /* 0 */
-	[6] = { 3000-(150+450*2), 2100-(128+250*3)}, /* 0 */
-
-//	[12] = { 3000-(150+450*1), 2100-(128+250*0)}, /* 0 */
-	[7] = { 3000-(150+450*1), 2100-(128+250*2)}, /* 0 */
-	[8] = { 3000-(150+450*1), 2100-(128+250*4)}, /* 0 */
-
-//	[15] = { 3000-(150+450*0), 2100-(128+250*1)}, /* 0 */
-//	[16] = { 3000-(150+450*0), 2100-(128+250*3)},
-//	[17] = { 3000-(150+450*0), 2100-(128+250*5)},
+#ifdef HOMOLOGATION
+/* /!\ half size */
+#define O_WIDTH  400
+#define O_LENGTH 550
+#else
+/* /!\ half size */
+#define O_WIDTH  360
+#define O_LENGTH 360
 #endif
-};
 
-uint8_t num_corn_in_path;
-uint8_t corn_in_path_flag[N_CORNS];
+#define CENTER_X 1500
+#define CENTER_Y 1050
 
-void set_rotated_pentagon(poly_t *pol, int16_t radius,
-			      int16_t x, int16_t y, uint8_t special)
+/* don't care about polygons further than this distance for escape */
+#define ESCAPE_POLY_THRES 1000
+
+/* don't reduce opp if opp is too far */
+#define REDUCE_POLY_THRES 600
+
+/* has to be longer than any poly */
+#define ESCAPE_VECT_LEN 3000
+
+/* related with slot in path */
+uint8_t num_slots_in_path;
+uint8_t slot_in_path_flag[SLOT_NUMBER];
+
+#ifdef HOST_VERSION
+int16_t g_robot_x;
+int16_t g_robot_y;
+double  g_robot_a;
+
+int16_t g_opp_x;
+int16_t g_opp_y;
+#endif
+
+#ifdef HOST_VERSION
+/* return the distance between two points */
+int16_t distance_between(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
-
-	double c_a, s_a;
-	uint8_t i;
-	double px1, py1, px2, py2;
-	double a_rad;
-
-	//a_rad = atan2(y - robot_y, x - robot_x);
-   a_rad = 0;
-
-	/* generate pentagon  */
-	c_a = cos(-2*M_PI/CORN_EDGE_NUMBER);
-	s_a = sin(-2*M_PI/CORN_EDGE_NUMBER);
-
-	/*
-	px1 = radius;
-	py1 = 0;
-	*/
-	px1 = radius * cos(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
-	py1 = radius * sin(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
-
-
-	for (i = 0; i < CORN_EDGE_NUMBER; i++){
-		
-		if(special == 1 && (i==0||i==1||i==2))
-		   oa_poly_set_point(pol, x + px1, PLAYGROUND_Y_MAX+2, i);
-		else if(special == 2 && (i==3))
-		   oa_poly_set_point(pol, x + px1, y + py1 - OFFSET_AVOID_RAMPE, i);
-		else if(special == 3 && (i==5))
-		   oa_poly_set_point(pol, x + px1, y + py1 - OFFSET_AVOID_RAMPE, i);
-		else
-		   oa_poly_set_point(pol, x + px1, y + py1, i);
-	
-		
-		px2 = px1*c_a + py1*s_a;
-		py2 = -px1*s_a + py1*c_a;
-
-		px1 = px2;
-		py1 = py2;
-	}
-
+	int32_t x,y;
+	x = (x2-x1);
+	x = x*x;
+	y = (y2-y1);
+	y = y*y;
+	return sqrt(x+y);
 }
-
-void set_rotated_pentagon_pts(point_t *pt, int16_t radius,
-			      int16_t x, int16_t y, uint8_t special)
-{
-
-	double c_a, s_a;
-	uint8_t i;
-	double px1, py1, px2, py2;
-	double a_rad;
-
-	//a_rad = atan2(y - robot_y, x - robot_x);
-   a_rad = 0;
-
-	/* generate pentagon  */
-	c_a = cos(-2*M_PI/CORN_EDGE_NUMBER);
-	s_a = sin(-2*M_PI/CORN_EDGE_NUMBER);
-
-	/*
-	px1 = radius;
-	py1 = 0;
-	*/
-	px1 = radius * cos(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
-	py1 = radius * sin(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
+#endif
 
 
-	for (i = 0; i < CORN_EDGE_NUMBER; i++){
-	
-	  if(special == 1 && (i==0||i==1||i==2)){
-			pt[i].x = x + px1;
-		  pt[i].y = PLAYGROUND_Y_MAX+2;
-		}
-		else if(special == 2 && (i==3)){
-		  pt[i].x = x + px1;
-		  pt[i].y = y + py1 - OFFSET_AVOID_RAMPE;
-    }
-		else if(special == 3 && (i==5)){
-		  pt[i].x = x + px1;
-		  pt[i].y = y + py1 - OFFSET_AVOID_RAMPE;
-    }
-		else{	
-		  pt[i].x = x + px1;
-		  pt[i].y = y + py1;
-		}   		
-    
-	  px2 = px1*c_a + py1*s_a;
-	  py2 = -px1*s_a + py1*c_a;
-      
-		px1 = px2;
-		py1 = py2;
-	}
 
-}
-
-//#define EDGE_NUMBER 5
-//void set_rotated_pentagon(poly_t *pol, const point_t *robot_pt,
-//			  int16_t radius, int16_t x, int16_t y)
-//{
-//
-//	double c_a, s_a;
-//	uint8_t i;
-//	double px1, py1, px2, py2;
-//	double a_rad;
-//
-//	a_rad = atan2(y - robot_pt->y, x - robot_pt->x);
-//
-//	/* generate pentagon  */
-//	c_a = cos(-2*M_PI/EDGE_NUMBER);
-//	s_a = sin(-2*M_PI/EDGE_NUMBER);
-//
-//	/*
-//	px1 = radius;
-//	py1 = 0;
-//	*/
-//	px1 = radius * cos(a_rad + 2*M_PI/(2*EDGE_NUMBER));
-//	py1 = radius * sin(a_rad + 2*M_PI/(2*EDGE_NUMBER));
-//
-//
-//	for (i = 0; i < EDGE_NUMBER; i++){
-//		oa_poly_set_point(pol, x + px1, y + py1, i);
-//		
-//		px2 = px1*c_a + py1*s_a;
-//		py2 = -px1*s_a + py1*c_a;
-//
-//		px1 = px2;
-//		py1 = py2;
-//	}
-//}
-
-//void set_rhombus(poly_t *pol,
-//               	int16_t w, int16_t l,
-//			      		int16_t x, int16_t y)
-//{
-//
-//   oa_poly_set_point(pol, x, y+l, 0);
-//   oa_poly_set_point(pol, x-w, y, 1);
-//   oa_poly_set_point(pol, x, y-l, 2);
-//   oa_poly_set_point(pol, x+w, y, 3);
-//}
-
+/* set rotated poly relative to robot coordinates */
 void set_rotated_poly(poly_t *pol, const point_t *robot_pt, 
 		      int16_t w, int16_t l, int16_t x, int16_t y)
 
@@ -286,8 +141,11 @@ void set_rotated_poly(poly_t *pol, const point_t *robot_pt,
 	double tmp_x, tmp_y;
 	double a_rad;
 
+	/* calcule relative angle to robot */
 	a_rad = atan2(y - robot_pt->y, x - robot_pt->x);
 
+
+	/* XXX the rotation is commented */
 
 	DEBUG(E_USER_STRAT, "%s() x,y=%d,%d a_rad=%2.2f", 
 	      __FUNCTION__, x, y, a_rad);
@@ -325,110 +183,189 @@ void set_rotated_poly(poly_t *pol, const point_t *robot_pt,
 	oa_poly_set_point(pol, tmp_x, tmp_y, 3);
 }
 
+/* set poly that represent the opponent */
 void set_opponent_poly(poly_t *pol, const point_t *robot_pt, int16_t w, int16_t l)
 {
 	int16_t x, y;
+	
+#ifndef HOST_VERSION
 	get_opponent_xy(&x, &y);
+#else
+	x = g_opp_x;
+	y = g_opp_y;
+#endif	
+
 	DEBUG(E_USER_STRAT, "oponent at: %d %d", x, y);
 	
-	/* place poly even if invalid, because it's -100 */
-	set_rotated_poly(pol, robot_pt, w, l, x, y);
+	/* place poly even if invalid, because it's -1000 */
+	set_rotated_poly(pol, robot_pt, w, l, x, y); 
 }
 
-//#define DISC_X CENTER_X
-//#define DISC_Y CENTER_Y
-//void set_central_disc_poly(poly_t *pol, const point_t *robot_pt)
-//{
-//	set_rotated_pentagon(pol, robot_pt, DISC_PENTA_DIAG,
-//			     DISC_X, DISC_Y);
-//}
 
-void set_corns_poly_in_path(poly_t **pol, int32_t x0, int32_t y0, int32_t x1, int32_t y1)
+/* set point of a rhombus, used for slot polys */
+uint8_t set_rhombus_pts(point_t *pt,
+               		int16_t w, int16_t l,
+			      		int16_t x, int16_t y,
+			      		uint8_t flags_no_point)
 {
-  uint8_t i;
-  int16_t ret;
-  poly_t poly_corn;
-  point_t poly_corn_pts[CORN_EDGE_NUMBER];
-	point_t init_pt, dst_pt, intersect_corn_pt;
-   
-  init_pt.x = x0;
-	init_pt.y = y0;
-   
-  dst_pt.x = x1;
-  dst_pt.y = y1;
+	uint8_t i, j;
 
-	//NOTICE(E_USER_STRAT,"set_corns_poly_in_path");
-  //NOTICE(E_USER_STRAT,"init_pt (%"PRIi32"  %"PRIi32")", init_pt.x, init_pt.y);
+	/* loop for rhrombus points */
+	for(i=0, j=0; i<4; i++) {
+			
+		/* if there was more than two disable point consecuvely before */
+		if(i==0) {
+			/* two no point at position 0 and  3 */
+			if( (flags_no_point & SLOT_POLY_NO_POINT_0) 
+				&& (flags_no_point & SLOT_POLY_NO_POINT_3) ) {
+			
+				/* add point at origin */
+				pt[j].x = x;
+				pt[j].y = y;
+				
+				/* next point */
+				j++;
+				
+				continue;
+			}
+		}
+		else {
+			/* two no point consecutively */
+			if( (flags_no_point & (1<<i)) 
+				&& (flags_no_point & (1<<(i-1))) ) {
+			
+				/* add point at origin */
+				pt[j].x = x;
+				pt[j].y = y;
+				
+				/* next point */
+				j++;
+				
+				continue;
+			}
+		}
+
+		/* skip lonly no point */		
+		if(flags_no_point & (1<<i)) {
+				continue;
+		}
+	
+		/* add point of rhombus */
+		if(i==0) {				
+			pt[j].x = x + w;
+			pt[j].y = y;
+		}
+		else if(i==1) {				
+			pt[j].x = x;
+			pt[j].y = y + l;
+		}
+		else if(i==2) {				
+			pt[j].x = x - w;
+			pt[j].y = y;
+		}
+		else if(i==3) {				
+			pt[j].x = x;
+			pt[j].y = y - l;
+		}
+		
+		/* next point */
+		j++;
+	}
+	
+	/* return number of points */
+	return j;		
+}
+
+/* set oa poly point */
+void set_poly_pts(poly_t *pol_dest, poly_t *pol_org)
+{
+	uint8_t i;
+	
+	/* loop for all point */
+	for(i=0; i < pol_org->l; i++) {
+	   oa_poly_set_point(pol_dest, pol_org->pts[i].x, pol_org->pts[i].y, i);
+   }
+}
+
+/* set slot polys that are in direct path between two point */
+void set_slots_poly_in_path(poly_t **pol,
+									 int32_t x0, int32_t y0, int32_t x1, int32_t y1,
+									 int16_t dst_x, int16_t dst_y)
+{
+	uint8_t i, j, k;
+	int16_t ret;
+	poly_t poly_slot;
+	point_t poly_slot_pts[SLOT_EDGE_NUMBER];
+	point_t init_pt, dst_pt, intersect_slot_pt;
+
+	/* set init and destination points */
+	init_pt.x = x0;
+	init_pt.y = y0;
+	dst_pt.x = x1;
+	dst_pt.y = y1;
+
+	//NOTICE(E_USER_STRAT,"set_slots_poly_in_path");
+   //NOTICE(E_USER_STRAT,"init_pt (%"PRIi32"  %"PRIi32")", init_pt.x, init_pt.y);
  	//NOTICE(E_USER_STRAT,"dst_pt (%"PRIi32", %"PRIi32")", dst_pt.x, dst_pt.y);
 
+	/* init poly structure */
+	poly_slot.l = SLOT_EDGE_NUMBER;
+	poly_slot.pts = poly_slot_pts;
+   
+	/* loop all slots less green areas and safe zones */  
+	k = 0;
+	for(i=1; i<(NB_SLOT_X-1); i++)
+	{
+		for(j=0; j<(NB_SLOT_Y-1); j++)
+		{			
+	
+#ifndef HOST_VERSION		
+			if((strat_infos.slot[i][j].flags & SLOT_AVOID) 
+				& (strat_infos.slot[i][j].color == SLOT_BLUE)) /* TODO: get our color */
+#else
+			if((strat_infos.slot[i][j].color == SLOT_BLUE)) /* TODO: get our color */
+#endif
+			{  
+				/* set points */									
+				poly_slot.l = set_rhombus_pts(poly_slot_pts,
+														SLOT_RADIUS, SLOT_RADIUS,
+														strat_infos.slot[i][j].x, strat_infos.slot[i][j].y,
+														strat_infos.slot[i][j].flags_poly_no_pts);
 
-  poly_corn.l = CORN_EDGE_NUMBER;
-  poly_corn.pts = poly_corn_pts;
-     
-	for(i=0; i<N_CORNS; i++)
-	{	
-	   if(corn[i].oa_flag)
-	   {      
-	     set_rotated_pentagon_pts(poly_corn_pts, CORN_RADIUS, 
-	                              corn[i].x, corn[i].y, corn[i].special_poly);
+				/* skip slot if destination point is included */
+				//if (is_point_in_poly(&poly_slot, dst_x, dst_y)) {
+		      //	NOTICE(E_USER_STRAT, " dst is in our color slot[%d][%d] %d", i, j, k);
+		      //	continue;
+	      	//}
 
-       ret = is_crossing_poly(init_pt, dst_pt, &intersect_corn_pt, &poly_corn);
-                              
-       if(ret==1 && corn_in_path_flag[i]==0)
-		   {
-		      corn_in_path_flag[i] = 1;
-		      num_corn_in_path++;
+				/* check if poly is in direct path */
+		    	ret = is_crossing_poly(init_pt, dst_pt, &intersect_slot_pt, &poly_slot);
+		                 
+		                 
+		      /* XXX test poly generation */
+		      ret = 1;               
+		                           
+				/* if poly is in path set it */
+				if(ret==1 && slot_in_path_flag[k]==0)
+				{
+					slot_in_path_flag[k] = 1;
+					num_slots_in_path++;
 
-           *(pol+i) = oa_new_poly(CORN_EDGE_NUMBER);
-            set_rotated_pentagon(*(pol+i), CORN_RADIUS,
-                                 corn[i].x, corn[i].y, corn[i].special_poly);            
+					NOTICE(E_USER_STRAT,"slot[%d][%d] (%d) is in path", i, j, k);	         
+					NOTICE(E_USER_STRAT,"num_slots_in_path %d", num_slots_in_path);
+					
+					*(pol+k) = oa_new_poly(poly_slot.l);
+					set_poly_pts(*(pol+k), &poly_slot);           
 
-            //*(pol+i) = oa_new_poly(4);
-	         //set_rhombus(*(pol+i), 440, 240, corn[i].x, corn[i].y);
-	         NOTICE(E_USER_STRAT,"corn %d is in path", i);	         
-	         NOTICE(E_USER_STRAT,"num_corn_in_path %d", num_corn_in_path);
-	      }
-	   }
+				}
+			}
+			
+			/* slot linear index*/
+			k ++;
+		}
 	} 
 }
 
-
-#define RAMPE_X (1500)
-#define RAMPE_Y (PLAYGROUND_Y_MIN)
-void set_rampe_poly(poly_t *pol)
-{
-//   oa_poly_set_point(pol, 740-220, PLAYGROUND_Y_MIN-2, 0); 
-//   oa_poly_set_point(pol, 3000-(740-220), PLAYGROUND_Y_MIN-2, 1);
-//   oa_poly_set_point(pol, 3000-(740-220), 2100-(1600-11-150), 2);
-//   oa_poly_set_point(pol, 740-220, 2100-(1600-11-150), 3);
-
-   oa_poly_set_point(pol, 650, PLAYGROUND_Y_MIN-2, 0); 
-   oa_poly_set_point(pol, 3000-(650), PLAYGROUND_Y_MIN-2, 1);
-   oa_poly_set_point(pol, 3000-(650), 700, 2);
-   oa_poly_set_point(pol, 650, 700, 3);
-
-}
-
-#ifdef HOMOLOGATION
-/* /!\ half size */
-#define O_WIDTH  360 //400
-#define O_LENGTH 360 //550
-#else
-/* /!\ half size */
-#define O_WIDTH  360
-#define O_LENGTH 360
-#endif
-
-
-
-/* don't care about polygons further than this distance for escape */
-#define ESCAPE_POLY_THRES 1000
-
-/* don't reduce opp if opp is too far */
-#define REDUCE_POLY_THRES 600
-
-/* has to be longer than any poly */
-#define ESCAPE_VECT_LEN 3000
 
 /*
  * Go in playground, loop until out of poly. The argument robot_pt is 
@@ -468,9 +405,10 @@ static int8_t go_in_area(point_t *robot_pt)
 		is_crossing_poly(*robot_pt, center_pt, &dst_pt, &poly_area);
 		NOTICE(E_USER_STRAT, "pt dst %"PRIi32", %"PRIi32"", dst_pt.x, dst_pt.y);
 
-		/* XXX virtual scape from poly? */		
+		/* scape from poly */
+#ifndef HOST_VERSION		
 		strat_goto_xy_force(dst_pt.x, dst_pt.y);
-
+#endif
 		robot_pt->x = dst_pt.x;
 		robot_pt->y = dst_pt.y;
 
@@ -490,11 +428,11 @@ static int8_t go_in_area(point_t *robot_pt)
  * updated.
  */
 static int8_t escape_from_poly(point_t *robot_pt,
-						 poly_t *pol_rampe,
-			       int16_t opp_x, int16_t opp_y, 
-			       int16_t opp_w, int16_t opp_l, 
-			       poly_t *pol_opp)
+										int16_t opp_x, int16_t opp_y, 
+										int16_t opp_w, int16_t opp_l, 
+										poly_t *pol_opp)
 {
+#if 0
 	uint8_t in_opp = 0, in_corn = 0, in_rampe = 0;
 	double escape_dx = 0, escape_dy = 0;
 	double corn_dx = 0, corn_dy = 0;
@@ -735,64 +673,97 @@ static int8_t escape_from_poly(point_t *robot_pt,
 			}
 		}
 	}
+#endif
 
 	/* should not happen */
 	return -1;
 }
 
 
+#ifndef HOST_VERSION
 static int8_t __goto_and_avoid(int16_t x, int16_t y,
 			       uint8_t flags_intermediate,
 			       uint8_t flags_final, uint8_t forward)
+#else
+int8_t goto_and_avoid(int16_t x, int16_t y,
+					   	int16_t robot_x, int16_t robot_y, double robot_a,
+					   	int16_t opp_x, int16_t opp_y)
+
+#endif
 {
-	int8_t len = -1, i, num_corn_in_path_save;
+	int8_t len = -1;
+	int8_t i;
+
+	int8_t num_slots_in_path_save;
+
 	point_t *p;
-	poly_t *pol_corn_in_path[N_CORNS], *pol_opp, *pol_rampe;
-
-  poly_t pol_corn;
-  point_t pol_corn_pts[CORN_EDGE_NUMBER];
-
+	poly_t *pol_slots_in_path[SLOT_NUMBER];
+	poly_t *pol_opp;
 	int8_t ret;
-	int16_t opp_w, opp_l, opp_x, opp_y;
-	point_t p_dst, robot_pt;
 
+	int16_t opp_w, opp_l;
+#ifndef HOST_VERSION
+	int16_t opp_x, opp_y;
 	double d,a;
-	void * p_retry;
-	void * p_repeat_oa;
-	p_retry = &&retry;
-	p_repeat_oa = &&repeat_oa;
+#endif	
+
+	point_t p_dst, robot_pt;
 	
+	void * p_retry;
+//	void * p_repeat_oa;
+	p_retry = &&retry;
+//	p_repeat_oa = &&repeat_oa;
+	
+#ifndef HOST_VERSION	
 	DEBUG(E_USER_STRAT, "%s(%d,%d) flags_i=%x flags_f=%x forw=%d",
 	      __FUNCTION__, x, y, flags_intermediate, flags_final, forward);
+#else
+	g_robot_x = robot_x;
+	g_robot_y = robot_y;
+	g_robot_a = robot_a;
+	g_opp_x = opp_x;
+	g_opp_y = opp_y;
+#endif
 
  retry:
 
-  /* init corns in path */
-  num_corn_in_path = 0;
-  for(i=0; i<N_CORNS; i++)
-	  corn_in_path_flag[i] = 0;
-
+	/* reset slots in path */
+  	num_slots_in_path = 0;
+  	for(i=0; i<SLOT_NUMBER; i++)
+		slot_in_path_flag[i] = 0;
+	
+	/* opponent info */
+#ifndef HOST_VERSION	
 	get_opponent_xy(&opp_x, &opp_y);
+#endif
+
 	opp_w = O_WIDTH;
 	opp_l = O_LENGTH;
 
+	/* robot info */
+#ifndef HOST_VERSION
 	robot_pt.x = position_get_x_s16(&mainboard.pos);
 	robot_pt.y = position_get_y_s16(&mainboard.pos);
-	
+#else
+	robot_pt.x = robot_x;
+	robot_pt.y = robot_y;
+#endif
+
+	/* init oa */
 	oa_init();
   
-  pol_rampe = oa_new_poly(4);
-  set_rampe_poly(pol_rampe);
-
+	/* add opponent poly */
 	pol_opp = oa_new_poly(4);
-	set_opponent_poly(pol_opp, &robot_pt, O_WIDTH, O_LENGTH);
+	set_opponent_poly(pol_opp, &robot_pt, O_WIDTH, O_LENGTH); 	/* XXX: disable rotated poly  */
+																					/* TODO: enable rotated poly? */
 
-	/* If we are not in the limited area, try to go in it. */
+	/* if we are not in the limited area, try to go in it. */
 	ret = go_in_area(&robot_pt);
 
-  set_corns_poly_in_path(&pol_corn_in_path[0], robot_pt.x, robot_pt.y, x, y);
+	/* set slots in path beetween robot and destination point */ 
+	set_slots_poly_in_path(&pol_slots_in_path[0], robot_pt.x, robot_pt.y, x, y, x, y);
 
-	/* check that destination is valid */
+	/* check that destination is in playground */
 	p_dst.x = x;
 	p_dst.y = y;
 	if (!is_in_boundingbox(&p_dst)) {
@@ -800,29 +771,8 @@ static int8_t __goto_and_avoid(int16_t x, int16_t y,
 		return END_ERROR;
 	}
   
-  pol_corn.l = CORN_EDGE_NUMBER;
-  pol_corn.pts = pol_corn_pts;
-
-	for(i=0; i<N_CORNS; i++){ 
-	   if(corn[i].oa_flag){
-	   
-    	   set_rotated_pentagon_pts(pol_corn_pts, CORN_RADIUS, 
-    	                            corn[i].x, corn[i].y, corn[i].special_poly);
-    	                                    
-	      if (is_point_in_poly(&pol_corn, x, y)) {
-		      NOTICE(E_USER_STRAT, " dst is in corn %d", i);
-		      return -1;
-	      }
-	   }
-   }
-
-	
-	 if (is_point_in_poly(pol_rampe, x, y)) {
-	   NOTICE(E_USER_STRAT, " dst is in rampe");
-	   return END_ERROR;
-   }
-
-  if (is_point_in_poly(pol_opp, x, y)) {
+	/* check if destination is in opponent */
+  	if (is_point_in_poly(pol_opp, x, y)) {
 		NOTICE(E_USER_STRAT, " dst is in opp");
 		return END_ERROR;
 	}
@@ -830,60 +780,75 @@ static int8_t __goto_and_avoid(int16_t x, int16_t y,
 	/* now start to avoid */
 	while (opp_w && opp_l) {
 
-		/* robot_pt is not updated if it fails */
-		ret = escape_from_poly(&robot_pt,
+		/* robot_pt is not updated if it fails */		
+		/* ret = escape_from_poly(&robot_pt,
 							 &pol_rampe[0],
 				       opp_x, opp_y, opp_w, opp_l, 
 				       pol_opp);
-				       
+		*/
+
+		ret = 0;	/* XXX skip escape from poly */
+
 		if (ret == 0) {
 
- repeat_oa:
- 
+/* XXX changed for continue */
+// repeat_oa:
+ 			/* reset and set start and end points */
 			oa_reset();
 			oa_start_end_points(robot_pt.x, robot_pt.y, x, y);
-			/* oa_dump(); */
+			//oa_dump();
 	
+			/* proccesing path */
 			len = oa_process();
 	
-			if (len > 0){
-				/* any corn else in path? */
-				num_corn_in_path_save = num_corn_in_path;
+			if (len > 0) {
+
+				/* check if there are any more slots in path */
+				num_slots_in_path_save = num_slots_in_path;
             p = oa_get_path();
-            set_corns_poly_in_path(&pol_corn_in_path[0], robot_pt.x, robot_pt.y, p->x, p->y);
+            
+            /* loop for all pair of path points */
+            set_slots_poly_in_path(&pol_slots_in_path[0], robot_pt.x, robot_pt.y, p->x, p->y, x, y);
          	for (i=0 ; i<(len-1) ; i++) {
-               set_corns_poly_in_path(&pol_corn_in_path[0], p->x, p->y, (p+1)->x, (p+1)->y);
-               p++;
+	            set_slots_poly_in_path(&pol_slots_in_path[0], p->x, p->y, (p+1)->x, (p+1)->y, x, y);
+	            p++;
 				}
-								
-				if(num_corn_in_path_save != num_corn_in_path){
-   				NOTICE(E_USER_STRAT,"repeat oa");   				
-				   goto *p_repeat_oa;
+				
+				/* if there are new slots in path repeat oa */
+				if(num_slots_in_path_save != num_slots_in_path){
+   				NOTICE(E_USER_STRAT,"new slots in path");
+					continue;   				
+				   //goto *p_repeat_oa;
 				}
 				else
 				   break;
 			}
-			else 
-			if(len >= 0)
+			else if(len == 0)
 			   break;
 		}
+
+		/* len < 0, try reduce opponent to get a valid path */
 		if (distance_between(robot_pt.x, robot_pt.y, opp_x, opp_y) < REDUCE_POLY_THRES ) {
-			if (opp_w == 0)
+			if (opp_w == 0) {
 				opp_l /= 2;
+			}
+
 			opp_w /= 2;
+
+			NOTICE(E_USER_STRAT, "reducing opponent %d %d", opp_w, opp_l);
+			set_opponent_poly(pol_opp, &robot_pt, opp_w, opp_l);
 		}
 		else {
 			NOTICE(E_USER_STRAT, "oa_process() returned %d", len);
 			return END_ERROR;
 		}
-
-		NOTICE(E_USER_STRAT, "reducing opponent %d %d", opp_w, opp_l);
-		set_opponent_poly(pol_opp, &robot_pt, opp_w, opp_l);
 	}
 	
+	/* execute path */
 	p = oa_get_path();
 	for (i=0 ; i<len ; i++) {
 
+#ifndef HOST_VERSION
 		/* if the point is in front of us fordward else backward*/
 		abs_xy_to_rel_da(p->x, p->y, &d, &a);
 		
@@ -921,12 +886,19 @@ static int8_t __goto_and_avoid(int16_t x, int16_t y,
 		else if (!TRAJ_SUCCESS(ret)) {
 			return ret;
 		}
+
+#endif /* HOST_VERSION */
+
+		DEBUG(E_USER_STRAT, "With avoidance %d: x=%d y=%d", i, p->x, p->y);		
+
+		/* next point */
 		p++;
 	}
 	
 	return END_TRAJ;
 }
 
+#ifndef HOST_VERSION
 /* go forward to a x,y point. use current speed for that */
 uint8_t goto_and_avoid_forward(int16_t x, int16_t y, uint8_t flags_intermediate,
 			       uint8_t flags_final)
@@ -956,3 +928,144 @@ uint8_t goto_and_avoid(int16_t x, int16_t y, uint8_t flags_intermediate,
 //		return __goto_and_avoid(x, y, flags_intermediate,
 //					flags_final, 0);
 }
+
+#endif
+
+
+
+
+#if 0
+void set_rotated_pentagon(poly_t *pol, int16_t radius,
+			      int16_t x, int16_t y, uint8_t special)
+{
+
+	double c_a, s_a;
+	uint8_t i;
+	double px1, py1, px2, py2;
+	double a_rad;
+
+	//a_rad = atan2(y - robot_y, x - robot_x);
+   a_rad = 0;
+
+	/* generate pentagon  */
+	c_a = cos(-2*M_PI/CORN_EDGE_NUMBER);
+	s_a = sin(-2*M_PI/CORN_EDGE_NUMBER);
+
+	/*
+	px1 = radius;
+	py1 = 0;
+	*/
+	px1 = radius * cos(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
+	py1 = radius * sin(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
+
+
+	for (i = 0; i < CORN_EDGE_NUMBER; i++){
+		
+		if(special == 1 && (i==0||i==1||i==2))
+		   oa_poly_set_point(pol, x + px1, PLAYGROUND_Y_MAX+2, i);
+		else if(special == 2 && (i==3))
+		   oa_poly_set_point(pol, x + px1, y + py1 - OFFSET_AVOID_RAMPE, i);
+		else if(special == 3 && (i==5))
+		   oa_poly_set_point(pol, x + px1, y + py1 - OFFSET_AVOID_RAMPE, i);
+		else
+		   oa_poly_set_point(pol, x + px1, y + py1, i);
+	
+		
+		px2 = px1*c_a + py1*s_a;
+		py2 = -px1*s_a + py1*c_a;
+
+		px1 = px2;
+		py1 = py2;
+	}
+
+}
+
+void set_rotated_pentagon_pts(point_t *pt, int16_t radius,
+			      int16_t x, int16_t y, uint8_t special)
+{
+
+	double c_a, s_a;
+	uint8_t i;
+	double px1, py1, px2, py2;
+	double a_rad;
+
+	//a_rad = atan2(y - robot_y, x - robot_x);
+   a_rad = 0;
+
+	/* generate pentagon  */
+	c_a = cos(-2*M_PI/CORN_EDGE_NUMBER);
+	s_a = sin(-2*M_PI/CORN_EDGE_NUMBER);
+
+	/*
+	px1 = radius;
+	py1 = 0;
+	*/
+	px1 = radius * cos(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
+	py1 = radius * sin(a_rad + 2*M_PI/(2*CORN_EDGE_NUMBER));
+
+
+	for (i = 0; i < CORN_EDGE_NUMBER; i++){
+	
+	  if(special == 1 && (i==0||i==1||i==2)){
+			pt[i].x = x + px1;
+		  pt[i].y = PLAYGROUND_Y_MAX+2;
+		}
+		else if(special == 2 && (i==3)){
+		  pt[i].x = x + px1;
+		  pt[i].y = y + py1 - OFFSET_AVOID_RAMPE;
+    }
+		else if(special == 3 && (i==5)){
+		  pt[i].x = x + px1;
+		  pt[i].y = y + py1 - OFFSET_AVOID_RAMPE;
+    }
+		else{	
+		  pt[i].x = x + px1;
+		  pt[i].y = y + py1;
+		}   		
+    
+	  px2 = px1*c_a + py1*s_a;
+	  py2 = -px1*s_a + py1*c_a;
+      
+		px1 = px2;
+		py1 = py2;
+	}
+
+}
+
+//#define EDGE_NUMBER 5
+//void set_rotated_pentagon(poly_t *pol, const point_t *robot_pt,
+//			  int16_t radius, int16_t x, int16_t y)
+//{
+//
+//	double c_a, s_a;
+//	uint8_t i;
+//	double px1, py1, px2, py2;
+//	double a_rad;
+//
+//	a_rad = atan2(y - robot_pt->y, x - robot_pt->x);
+//
+//	/* generate pentagon  */
+//	c_a = cos(-2*M_PI/EDGE_NUMBER);
+//	s_a = sin(-2*M_PI/EDGE_NUMBER);
+//
+//	/*
+//	px1 = radius;
+//	py1 = 0;
+//	*/
+//	px1 = radius * cos(a_rad + 2*M_PI/(2*EDGE_NUMBER));
+//	py1 = radius * sin(a_rad + 2*M_PI/(2*EDGE_NUMBER));
+//
+//
+//	for (i = 0; i < EDGE_NUMBER; i++){
+//		oa_poly_set_point(pol, x + px1, y + py1, i);
+//		
+//		px2 = px1*c_a + py1*s_a;
+//		py2 = -px1*s_a + py1*c_a;
+//
+//		px1 = px2;
+//		py1 = py2;
+//	}
+//}
+
+#endif
+

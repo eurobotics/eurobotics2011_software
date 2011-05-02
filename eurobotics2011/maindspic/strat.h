@@ -131,9 +131,14 @@ struct slot_info {
 #define SLOT_SAFE					0x02
 #define SLOT_WALL					0x04
 #define SLOT_CHECK_ONESIDE		0x08
-#define SLOT_VISITED				0x16
+#define SLOT_AVOID				0x16
 #define SLOT_CHECK				0x32
 
+	uint8_t flags_poly_no_pts;
+#define SLOT_POLY_NO_POINT_0	0x01
+#define SLOT_POLY_NO_POINT_1	0x02
+#define SLOT_POLY_NO_POINT_2	0x04
+#define SLOT_POLY_NO_POINT_3	0x08
 };
 
 struct slot_position {
@@ -182,7 +187,7 @@ struct strat_infos {
 extern struct strat_infos strat_infos;
 
 
-#ifndef TEST_OA_HOST
+#ifndef HOST_VERSION
 
 /************************************************************* 
  * Functions headers of strat files
@@ -233,6 +238,10 @@ uint8_t strat_bonus_point(void);
 
 /* add here more strat functions in files */
 
-#endif /* TEST_OA_HOST */
+#else
+
+void strat_set_bounding_box(void);
+
+#endif /* HOST_VERSION */
 
 #endif

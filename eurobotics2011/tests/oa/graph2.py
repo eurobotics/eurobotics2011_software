@@ -4,7 +4,7 @@ import matplotlib
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arrow, Circle, Wedge, Polygon
+from matplotlib.patches import Arrow, Circle, Wedge, Polygon, Rectangle
 from matplotlib.collections import PatchCollection
 import popen2, random
 
@@ -36,12 +36,12 @@ def graph(filename, stx, sty, sta, enx, eny, opx, opy):
     cmd = "./main %d %d %d %d %d %d %d"%(stx, sty, sta, enx, eny, opx, opy)
     o,i = popen2.popen2(cmd)
     i.close()
-    s = o.read(1000000)
+    s = o.read(10000000)
     o.close()
 
     open(filename + ".txt", "w").write(s)
 
-    if len(s) == 1000000:
+    if len(s) == 10000000:
         gloupix()
 
     fig = plt.figure()
@@ -51,45 +51,66 @@ def graph(filename, stx, sty, sta, enx, eny, opx, opy):
     x,y = build_poly([(0,0), (3000,0), (3000,2100), (0,2100)])
     ax.plot(x, y, 'g-')
     
-    x,y = build_poly([(350,300), (2650,300), (2650,1800), (350,1800)])
+    x,y = build_poly([(626,220), (2374,220), (2374,1574), (626,1574)])
     ax.plot(x, y, 'g--')
+     
+    # black lines
+    black_elements = [ Rectangle((400, 0), 50, 2100) ] 
+    black_elements += [ Rectangle((2550, 0), 50, 2100) ] 
     
-    # rampes
-    x,y = build_poly([(740, 500+22), (3000-740,500+22), (3000-740,0), (740,0)])
-    ax.plot(x, y, 'k-')
+    # physical limits
+    black_elements += [ Rectangle((0, 400), 400, 22) ]  
+    black_elements += [ Rectangle((2600, 400), 400, 22) ]
+    
+    black_elements += [ Rectangle((450, 1850), 22, 250) ]
+    black_elements += [ Rectangle((1128, 1850), 22, 250) ]
+    
+    black_elements += [ Rectangle((2528, 1850), 22, 250) ]
+    black_elements += [ Rectangle((1850, 1850), 22, 250) ]
+    
+    black_elements += [ Rectangle((472, 1980), 656, 120) ]
+    black_elements += [ Rectangle((1872, 1980), 656, 120) ]
  
-       
-    # corns
-    patches = [ Circle((150, 2100-(128+250)), 50) ]
-    patches += [ Circle((150, 2100-(128+250*3)), 50) ]
-    patches += [ Circle((150, 2100-(128+250*5)), 50) ]
+    black_elements += [ Circle((975, 525), 50) ]
+    black_elements += [ Circle((975, 1225), 50) ]
 
-    patches += [ Circle((150+450, 2100-(128+250*0)), 50) ]
-    patches += [ Circle((150+450, 2100-(128+250*2)), 50) ]
-    patches += [ Circle((150+450, 2100-(128+250*4)), 50) ]
+    black_elements += [ Circle((2025, 525), 50) ]
+    black_elements += [ Circle((2025, 1225), 50) ]
 
-    patches += [ Circle((150+450*2, 2100-(128+250*1)), 50) ]
-    patches += [ Circle((150+450*2, 2100-(128+250*3)), 50) ]
-
-    patches += [ Circle((150+450*3, 2100-(128+250*0)), 50) ]
-    patches += [ Circle((150+450*3, 2100-(128+250*2)), 50) ]
-
-    patches += [ Circle((3000-150, 2100-(128+250)), 50) ]
-    patches += [ Circle((3000-150, 2100-(128+250*3)), 50) ]
-    patches += [ Circle((3000-150, 2100-(128+250*5)), 50) ]
-
-    patches += [ Circle((3000-(150+450), 2100-(128+250*0)), 50) ]
-    patches += [ Circle((3000-(150+450), 2100-(128+250*2)), 50) ]
-    patches += [ Circle((3000-(150+450), 2100-(128+250*4)), 50) ]
-
-    patches += [ Circle((3000-(150+450*2), 2100-(128+250*1)), 50) ]
-    patches += [ Circle((3000-(150+450*2), 2100-(128+250*3)), 50) ]
+    black_elements += [ Circle((1325, 1925), 50) ]
+    black_elements += [ Circle((1675, 1925), 50) ]
 
     
+    # green areas
+    green_areas = [ Rectangle((0, 422), 400, 1678) ]
+    green_areas += [ Rectangle((2600, 422), 400, 1678) ]
+   
+    # start areas
+    blue_slots = [ Rectangle((0, 0), 400, 400) ]
+    red_slots = [ Rectangle((2600, 0), 400, 400) ]     
+      
+    # slots
+    color = 'blue'
+    for i in range(0,6):
+    
+      if color == 'red':
+         color = 'blue'
+      else:
+         color = 'red'
+         
+      for j in range(0,6):
+         if color == 'red':
+            color = 'blue'
+            red_slots += [ Rectangle((450+(i*350), j*350), 350, 350) ]
+         else:
+            color = 'red'
+            blue_slots += [ Rectangle((450+(i*350), j*350), 350, 350) ]
+         
     poly = None
     poly_wait_pts = 0
     start = None
     path = None
+    patches = []
     for l in s.split("\n"):
         m = re.match("robot at: (-?\d+) (-?\d+) (-?\d+)", l)
         if m:
@@ -139,52 +160,65 @@ def graph(filename, stx, sty, sta, enx, eny, opx, opy):
 
     p = PatchCollection(patches, cmap=matplotlib.cm.jet, alpha=0.4)
     ax.add_collection(p)
+    
+    p = PatchCollection(green_areas, cmap=matplotlib.cm.jet, alpha=0.4,  color='green')
+    ax.add_collection(p)
+    
+    p = PatchCollection(red_slots, cmap=matplotlib.cm.jet, alpha=0.4,  color='red')
+    ax.add_collection(p)
+
+    p = PatchCollection(blue_slots, cmap=matplotlib.cm.jet, alpha=0.4,  color='blue')
+    ax.add_collection(p)
+    
+    p = PatchCollection(black_elements, cmap=matplotlib.cm.jet, alpha=0.4,  color='black')
+    ax.add_collection(p)
+
 
     x,y = build_path(path)
     ax.plot(x, y, 'bo-')
 
     ax.grid()
     ax.set_xlim(-100, 3100)
-    ax.set_ylim(-100, 2200)
+    ax.set_ylim(-100, 2500)
     #ax.set_title('spline paths')
     #plt.show()
     fig.savefig(filename)
 
 # args are: startx, starty, starta, endx, endy, oppx, oppy
 graph("normal1.png", 245, 45+190, 90, 2625, 1597, -1000, 0)
-graph("normal2.png", 245, 45+190, 90, 2625, 1097, -1000, 0)
-graph("normal3.png", 2625, 1597, -29, 2625, 1097, -1000, 0)
+#graph("normal2.png", 245, 45+190, 90, 2625, 1097, -1000, 0)
+#graph("normal3.png", 2625, 1597, -29, 2625, 1097, -1000, 0)
 
-# corns in path
-graph("inpath1.png", 350, 1800, 0, 3000-350, 1800, -1000, 0)
-graph("inpath2.png", 350, 1500, 0, 3000-350, 1500, -1000, 0)
-graph("inpath3.png", 350, 1250, 0, 3000-350, 1250, -1000, 0)
-graph("inpath4.png", 350, 1000, 0, 3000-350, 1000, -1000, 0)
+## corns in path
+#graph("inpath1.png", 350, 1800, 0, 3000-350, 1800, -1000, 0)
+#graph("inpath2.png", 350, 1500, 0, 3000-350, 1500, -1000, 0)
+#graph("inpath3.png", 350, 1250, 0, 3000-350, 1250, -1000, 0)
+#graph("inpath4.png", 350, 1000, 0, 3000-350, 1000, -1000, 0)
 
-# in corn
-graph("incorn1.png", 245, 45+190, 90, 2000, 1400 , -1000, 0)
+## in corn
+#graph("incorn1.png", 245, 45+190, 90, 2000, 1400 , -1000, 0)
 
-# in rampe
-graph("inrampe1.png", 245, 45+190, 90, 1000, 500 , -1000, 0)
+## in rampe
+#graph("inrampe1.png", 245, 45+190, 90, 1000, 500 , -1000, 0)
 
-# in opponent
-graph("inopp1.png", 400, 400, 90, 1500, 1000 , 1500, 1000)
+## in opponent
+#graph("inopp1.png", 400, 400, 90, 1500, 1000 , 1500, 1000)
 
-# scapes
-graph("escape1.png", 2000, 1400, 0, 2625, 1597, -1000, 0)
-graph("escape2.png", 500, 1500, 0, 2625, 1597, -1000, 0)
-graph("escape3.png", 100, 100, 0, 2625, 1597, -1000, 0)
-graph("escape4.png", 1000, 1600, 0, 2625, 1597, -1000, 0)
-graph("escape5.png", 350, 1000, 0, 3000-350, 1000, 700, 1200)
+## scapes
+#graph("escape1.png", 2000, 1400, 0, 2625, 1597, -1000, 0)
+#graph("escape2.png", 500, 1500, 0, 2625, 1597, -1000, 0)
+#graph("escape3.png", 100, 100, 0, 2625, 1597, -1000, 0)
+#graph("escape4.png", 1000, 1600, 0, 2625, 1597, -1000, 0)
+#graph("escape5.png", 350, 1000, 0, 3000-350, 1000, 700, 1200)
 
-# oa opponent
-graph("oaopp1.png", 400, 400, 90, 2625, 1597 , 1500, 1000)
-graph("oaopp2.png", 400, 400, 90, 3000-400, 400 , 1500, 1000)
-graph("oaopp3.png", 375, 1597, -90, 2625, 1597 , 1500, 1000)
-graph("oaopp4.png", 375, 1097, -90, 2625, 1597 , 1500, 1000)
-graph("oaopp5.png", 375, 1097, -90, 2625, 1597 , 1500, 1222)
-graph("oaopp6.png", 375, 1722, -90, 2625, 1597 , 1500, 1222)
-graph("oaopp7.png", 375, 375, -90, 2625, 1597 , 1500, 1222)
+## oa opponent
+#graph("oaopp1.png", 400, 400, 90, 2625, 1597 , 1500, 1000)
+#graph("oaopp2.png", 400, 400, 90, 3000-400, 400 , 1500, 1000)
+#graph("oaopp3.png", 375, 1597, -90, 2625, 1597 , 1500, 1000)
+#graph("oaopp4.png", 375, 1097, -90, 2625, 1597 , 1500, 1000)
+#graph("oaopp5.png", 375, 1097, -90, 2625, 1597 , 1500, 1222)
+#graph("oaopp6.png", 375, 1722, -90, 2625, 1597 , 1500, 1222)
+#graph("oaopp7.png", 375, 375, -90, 2625, 1597 , 1500, 1222)
 
 
 # pas d'echappement possible... petit carre
