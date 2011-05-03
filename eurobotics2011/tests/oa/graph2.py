@@ -51,7 +51,7 @@ def graph(filename, stx, sty, sta, enx, eny, opx, opy):
     x,y = build_poly([(0,0), (3000,0), (3000,2100), (0,2100)])
     ax.plot(x, y, 'g-')
     
-    x,y = build_poly([(626,220), (2374,220), (2374,1574), (626,1574)])
+    x,y = build_poly([(625,220), (2375,220), (2375,1575), (625,1575)])
     ax.plot(x, y, 'g--')
      
     # black lines
@@ -185,58 +185,24 @@ def graph(filename, stx, sty, sta, enx, eny, opx, opy):
     fig.savefig(filename)
 
 # args are: startx, starty, starta, endx, endy, oppx, oppy
-graph("normal1.png", 245, 45+190, 90, 2625, 1597, -1000, 0)
-#graph("normal2.png", 245, 45+190, 90, 2625, 1097, -1000, 0)
-#graph("normal3.png", 2625, 1597, -29, 2625, 1097, -1000, 0)
 
-## corns in path
-#graph("inpath1.png", 350, 1800, 0, 3000-350, 1800, -1000, 0)
-#graph("inpath2.png", 350, 1500, 0, 3000-350, 1500, -1000, 0)
-#graph("inpath3.png", 350, 1250, 0, 3000-350, 1250, -1000, 0)
-#graph("inpath4.png", 350, 1000, 0, 3000-350, 1000, -1000, 0)
+# paths to one slot from all others
+random.seed(5)
+for i in range(0,6):
+   for j in range(0,5):
+      x = 0
+      y = 0
+      name = "slot_%d%d_to_%d%d.png"%(i,j,x,y)
+      startx = 625 + x*350
+      starty = 175 + y*350
+      endx = 625 + i*350
+      endy = 175 + j*350
+      oppx = 625 + int(random.randint(0,6))*350
+      oppy = 175 + int(random.randint(0,5))*350
+      print (name, startx, starty, 0, endx, endy, oppx, oppy)
+      graph(name, startx, starty, 0, endx, endy, oppx, oppy)
 
-## in corn
-#graph("incorn1.png", 245, 45+190, 90, 2000, 1400 , -1000, 0)
-
-## in rampe
-#graph("inrampe1.png", 245, 45+190, 90, 1000, 500 , -1000, 0)
-
-## in opponent
-#graph("inopp1.png", 400, 400, 90, 1500, 1000 , 1500, 1000)
-
-## scapes
-#graph("escape1.png", 2000, 1400, 0, 2625, 1597, -1000, 0)
-#graph("escape2.png", 500, 1500, 0, 2625, 1597, -1000, 0)
-#graph("escape3.png", 100, 100, 0, 2625, 1597, -1000, 0)
-#graph("escape4.png", 1000, 1600, 0, 2625, 1597, -1000, 0)
-#graph("escape5.png", 350, 1000, 0, 3000-350, 1000, 700, 1200)
-
-## oa opponent
-#graph("oaopp1.png", 400, 400, 90, 2625, 1597 , 1500, 1000)
-#graph("oaopp2.png", 400, 400, 90, 3000-400, 400 , 1500, 1000)
-#graph("oaopp3.png", 375, 1597, -90, 2625, 1597 , 1500, 1000)
-#graph("oaopp4.png", 375, 1097, -90, 2625, 1597 , 1500, 1000)
-#graph("oaopp5.png", 375, 1097, -90, 2625, 1597 , 1500, 1222)
-#graph("oaopp6.png", 375, 1722, -90, 2625, 1597 , 1500, 1222)
-#graph("oaopp7.png", 375, 375, -90, 2625, 1597 , 1500, 1222)
-
-
-# pas d'echappement possible... petit carre
-#graph("small_square1.png", 500, 300, 0, 2500, 1700, 500, 500)
-#graph("small_square2.png", 500, 1000, 0, 2500, 1700, 500, 1000)
-#graph("small_square3.png", 590, 1000, 0, 2500, 1700, 500, 1000)
-#graph("small_square4.png", 560, 1000, 0, 2500, 1700, 300, 1000)
-#graph("small_square5.png", 550, 1000, 0, 2500, 1700, 250, 1000)
-#graph("small_square6.png", 5750, 1000, 0, 2500, 1700, 2750, 1000)
-
-# impossible
-#graph("impossible1.png", 500, 300, 0, 2700, 1800, 2700, 1800)
-#graph("impossible2.png", 500, 300, 0, 2700, 1800, 2400, 1500)
-#graph("impossible3.png", 500, 300, 0, 1500, 1150, 2700, 1800 )
-
-#test current
-#graph("current01.png", 1274,709, 58, 1312, 400, 2274, 1241 )
-
+ 
 
 #random.seed(0)
 #for i in range(100):

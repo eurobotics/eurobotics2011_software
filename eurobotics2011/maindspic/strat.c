@@ -146,10 +146,10 @@ struct strat_infos strat_infos = {
 void strat_set_bounding_box(void)
 {
 
-	strat_infos.area_bbox.x1 = 626;
+	strat_infos.area_bbox.x1 = 625;
 	strat_infos.area_bbox.y1 = 220;
-	strat_infos.area_bbox.x2 = 2374;
-	strat_infos.area_bbox.y2 = 1574;
+	strat_infos.area_bbox.x2 = 2375;
+	strat_infos.area_bbox.y2 = 1575;
 
 	polygon_set_boundingbox(strat_infos.area_bbox.x1,
 				strat_infos.area_bbox.y1,

@@ -89,8 +89,8 @@
 #define O_LENGTH 550
 #else
 /* /!\ half size */
-#define O_WIDTH  360
-#define O_LENGTH 360
+#define O_WIDTH  340
+#define O_LENGTH 340
 #endif
 
 #define CENTER_X 1500
@@ -131,6 +131,25 @@ int16_t distance_between(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 }
 #endif
 
+/* normalize vector from origin */
+double norm(double x, double y)
+{
+	return sqrt(x*x + y*y);
+}
+
+
+/* rotate point */
+void rotate(double *x, double *y, double rot)
+{
+	double l, a;
+	
+	l = norm(*x, *y);
+	a = atan2(*y, *x);
+
+	a += rot;
+	*x = l * cos(a);
+	*y = l * sin(a);
+}
 
 
 /* set rotated poly relative to robot coordinates */
@@ -144,16 +163,13 @@ void set_rotated_poly(poly_t *pol, const point_t *robot_pt,
 	/* calcule relative angle to robot */
 	a_rad = atan2(y - robot_pt->y, x - robot_pt->x);
 
-
-	/* XXX the rotation is commented */
-
 	DEBUG(E_USER_STRAT, "%s() x,y=%d,%d a_rad=%2.2f", 
 	      __FUNCTION__, x, y, a_rad);
 
 	/* point 1 */
 	tmp_x = w;
 	tmp_y = l;
-	//rotate(&tmp_x, &tmp_y, a_rad);
+	rotate(&tmp_x, &tmp_y, a_rad);
 	tmp_x += x;
 	tmp_y += y;
 	oa_poly_set_point(pol, tmp_x, tmp_y, 0);
@@ -161,7 +177,7 @@ void set_rotated_poly(poly_t *pol, const point_t *robot_pt,
 	/* point 2 */
 	tmp_x = -w;
 	tmp_y = l;
-	//rotate(&tmp_x, &tmp_y, a_rad);
+	rotate(&tmp_x, &tmp_y, a_rad);
 	tmp_x += x;
 	tmp_y += y;
 	oa_poly_set_point(pol, tmp_x, tmp_y, 1);
@@ -169,7 +185,7 @@ void set_rotated_poly(poly_t *pol, const point_t *robot_pt,
 	/* point 3 */
 	tmp_x = -w;
 	tmp_y = -l;
-	//rotate(&tmp_x, &tmp_y, a_rad);
+	rotate(&tmp_x, &tmp_y, a_rad);
 	tmp_x += x;
 	tmp_y += y;
 	oa_poly_set_point(pol, tmp_x, tmp_y, 2);
@@ -177,7 +193,7 @@ void set_rotated_poly(poly_t *pol, const point_t *robot_pt,
 	/* point 4 */
 	tmp_x = w;
 	tmp_y = -l;
-	//rotate(&tmp_x, &tmp_y, a_rad);
+	rotate(&tmp_x, &tmp_y, a_rad);
 	tmp_x += x;
 	tmp_y += y;
 	oa_poly_set_point(pol, tmp_x, tmp_y, 3);
@@ -212,7 +228,7 @@ uint8_t set_rhombus_pts(point_t *pt,
 
 	/* loop for rhrombus points */
 	for(i=0, j=0; i<4; i++) {
-			
+#if 0			
 		/* if there was more than two disable point consecuvely before */
 		if(i==0) {
 			/* two no point at position 0 and  3 */
@@ -249,7 +265,7 @@ uint8_t set_rhombus_pts(point_t *pt,
 		if(flags_no_point & (1<<i)) {
 				continue;
 		}
-	
+#endif	
 		/* add point of rhombus */
 		if(i==0) {				
 			pt[j].x = x + w;
@@ -267,7 +283,7 @@ uint8_t set_rhombus_pts(point_t *pt,
 			pt[j].x = x;
 			pt[j].y = y - l;
 		}
-		
+				
 		/* next point */
 		j++;
 	}
@@ -290,6 +306,7 @@ void set_poly_pts(poly_t *pol_dest, poly_t *pol_org)
 /* set slot polys that are in direct path between two point */
 void set_slots_poly_in_path(poly_t **pol,
 									 int32_t x0, int32_t y0, int32_t x1, int32_t y1,
+									 int16_t org_x, int16_t org_y,
 									 int16_t dst_x, int16_t dst_y)
 {
 	uint8_t i, j, k;
@@ -321,9 +338,9 @@ void set_slots_poly_in_path(poly_t **pol,
 	
 #ifndef HOST_VERSION		
 			if((strat_infos.slot[i][j].flags & SLOT_AVOID) 
-				& (strat_infos.slot[i][j].color == SLOT_BLUE)) /* TODO: get our color */
+				& (strat_infos.slot[i][j].color == get_our_color())) /* TODO: get our color */
 #else
-			if((strat_infos.slot[i][j].color == SLOT_BLUE)) /* TODO: get our color */
+			if((strat_infos.slot[i][j].color == SLOT_RED)) /* XXX: test one color */
 #endif
 			{  
 				/* set points */									
@@ -333,17 +350,26 @@ void set_slots_poly_in_path(poly_t **pol,
 														strat_infos.slot[i][j].flags_poly_no_pts);
 
 				/* skip slot if destination point is included */
-				//if (is_point_in_poly(&poly_slot, dst_x, dst_y)) {
-		      //	NOTICE(E_USER_STRAT, " dst is in our color slot[%d][%d] %d", i, j, k);
-		      //	continue;
-	      	//}
+				if (is_point_in_poly(&poly_slot, dst_x, dst_y)) {
+		      	NOTICE(E_USER_STRAT, " dst is in our color slot[%d][%d] %d", i, j, k);
+		      	NOTICE(E_USER_STRAT, " skip slot");
+		      	continue;
+	      	}
+	      	
+	      	/* skip slot if origin point is included */
+				if (is_point_in_poly(&poly_slot, org_x, org_y)) {
+		      	NOTICE(E_USER_STRAT, " we are in our color slot[%d][%d] %d", i, j, k);
+		      	NOTICE(E_USER_STRAT, " skip slot");
+		      	continue;
+	      	}
+
 
 				/* check if poly is in direct path */
 		    	ret = is_crossing_poly(init_pt, dst_pt, &intersect_slot_pt, &poly_slot);
 		                 
 		                 
-		      /* XXX test poly generation */
-		      ret = 1;               
+		      /* XXX test all poly generation */
+		      //ret = 1;               
 		                           
 				/* if poly is in path set it */
 				if(ret==1 && slot_in_path_flag[k]==0)
@@ -710,9 +736,8 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 	point_t p_dst, robot_pt;
 	
 	void * p_retry;
-//	void * p_repeat_oa;
 	p_retry = &&retry;
-//	p_repeat_oa = &&repeat_oa;
+
 	
 #ifndef HOST_VERSION	
 	DEBUG(E_USER_STRAT, "%s(%d,%d) flags_i=%x flags_f=%x forw=%d",
@@ -754,14 +779,16 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
   
 	/* add opponent poly */
 	pol_opp = oa_new_poly(4);
-	set_opponent_poly(pol_opp, &robot_pt, O_WIDTH, O_LENGTH); 	/* XXX: disable rotated poly  */
-																					/* TODO: enable rotated poly? */
+	set_opponent_poly(pol_opp, &robot_pt, O_WIDTH, O_LENGTH);
+																				
 
 	/* if we are not in the limited area, try to go in it. */
 	ret = go_in_area(&robot_pt);
 
 	/* set slots in path beetween robot and destination point */ 
-	set_slots_poly_in_path(&pol_slots_in_path[0], robot_pt.x, robot_pt.y, x, y, x, y);
+	set_slots_poly_in_path(&pol_slots_in_path[0],
+	                       robot_pt.x, robot_pt.y, x, y, 
+	                       robot_pt.x, robot_pt.y, x, y);
 
 	/* check that destination is in playground */
 	p_dst.x = x;
@@ -780,6 +807,7 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 	/* now start to avoid */
 	while (opp_w && opp_l) {
 
+      /* TODO: escape from opponent */
 		/* robot_pt is not updated if it fails */		
 		/* ret = escape_from_poly(&robot_pt,
 							 &pol_rampe[0],
@@ -791,8 +819,6 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 
 		if (ret == 0) {
 
-/* XXX changed for continue */
-// repeat_oa:
  			/* reset and set start and end points */
 			oa_reset();
 			oa_start_end_points(robot_pt.x, robot_pt.y, x, y);
@@ -808,9 +834,18 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
             p = oa_get_path();
             
             /* loop for all pair of path points */
-            set_slots_poly_in_path(&pol_slots_in_path[0], robot_pt.x, robot_pt.y, p->x, p->y, x, y);
+            set_slots_poly_in_path(&pol_slots_in_path[0], 
+                                   robot_pt.x, robot_pt.y, 
+                                   p->x, p->y,
+                                   robot_pt.x, robot_pt.y, 
+                                   x, y);
+                                   
          	for (i=0 ; i<(len-1) ; i++) {
-	            set_slots_poly_in_path(&pol_slots_in_path[0], p->x, p->y, (p+1)->x, (p+1)->y, x, y);
+	            set_slots_poly_in_path(&pol_slots_in_path[0],
+	                                   p->x, p->y, 
+	                                   (p+1)->x, (p+1)->y, 
+	                                   robot_pt.x, robot_pt.y,
+	                                   x, y);
 	            p++;
 				}
 				
