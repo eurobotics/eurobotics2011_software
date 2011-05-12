@@ -127,18 +127,16 @@ struct slot_info {
 #define SLOT_PRIO_SAFE		6
 
 	uint16_t flags;
-#define SLOT_BONUS				0x01
-#define SLOT_SAFE					0x02
-#define SLOT_WALL					0x04
-#define SLOT_CHECK_ONESIDE		0x08
-#define SLOT_AVOID				0x16
-#define SLOT_CHECK				0x32
+#define SLOT_BONUS				1
+#define SLOT_SAFE					2
+#define SLOT_WALL					4
+#define SLOT_CHECK_ONESIDE		8
+#define SLOT_AVOID				16
+#define SLOT_CHECK				32
 
-	uint8_t flags_poly_no_pts;
-#define SLOT_POLY_NO_POINT_0	0x01
-#define SLOT_POLY_NO_POINT_1	0x02
-#define SLOT_POLY_NO_POINT_2	0x04
-#define SLOT_POLY_NO_POINT_3	0x08
+	uint8_t flags_poly;
+#define SLOT_POLY_SQUARE	1
+
 };
 
 struct slot_position {

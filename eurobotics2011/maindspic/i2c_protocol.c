@@ -198,6 +198,8 @@ void i2c_poll_slaves(void *dummy)
 		/* XXX wait send reset */
 		//wait_ms(10);
 
+		set_uart_mux(BEACON_CHANNEL);
+
 		/* reset local i2c */
 		i2c_reset();
 		return;
@@ -240,6 +242,7 @@ void i2c_poll_slaves(void *dummy)
 	running_op = OP_POLL;
 	
 	/* poll status of gpios and microcontrollers */
+	//i2c_state = I2C_REQ_SLAVEDSPIC;
 	switch(i2c_state) {
 
 		case I2C_READ_GPIOS_01_VALUES:

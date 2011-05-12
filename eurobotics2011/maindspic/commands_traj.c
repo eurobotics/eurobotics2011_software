@@ -530,12 +530,22 @@ static void cmd_goto_parsed(void * parsed_result, void * data)
 		trajectory_goto_xy_abs(&mainboard.traj, res->arg2, res->arg3);
 	}
 	else if (!strcmp_P(res->arg1, PSTR("avoid"))) {
-		err = goto_and_avoid_forward(res->arg2, res->arg3, 0xFF, 0xFF);
+		err = goto_and_avoid_forward(res->arg2, res->arg3, TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 		if (err != END_TRAJ && err != END_NEAR)
 			strat_hardstop();
 	}
 	else if (!strcmp_P(res->arg1, PSTR("avoid_bw"))) {
-		err = goto_and_avoid_backward(res->arg2, res->arg3, 0xFF, 0xFF);
+		err = goto_and_avoid_backward(res->arg2, res->arg3, TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+		if (err != END_TRAJ && err != END_NEAR)
+			strat_hardstop();
+	}
+	else if (!strcmp_P(res->arg1, PSTR("avoid_empty"))) {
+		err = goto_and_avoid_empty_side(res->arg2, res->arg3, TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+		if (err != END_TRAJ && err != END_NEAR)
+			strat_hardstop();
+	}
+	else if (!strcmp_P(res->arg1, PSTR("avoid_busy"))) {
+		err = goto_and_avoid_busy_side(res->arg2, res->arg3, TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 		if (err != END_TRAJ && err != END_NEAR)
 			strat_hardstop();
 	}
@@ -549,7 +559,7 @@ static void cmd_goto_parsed(void * parsed_result, void * data)
 		trajectory_d_a_rel(&mainboard.traj, res->arg2, res->arg3);
 	}
 	t1 = time_get_us2();
-	while ((err = test_traj_end(0xFF)) == 0) {
+	while ((err = test_traj_end(TRAJ_FLAGS_NO_NEAR)) == 0) {
 		t2 = time_get_us2();
 		if (t2 - t1 > 20000) {
 			dump_cs_debug("angle", &mainboard.angle.cs);
@@ -582,7 +592,7 @@ parse_pgm_inst_t cmd_goto1 = {
 	},
 };
 
-prog_char str_goto_arg1_b[] = "xy_rel#xy_abs#xy_abs_fow#xy_abs_back#da_rel#a_to_xy#avoid#avoid_bw#a_behind_xy";
+prog_char str_goto_arg1_b[] = "xy_rel#xy_abs#xy_abs_fow#xy_abs_back#da_rel#a_to_xy#avoid#avoid_bw#a_behind_xy#avoid_empty#avoid_busy";
 parse_pgm_token_string_t cmd_goto_arg1_b = TOKEN_STRING_INITIALIZER(struct cmd_goto_result, arg1, str_goto_arg1_b);
 parse_pgm_token_num_t cmd_goto_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_goto_result, arg3, INT32);
 

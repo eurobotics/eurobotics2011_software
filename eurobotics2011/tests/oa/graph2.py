@@ -51,7 +51,7 @@ def graph(filename, stx, sty, sta, enx, eny, opx, opy):
     x,y = build_poly([(0,0), (3000,0), (3000,2100), (0,2100)])
     ax.plot(x, y, 'g-')
     
-    x,y = build_poly([(625,220), (2375,220), (2375,1575), (625,1575)])
+    x,y = build_poly([(945,495), (2055,495), (2055,1575), (945,1575)])
     ax.plot(x, y, 'g--')
      
     # black lines
@@ -188,17 +188,19 @@ def graph(filename, stx, sty, sta, enx, eny, opx, opy):
 
 # paths to one slot from all others
 random.seed(5)
-for i in range(0,6):
-   for j in range(0,5):
-      x = 0
-      y = 0
-      name = "slot_%d%d_to_%d%d.png"%(i,j,x,y)
-      startx = 625 + x*350
+for i in range(1,6):
+   for j in range(1,5):
+      x = 2
+      y = 1
+      name = "slot_%d%d_to_%d%d.png"%(x-1,y-1,i+1,j)
+      startx = 625 + (x-1)*350
       starty = 175 + y*350
       endx = 625 + i*350
       endy = 175 + j*350
-      oppx = 625 + int(random.randint(0,6))*350
-      oppy = 175 + int(random.randint(0,5))*350
+      #oppx = 625 + int(random.randint(2,5))*350
+      #oppy = 175 + int(random.randint(2,4))*350
+      oppx = -1000
+      oppy = 0
       print (name, startx, starty, 0, endx, endy, oppx, oppy)
       graph(name, startx, starty, 0, endx, endy, oppx, oppy)
 

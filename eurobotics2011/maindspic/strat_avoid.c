@@ -65,6 +65,8 @@
 
 #else
 
+#define TEST_ALL_POLYS
+
 #define E_USER_STRAT 200
 
 #define END_TRAJ       1 /* traj successful */
@@ -82,6 +84,7 @@
 #define SLOT_NUMBER			((NB_SLOT_X-2)*(NB_SLOT_Y-1))	/* all less green areas and safe zones */
 #define SLOT_EDGE_NUMBER   4
 #define SLOT_RADIUS        340
+#define SLOT_MARGIN        320
 
 #ifdef HOMOLOGATION
 /* /!\ half size */
@@ -89,7 +92,7 @@
 #define O_LENGTH 550
 #else
 /* /!\ half size */
-#define O_WIDTH  340
+#define O_WIDTH  245
 #define O_LENGTH 340
 #endif
 
@@ -131,14 +134,17 @@ int16_t distance_between(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 }
 #endif
 
+
 /* normalize vector from origin */
+#if HOST_VERSION
 double norm(double x, double y)
 {
 	return sqrt(x*x + y*y);
 }
-
+#endif
 
 /* rotate point */
+#ifdef HOST_VERSION
 void rotate(double *x, double *y, double rot)
 {
 	double l, a;
@@ -150,7 +156,7 @@ void rotate(double *x, double *y, double rot)
 	*x = l * cos(a);
 	*y = l * sin(a);
 }
-
+#endif
 
 /* set rotated poly relative to robot coordinates */
 void set_rotated_poly(poly_t *pol, const point_t *robot_pt, 
@@ -221,51 +227,14 @@ void set_opponent_poly(poly_t *pol, const point_t *robot_pt, int16_t w, int16_t 
 /* set point of a rhombus, used for slot polys */
 uint8_t set_rhombus_pts(point_t *pt,
                		int16_t w, int16_t l,
-			      		int16_t x, int16_t y,
-			      		uint8_t flags_no_point)
+			      		int16_t x, int16_t y)
 {
+#ifdef SET_RHOMBUS_PTS_OLD_VERSION
 	uint8_t i, j;
 
 	/* loop for rhrombus points */
 	for(i=0, j=0; i<4; i++) {
-#if 0			
-		/* if there was more than two disable point consecuvely before */
-		if(i==0) {
-			/* two no point at position 0 and  3 */
-			if( (flags_no_point & SLOT_POLY_NO_POINT_0) 
-				&& (flags_no_point & SLOT_POLY_NO_POINT_3) ) {
-			
-				/* add point at origin */
-				pt[j].x = x;
-				pt[j].y = y;
-				
-				/* next point */
-				j++;
-				
-				continue;
-			}
-		}
-		else {
-			/* two no point consecutively */
-			if( (flags_no_point & (1<<i)) 
-				&& (flags_no_point & (1<<(i-1))) ) {
-			
-				/* add point at origin */
-				pt[j].x = x;
-				pt[j].y = y;
-				
-				/* next point */
-				j++;
-				
-				continue;
-			}
-		}
-
-		/* skip lonly no point */		
-		if(flags_no_point & (1<<i)) {
-				continue;
-		}
-#endif	
+	
 		/* add point of rhombus */
 		if(i==0) {				
 			pt[j].x = x + w;
@@ -287,9 +256,54 @@ uint8_t set_rhombus_pts(point_t *pt,
 		/* next point */
 		j++;
 	}
-	
+		
 	/* return number of points */
-	return j;		
+	return j;	
+	
+	
+#else
+	
+	/* points of rhombus */
+		
+	pt[0].x = x + w;
+	pt[0].y = y;
+			
+	pt[1].x = x;
+	pt[1].y = y + l;
+		
+	pt[2].x = x - w;
+	pt[2].y = y;
+				
+	pt[3].x = x;
+	pt[3].y = y - l;
+	  
+	return 4;
+
+#endif	
+
+}
+
+/* set point of a square */
+uint8_t set_square_pts(point_t *pt,
+               		int16_t w, int16_t l,
+			      		int16_t x, int16_t y)
+{
+	
+	/* points of rhombus */
+		
+	pt[0].x = x + w;
+	pt[0].y = y + l;
+			
+	pt[1].x = x - w;
+	pt[1].y = y + l;
+		
+	pt[2].x = x - w;
+	pt[2].y = y - l;
+				
+	pt[3].x = x + w;
+	pt[3].y = y - l;
+	  
+	return 4;
 }
 
 /* set oa poly point */
@@ -322,8 +336,8 @@ void set_slots_poly_in_path(poly_t **pol,
 	dst_pt.y = y1;
 
 	//NOTICE(E_USER_STRAT,"set_slots_poly_in_path");
-   //NOTICE(E_USER_STRAT,"init_pt (%"PRIi32"  %"PRIi32")", init_pt.x, init_pt.y);
- 	//NOTICE(E_USER_STRAT,"dst_pt (%"PRIi32", %"PRIi32")", dst_pt.x, dst_pt.y);
+   //NOTICE(E_USER_STRAT,"init_pt (%"PRId32"  %"PRId32")", init_pt.x, init_pt.y);
+ 	//NOTICE(E_USER_STRAT,"dst_pt (%"PRId32", %"PRId32")", dst_pt.x, dst_pt.y);
 
 	/* init poly structure */
 	poly_slot.l = SLOT_EDGE_NUMBER;
@@ -331,31 +345,38 @@ void set_slots_poly_in_path(poly_t **pol,
    
 	/* loop all slots less green areas and safe zones */  
 	k = 0;
-	for(i=1; i<(NB_SLOT_X-1); i++)
+	for(i=2; i<(NB_SLOT_X-2); i++)
 	{
-		for(j=0; j<(NB_SLOT_Y-1); j++)
+		for(j=1; j<(NB_SLOT_Y-1); j++)
 		{			
 	
 #ifndef HOST_VERSION		
-			if((strat_infos.slot[i][j].flags & SLOT_AVOID) 
-				& (strat_infos.slot[i][j].color == get_our_color())) /* TODO: get our color */
+//			if((strat_infos.slot[i][j].flags & SLOT_AVOID) 
+//				& (strat_infos.slot[i][j].color == mainboard.our_color)) /* TODO enable avoid flag */
+			if((strat_infos.slot[i][j].color == mainboard.our_color))
 #else
 			if((strat_infos.slot[i][j].color == SLOT_RED)) /* XXX: test one color */
 #endif
 			{  
-				/* set points */									
-				poly_slot.l = set_rhombus_pts(poly_slot_pts,
-														SLOT_RADIUS, SLOT_RADIUS,
-														strat_infos.slot[i][j].x, strat_infos.slot[i][j].y,
-														strat_infos.slot[i][j].flags_poly_no_pts);
-
+				/* set points */				
+				if(strat_infos.slot[i][j].flags_poly & SLOT_POLY_SQUARE) {
+               poly_slot.l = set_square_pts(poly_slot_pts,
+														  SLOT_MARGIN, SLOT_MARGIN,
+														  strat_infos.slot[i][j].x, strat_infos.slot[i][j].y);									
+				}
+				else {					
+				   poly_slot.l = set_rhombus_pts(poly_slot_pts,
+														   SLOT_RADIUS, SLOT_RADIUS,
+														   strat_infos.slot[i][j].x, strat_infos.slot[i][j].y);
+	         }
+#ifdef SKIP_DST_POLY
 				/* skip slot if destination point is included */
 				if (is_point_in_poly(&poly_slot, dst_x, dst_y)) {
 		      	NOTICE(E_USER_STRAT, " dst is in our color slot[%d][%d] %d", i, j, k);
 		      	NOTICE(E_USER_STRAT, " skip slot");
 		      	continue;
 	      	}
-	      	
+#endif	      	
 	      	/* skip slot if origin point is included */
 				if (is_point_in_poly(&poly_slot, org_x, org_y)) {
 		      	NOTICE(E_USER_STRAT, " we are in our color slot[%d][%d] %d", i, j, k);
@@ -367,10 +388,10 @@ void set_slots_poly_in_path(poly_t **pol,
 				/* check if poly is in direct path */
 		    	ret = is_crossing_poly(init_pt, dst_pt, &intersect_slot_pt, &poly_slot);
 		                 
-		                 
-		      /* XXX test all poly generation */
-		      //ret = 1;               
-		                           
+#ifdef TEST_ALL_POLYS		                 
+		      /* test all poly generation */
+		      ret = 1;               
+#endif		                           
 				/* if poly is in path set it */
 				if(ret==1 && slot_in_path_flag[k]==0)
 				{
@@ -411,7 +432,7 @@ static int8_t go_in_area(point_t *robot_pt)
 
 	/* Go in playground */
 	if (!is_in_boundingbox(robot_pt)){
-		NOTICE(E_USER_STRAT, "not in playground %"PRIi32", %"PRIi32"",
+		NOTICE(E_USER_STRAT, "not in playground %"PRId32", %"PRId32"",
 		       robot_pt->x, robot_pt->y);
 
 		poly_area.l = 4;
@@ -429,7 +450,10 @@ static int8_t go_in_area(point_t *robot_pt)
 		poly_pts_area[3].y = strat_infos.area_bbox.y2;
 
 		is_crossing_poly(*robot_pt, center_pt, &dst_pt, &poly_area);
-		NOTICE(E_USER_STRAT, "pt dst %"PRIi32", %"PRIi32"", dst_pt.x, dst_pt.y);
+		NOTICE(E_USER_STRAT, "pt dst %"PRId32", %"PRId32"", dst_pt.x, dst_pt.y);
+
+		NOTICE(E_USER_STRAT, "GOTO %"PRId32",%"PRId32"",
+		       dst_pt.x, dst_pt.y);
 
 		/* scape from poly */
 #ifndef HOST_VERSION		
@@ -438,8 +462,6 @@ static int8_t go_in_area(point_t *robot_pt)
 		robot_pt->x = dst_pt.x;
 		robot_pt->y = dst_pt.y;
 
-		NOTICE(E_USER_STRAT, "GOTO %"PRIi32",%"PRIi32"",
-		       dst_pt.x, dst_pt.y);
 
 		return 1;
 	}
@@ -602,9 +624,9 @@ static int8_t escape_from_poly(point_t *robot_pt,
 	dst_pt.x = robot_pt->x + escape_dx * ESCAPE_VECT_LEN;
 	dst_pt.y = robot_pt->y + escape_dy * ESCAPE_VECT_LEN;
 
-	NOTICE(E_USER_STRAT, "robot pt %"PRIi32" %"PRIi32,
+	NOTICE(E_USER_STRAT, "robot pt %"PRId32" %"PRId32,
 	       robot_pt->x, robot_pt->y);
-	NOTICE(E_USER_STRAT, "dst point %"PRIi32",%"PRIi32,
+	NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
 	       dst_pt.x, dst_pt.y);
 
 	if (in_corn) {
@@ -614,7 +636,7 @@ static int8_t escape_from_poly(point_t *robot_pt,
 			dst_pt.x = intersect_corn_pt.x + escape_dx * 4;
 			dst_pt.y = intersect_corn_pt.y + escape_dy * 4;
 
-			NOTICE(E_USER_STRAT, "dst point %"PRIi32",%"PRIi32,
+			NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
 			       dst_pt.x, dst_pt.y);
 
 			if (is_point_in_poly(pol_opp, dst_pt.x, dst_pt.y) != 1 &&
@@ -623,7 +645,7 @@ static int8_t escape_from_poly(point_t *robot_pt,
 				if (!is_in_boundingbox(&dst_pt))
 					return -1;
 				
-				NOTICE(E_USER_STRAT, "GOTO %"PRIi32",%"PRIi32"",
+				NOTICE(E_USER_STRAT, "GOTO %"PRId32",%"PRId32"",
 				       dst_pt.x, dst_pt.y);
 
 				/* XXX virtual scape from poly, 
@@ -645,7 +667,7 @@ static int8_t escape_from_poly(point_t *robot_pt,
 			dst_pt.x = intersect_opp_pt.x + escape_dx * 2;
 			dst_pt.y = intersect_opp_pt.y + escape_dy * 2;
 
-			NOTICE(E_USER_STRAT, "dst point %"PRIi32",%"PRIi32,
+			NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
 			       dst_pt.x, dst_pt.y);
 
 			if ((is_point_in_poly(&pol_corn, dst_pt.x, dst_pt.y) && in_corn) != 1 &&
@@ -654,7 +676,7 @@ static int8_t escape_from_poly(point_t *robot_pt,
 				if (!is_in_boundingbox(&dst_pt))
 					return -1;
 				
-				NOTICE(E_USER_STRAT, "GOTO %"PRIi32",%"PRIi32"",
+				NOTICE(E_USER_STRAT, "GOTO %"PRId32",%"PRId32"",
 				       dst_pt.x, dst_pt.y);
 
 				/* XXX virtual scape from poly, 
@@ -676,7 +698,7 @@ static int8_t escape_from_poly(point_t *robot_pt,
 			dst_pt.x = intersect_rampe_pt.x + escape_dx * 2;
 			dst_pt.y = intersect_rampe_pt.y + escape_dy * 2;
 			
-			NOTICE(E_USER_STRAT, "dst point %"PRIi32",%"PRIi32,
+			NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
 			       dst_pt.x, dst_pt.y);
 			
 			if (is_point_in_poly(pol_opp, dst_pt.x, dst_pt.y) != 1 &&
@@ -686,7 +708,7 @@ static int8_t escape_from_poly(point_t *robot_pt,
 				if (!is_in_boundingbox(&dst_pt))
 					return -1;
 				
-				NOTICE(E_USER_STRAT, "GOTO %"PRIi32",%"PRIi32"",
+				NOTICE(E_USER_STRAT, "GOTO %"PRId32",%"PRId32"",
 				       dst_pt.x, dst_pt.y);
 
 				/* XXX virtual scape from poly? */
@@ -706,10 +728,14 @@ static int8_t escape_from_poly(point_t *robot_pt,
 }
 
 
+#define GO_AVOID_AUTO		0
+#define GO_AVOID_FORWARD	1
+#define GO_AVOID_BACKWARD	2
+
 #ifndef HOST_VERSION
 static int8_t __goto_and_avoid(int16_t x, int16_t y,
 			       uint8_t flags_intermediate,
-			       uint8_t flags_final, uint8_t forward)
+			       uint8_t flags_final, uint8_t direction)
 #else
 int8_t goto_and_avoid(int16_t x, int16_t y,
 					   	int16_t robot_x, int16_t robot_y, double robot_a,
@@ -730,7 +756,6 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 	int16_t opp_w, opp_l;
 #ifndef HOST_VERSION
 	int16_t opp_x, opp_y;
-	double d,a;
 #endif	
 
 	point_t p_dst, robot_pt;
@@ -740,8 +765,8 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 
 	
 #ifndef HOST_VERSION	
-	DEBUG(E_USER_STRAT, "%s(%d,%d) flags_i=%x flags_f=%x forw=%d",
-	      __FUNCTION__, x, y, flags_intermediate, flags_final, forward);
+	DEBUG(E_USER_STRAT, "%s(%d,%d) flags_i=%x flags_f=%x direct=%d",
+	      __FUNCTION__, x, y, flags_intermediate, flags_final, direction);
 #else
 	g_robot_x = robot_x;
 	g_robot_y = robot_y;
@@ -853,7 +878,6 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 				if(num_slots_in_path_save != num_slots_in_path){
    				NOTICE(E_USER_STRAT,"new slots in path");
 					continue;   				
-				   //goto *p_repeat_oa;
 				}
 				else
 				   break;
@@ -884,20 +908,23 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 	for (i=0 ; i<len ; i++) {
 
 #ifndef HOST_VERSION
-		/* if the point is in front of us fordward else backward*/
-		abs_xy_to_rel_da(p->x, p->y, &d, &a);
 		
-		if (d<20){
-			p++;
-			continue;
-		}
-		if (a < RAD(75) && a > RAD(-75) && forward){
-			DEBUG(E_USER_STRAT, "With avoidance %d: x=%"PRIi32" y=%"PRIi32" forward", i, p->x, p->y);
+//		if (d<20){
+//			p++;
+//			continue;
+//		}
+
+		if (direction == GO_AVOID_FORWARD){
+			DEBUG(E_USER_STRAT, "With avoidance %d: x=%"PRId32" y=%"PRId32" forward", i, p->x, p->y);
 			trajectory_goto_forward_xy_abs(&mainboard.traj, p->x, p->y);
 		}
-		else{
-			DEBUG(E_USER_STRAT, "With avoidance %d: x=%"PRIi32" y=%"PRIi32" backward", i, p->x, p->y);
+		else if(direction == GO_AVOID_BACKWARD){
+			DEBUG(E_USER_STRAT, "With avoidance %d: x=%"PRId32" y=%"PRId32" backward", i, p->x, p->y);
 			trajectory_goto_backward_xy_abs(&mainboard.traj, p->x, p->y);
+		}
+		else {
+			DEBUG(E_USER_STRAT, "With avoidance %d: x=%"PRId32" y=%"PRId32" forward", i, p->x, p->y);
+			trajectory_goto_xy_abs(&mainboard.traj, p->x, p->y);
 		}
 		
 		/* no END_NEAR for the last point */
@@ -934,35 +961,53 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 }
 
 #ifndef HOST_VERSION
+/* go to a x,y point */
+uint8_t goto_and_avoid(int16_t x, int16_t y, uint8_t flags_intermediate,
+			       uint8_t flags_final)
+{
+	return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_AUTO);
+}
+
 /* go forward to a x,y point. use current speed for that */
 uint8_t goto_and_avoid_forward(int16_t x, int16_t y, uint8_t flags_intermediate,
 			       uint8_t flags_final)
 {
-	return __goto_and_avoid(x, y, flags_intermediate, flags_final, 1);
+	return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_FORWARD);
 }
 
 /* go backward to a x,y point. use current speed for that */
 uint8_t goto_and_avoid_backward(int16_t x, int16_t y, uint8_t flags_intermediate,
 		       uint8_t flags_final)
 {
-	return __goto_and_avoid(x, y, flags_intermediate, flags_final, 0);
+	return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_BACKWARD);
 }
 
-/* go to a x,y point. by default forward, later if the point is
- * near and in front of us finally go forward else go backwards*/
-uint8_t goto_and_avoid(int16_t x, int16_t y, uint8_t flags_intermediate,
+/* go to a x,y point with empty side */
+uint8_t goto_and_avoid_empty_side(int16_t x, int16_t y, uint8_t flags_intermediate,
 			       uint8_t flags_final)
 {
-//	double d,a;
-//	abs_xy_to_rel_da(x, y, &d, &a); 
-//
-//	if (d < 300 && a < RAD(75) && a > RAD(-75))
-		return __goto_and_avoid(x, y, flags_intermediate,
-					flags_final, 1);
-//	else
-//		return __goto_and_avoid(x, y, flags_intermediate,
-//					flags_final, 0);
+
+	if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR))
+		return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_AUTO);
+	else if(!token_catched(SIDE_FRONT))
+		return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_FORWARD);
+	else /* if(!token_catched(SIDE_REAR)) */
+		return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_BACKWARD);
+
 }
+
+/* go to a x,y point with empty or busy side */
+uint8_t goto_and_avoid_busy_side(int16_t x, int16_t y, uint8_t flags_intermediate,
+			       uint8_t flags_final)
+{
+	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR))
+		return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_AUTO);
+	else if(token_catched(SIDE_FRONT))
+		return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_FORWARD);
+	else /* if(token_catched(SIDE_REAR)) */
+		return __goto_and_avoid(x, y, flags_intermediate, flags_final, GO_AVOID_BACKWARD);
+}
+
 
 #endif
 

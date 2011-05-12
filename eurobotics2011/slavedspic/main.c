@@ -173,11 +173,18 @@ void io_pins_init(void)
 	_TRISB8  = 1;	// U1RX is input
   	_RP7R 	= 3;	// U1TX -> RP7 -> SLAVE_UART_TX
 	_TRISB7	= 0;	// U1TX is output
-	
+
+#ifdef OLD_SERVO_AX12	
 	_U2RXR 	= 9;	// U2RX <- RP9 <- SERVOS_AX12_UART
   	_RP9R 	= 5;	// U2TX -> RP9 -> SERVOS_AX12_UART
 	_TRISB9	= 0;	// U2TX is output
  	_ODCB9 	= 1;	// For half-duplex mode RP9 is open collector
+#else
+	_U2RXR 	= 9;	// U2RX <- RP4 <- SERVOS_AX12_UART
+  	_RP4R 	= 5;	// U2TX -> RP4 -> SERVOS_AX12_UART
+	_TRISB4	= 0;	// U2TX is output
+ 	_ODCB4 	= 1;	// For half-duplex mode RP4 is open collector
+#endif
 }
 
 int main(void)

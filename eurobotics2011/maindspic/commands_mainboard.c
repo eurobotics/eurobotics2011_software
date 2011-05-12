@@ -400,7 +400,6 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 	struct vt100 vt100;
 	if(!strcmp_P(res->arg1, "raw"))
 	{
-		
 
 		/* remap UART */
 		set_uart_mux(SLAVEDSPIC_CHANNEL);
@@ -425,6 +424,9 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 			/* send to slave */
 			uart_send_nowait(MUX_UART,c);	
 		}
+
+		/* remap UART */
+		set_uart_mux(BEACON_CHANNEL);
 	}	
 	else if (!strcmp(res->arg1, "init")){
 		i2c_slavedspic_mode_init();
@@ -449,6 +451,7 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 		i2c_led_control(I2C_SLAVEDSPIC_ADDR, 1, led_flag);
 		led_flag ^= 1;
 	}
+
 
 	printf("done \r\n");
 	return;	

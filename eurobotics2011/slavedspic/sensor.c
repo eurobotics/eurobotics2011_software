@@ -97,7 +97,9 @@ static uint16_t sensor_read(void)
 	tmp |= (uint16_t)((PORTB & (_BV(2)))>> 2)<< 2;
 	tmp |= (uint16_t)((PORTA & (_BV(8)))>> 8)<< 3;
 	tmp |= (uint16_t)((PORTC & (_BV(3)))>> 3)<< 4;
-	tmp |= (uint16_t)((PORTB & (_BV(4)))>> 4)<< 5;
+#ifdef OLD_SERVO_AX12
+	tmp |= (uint16_t)((PORTB & (_BV(4)))>> 4)<< 5; /* NEW SERVO AX12 */
+#endif
 	//tmp |= (uint16_t)((PORTC & (_BV(2)))>> 2)<< 6;
 
 	/* add more sensors here */
