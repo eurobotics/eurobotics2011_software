@@ -497,3 +497,105 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go)
 	/* never shoult be reached */
 	return END_TRAJ;
 }
+
+
+/* return 1 if found a valid pickup slot */
+uint8_t strat_get_pickup_slot(slot_index_t slot_origin, slot_index_t *slot_pickup)
+{
+	int8_t i, j;
+	double d_rel;
+	double front_a_rel_rad, rear_a_rel_rad;
+	double min_a_rel_rad = M_2PI;
+	slot_index_t slot;
+		
+	/* return if there's no empty side */
+	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)) {
+		DEBUG(E_USER_STRAT, "no empty side");		
+		return 0;
+	}
+
+	/* init*/
+	slot.i = -1;
+
+	/* check 3x3 area */
+	for(i=slot_origin.i-1; i<=slot_origin.i+1; i++) {
+		for(j=slot_origin.j-1; j<=slot_origin.j+1; j++) {
+	
+			/* skip origin position */
+			if(i == slot_origin.i && j == slot_origin.j)
+				continue;
+
+			/* skip our color slots */
+			if(strat_infos.slot[i][j].color == mainboard.our_color)
+				continue;
+
+			/* skip checked slots */
+			if(strat_infos.slot[i][j].flags & SLOT_CHECKED)
+				continue;
+
+			/* skip safe slots */
+			if(strat_infos.slot[i][j].flags & SLOT_SAFE)
+				continue;
+
+			/* skip hide bonus slots */
+			if(slot_origin.i == 5 && slot_origin.j == 4 &&	i == 4 && j == 5)
+				continue;
+			if(slot_origin.i == 2 && slot_origin.j == 4 &&	i == 3 && j == 5)
+				continue;
+
+			/* get relative angle to front and rear sides */
+			abs_xy_to_rel_da(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y, &d_rel, &front_a_rel_rad);	
+			rear_a_rel_rad = front_a_rel_rad - M_PI;
+
+			/* invalidate side if is busy */
+			if(!token_catched(SIDE_FRONT))
+				front_a_rel_rad = M_2PI;
+			if(!token_catched(SIDE_REAR))
+				rear_a_rel_rad = M_2PI;
+
+			/* get slot with minimun angle */
+			if(ABS(front_a_rel_rad) < min_a_rel_rad) {
+				min_a_rel_rad = ABS(front_a_rel_rad);
+				slot.i = i;
+				slot.j = j;
+			}
+
+			if(ABS(rear_a_rel_rad) < min_a_rel_rad) {
+				min_a_rel_rad = ABS(front_a_rel_rad);
+				slot.i = (slot_origin.i << 1) - i;	/* symmetrical slot */
+				slot.j = (slot_origin.j << 1) - j;
+			}	
+		}
+	}
+
+	/* return */
+	if(slot.i == -1) {
+		DEBUG(E_USER_STRAT, "no found pickup slot");
+		return 0;
+	}
+	else {
+		*slot_pickup = slot;
+		DEBUG(E_USER_STRAT, "found pickup slot (%d,%d)", slot_pickup->i, slot_pickup->j);
+		return 1;
+	}
+}
+
+uint8_t strat_pick_and_place_tokens(void)
+{
+
+	/* center in actual slot */
+
+	/* get the nearest and not checked opponent slot to empty side in angle */
+
+	/* first diagonal: pickup token in front */
+
+	/* back to init slot */
+
+	/* first diagonal: pickup token in back if side is empty */
+
+	/* back to init slot */
+
+	/* get the best empty slot */
+
+	/* first diagonal: place tokens */
+}

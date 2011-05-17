@@ -48,6 +48,8 @@
 #define SIDE_FRONT 	I2C_SIDE_FRONT 
 #define SIDE_MAX		I2C_SIDE_MAX
 
+#define OPPOSITE_SIDE(side) ((side==I2C_SIDE_FRONT)? (I2C_SIDE_REAR) : (I2C_SIDE_FRONT))	
+
 #define GO_FORWARD	0
 #define GO_BACKWARD	1
 
@@ -132,17 +134,17 @@ struct slot_info {
 #define SLOT_WALL					4
 #define SLOT_CHECK_ONESIDE		8
 #define SLOT_AVOID				16
-#define SLOT_CHECK				32
+#define SLOT_CHECKED				32
 
 	uint8_t flags_poly;
 #define SLOT_POLY_SQUARE	1
 
 };
 
-struct slot_position {
-	uint8_t x_index;
-	uint8_t y_index;
-};
+typedef struct {
+	int8_t i;
+	int8_t j;
+}slot_index_t;
 
 /* infos about strat */
 #define NB_SLOT_X				8
@@ -166,9 +168,9 @@ struct strat_infos {
 	uint16_t grid_line_y[NB_GRID_LINES_Y];
 
 	/* slot position */
-	struct slot_position slot_actual;
-	struct slot_position slot_before;
-	struct slot_position slot_target;
+	slot_index_t slot_actual;
+	slot_index_t slot_before;
+	slot_index_t slot_target;
 
 	/* movement direction */
 	uint8_t go_direction;

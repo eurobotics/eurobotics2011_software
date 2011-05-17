@@ -62,11 +62,6 @@
 #include "actuator.h"
 #include "beacon.h"
 
-typedef struct {
-	uint8_t i;
-	uint8_t j;
-}slot_index_t;
-
 #define ERROUT(e) do {\
 		err = e;			 \
 		goto end;		 \
@@ -112,19 +107,19 @@ void strat_update_slot_position(void)
 		return;
 
 	/* if it's changed */
-	if( (strat_infos.slot_actual.x_index != x_index) ||
-		 (strat_infos.slot_actual.y_index != y_index) ) {
+	if( (strat_infos.slot_actual.i != x_index) ||
+		 (strat_infos.slot_actual.j != y_index) ) {
 
 		/* save last position */
 		strat_infos.slot_before = strat_infos.slot_actual;
 	
 		/* update actual position*/
-		strat_infos.slot_actual.x_index = x_index; 
-		strat_infos.slot_actual.y_index = y_index; 
+		strat_infos.slot_actual.i = x_index; 
+		strat_infos.slot_actual.j = y_index; 
 
 		DEBUG(E_USER_STRAT, "new slot position (%d,%d), before (%d, %d)",
-					strat_infos.slot_actual.x_index, strat_infos.slot_actual.y_index,
-					strat_infos.slot_before.x_index, strat_infos.slot_before.y_index);
+					strat_infos.slot_actual.i, strat_infos.slot_actual.j,
+					strat_infos.slot_before.i, strat_infos.slot_before.j);
 	}
 
 }
@@ -194,14 +189,14 @@ void strat_get_next_slot_target(void)
 	slot = strat_calculate_next_slot(strat_infos.slot_actual.direction);
 
 	/* end of straight line */
-	if(strat_infos.slot[slot.x_index][slot.y_index].flag & SLOT_WALL) {
+	if(strat_infos.slot[slot.i][slot.j].flag & SLOT_WALL) {
 
 		DEBUG(E_USER_STRAT, "wall slot found");
 
 		/* try right or left */
 		slot = strat_calculate_slot_right(strat_infos.slot);
 
-		if(strat_infos.slot[slot.x_index][slot.y_index].flag & SLOT_WALL) {
+		if(strat_infos.slot[slot.i][slot.j].flag & SLOT_WALL) {
 			slot = strat_calculate_slot_left(strat_infos.go_direction);
 		}
 	 
