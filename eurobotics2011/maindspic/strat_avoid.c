@@ -65,7 +65,7 @@
 
 #else
 
-#define TEST_ALL_POLYS
+//#define TEST_ALL_POLYS
 
 #define E_USER_STRAT 200
 
@@ -80,10 +80,11 @@
 
 #endif
 
+#define SKIP_DST_POLY
 
 #define SLOT_NUMBER			((NB_SLOT_X-2)*(NB_SLOT_Y-1))	/* all less green areas and safe zones */
 #define SLOT_EDGE_NUMBER   4
-#define SLOT_RADIUS        340
+#define SLOT_RADIUS        348
 #define SLOT_MARGIN        320
 
 #ifdef HOMOLOGATION
@@ -355,7 +356,8 @@ void set_slots_poly_in_path(poly_t **pol,
 //				& (strat_infos.slot[i][j].color == mainboard.our_color)) /* TODO enable avoid flag */
 			if((strat_infos.slot[i][j].color == mainboard.our_color))
 #else
-			if((strat_infos.slot[i][j].color == SLOT_RED)) /* XXX: test one color */
+			if((strat_infos.slot[i][j].color == SLOT_BLUE)) /* XXX: test one color */
+//			if(0)                                          /* XXX: test without slots poly */
 #endif
 			{  
 				/* set points */				
@@ -480,77 +482,29 @@ static int8_t escape_from_poly(point_t *robot_pt,
 										int16_t opp_w, int16_t opp_l, 
 										poly_t *pol_opp)
 {
-#if 0
-	uint8_t in_opp = 0, in_corn = 0, in_rampe = 0;
+	uint8_t in_opp = 0;
 	double escape_dx = 0, escape_dy = 0;
-	double corn_dx = 0, corn_dy = 0;
 	double opp_dx = 0, opp_dy = 0;
-	double rampe_dx = 0, rampe_dy = 0;
 	double len;
-	uint8_t i;
 
-	poly_t pol_corn;
-	point_t pol_corn_pts[CORN_EDGE_NUMBER];
-
-	point_t opp_pt, corn_pt, rampe_pt, dst_pt;
-	point_t intersect_corn_pt, intersect_opp_pt, intersect_rampe_pt;
+	point_t opp_pt, dst_pt;
+	point_t intersect_opp_pt;
 
 	opp_pt.x = opp_x;
 	opp_pt.y = opp_y;
-	rampe_pt.x = RAMPE_X;
-  rampe_pt.y = RAMPE_Y;
 
-	/* escape from corns poly */
-  pol_corn.l = CORN_EDGE_NUMBER;
-  pol_corn.pts = pol_corn_pts;  
-	
-	for(i=0; i<N_CORNS; i++){
-		if(corn[i].oa_flag){
-  
-	  	corn_pt.x = corn[i].x;
-	    corn_pt.y = corn[i].y;
-
-    	set_rotated_pentagon_pts(pol_corn_pts, CORN_RADIUS, 
-    	                         corn[i].x, corn[i].y, corn[i].special_poly);
-
-	    if (is_in_poly(robot_pt,&pol_corn) == 1){
-		  	in_corn = 1;
-		    break;
-	    }
-		}	
-	}
-	
+	/* check if we are in any poly */
 	if (is_in_poly(robot_pt, pol_opp) == 1)
 		in_opp = 1;
-  if (is_in_poly(robot_pt, pol_rampe) == 1)
-		in_rampe = 1;
    
-	if (in_corn == 0 && in_opp == 0 && in_rampe == 0) {
+	if (in_opp == 0) {
 		NOTICE(E_USER_STRAT, "no need to escape");
 		return 0;
 	}
 	
-	NOTICE(E_USER_STRAT, "in_corn=%d, in_opp=%d, in_rampe=%d", in_corn, in_opp, in_rampe);
+	NOTICE(E_USER_STRAT, "in_opp=%d", in_opp);
 	
 	/* process escape vector */
-	if (distance_between(robot_pt->x, robot_pt->y, corn[i].x, corn[i].y) < ESCAPE_POLY_THRES) {
-		corn_dx = robot_pt->x - corn[i].x;
-		corn_dy = robot_pt->y - corn[i].y;
-		NOTICE(E_USER_STRAT, " robot is near corn %d: vect=%2.2f,%2.2f",
-		       i, corn_dx, corn_dy);
-		len = norm(corn_dx, corn_dy);
-		if (len != 0) {
-			corn_dx /= len;
-			corn_dy /= len;
-		}
-		else {
-			corn_dx = 1.0;
-			corn_dy = 0.0;
-		}
-		escape_dx += corn_dx;
-		escape_dy += corn_dy;
-	}
-
 	if (distance_between(robot_pt->x, robot_pt->y, opp_x, opp_y) < ESCAPE_POLY_THRES) {
 		opp_dx = robot_pt->x - opp_x;
 		opp_dy = robot_pt->y - opp_y;
@@ -568,25 +522,6 @@ static int8_t escape_from_poly(point_t *robot_pt,
 		escape_dx += opp_dx;
 		escape_dy += opp_dy;
 	}
-	
-	if (distance_between(robot_pt->x, robot_pt->y, RAMPE_X, RAMPE_Y) < ESCAPE_POLY_THRES) {
-		rampe_dx = robot_pt->x - RAMPE_X;
-		rampe_dy = robot_pt->y - RAMPE_Y;
-		NOTICE(E_USER_STRAT, " robot is near rampe: vect=%2.2f,%2.2f",
-		       rampe_dx, rampe_dy);
-		len = norm(rampe_dx, rampe_dy);
-		if (len != 0) {
-			rampe_dx /= len;
-			rampe_dy /= len;
-		}
-		else {
-			rampe_dx = 1.0;
-			rampe_dy = 0.0;
-		}
-		escape_dx += rampe_dx;
-		escape_dy += rampe_dy;
-	}
-
 
 	/* normalize escape vector */
 	len = norm(escape_dx, escape_dy);
@@ -595,20 +530,10 @@ static int8_t escape_from_poly(point_t *robot_pt,
 		escape_dy /= len;
 	}
 	else {
-		if (&pol_corn != NULL) {
-			/* rotate 90° */
-			escape_dx = corn_dy;
-			escape_dy = corn_dx;
-		}
-		else if (pol_opp != NULL) {
+      if (pol_opp != NULL) {
 			/* rotate 90° */
 			escape_dx = opp_dy;
 			escape_dy = opp_dx;
-		}
-		else if (pol_rampe != NULL) {
-			/* rotate 90° */
-			escape_dx = rampe_dy;
-			escape_dy = rampe_dx;
 		}
 		else { /* should not happen */
 			opp_dx = 1.0;
@@ -620,7 +545,6 @@ static int8_t escape_from_poly(point_t *robot_pt,
 	       escape_dx, escape_dy);
 
 	/* process the correct len of escape vector */
-
 	dst_pt.x = robot_pt->x + escape_dx * ESCAPE_VECT_LEN;
 	dst_pt.y = robot_pt->y + escape_dy * ESCAPE_VECT_LEN;
 
@@ -628,37 +552,6 @@ static int8_t escape_from_poly(point_t *robot_pt,
 	       robot_pt->x, robot_pt->y);
 	NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
 	       dst_pt.x, dst_pt.y);
-
-	if (in_corn) {
-		if (is_crossing_poly(*robot_pt, dst_pt, &intersect_corn_pt,
-				     &pol_corn) == 1) {
-			/* we add 2 mm to be sure we are out of th polygon */
-			dst_pt.x = intersect_corn_pt.x + escape_dx * 4;
-			dst_pt.y = intersect_corn_pt.y + escape_dy * 4;
-
-			NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
-			       dst_pt.x, dst_pt.y);
-
-			if (is_point_in_poly(pol_opp, dst_pt.x, dst_pt.y) != 1 &&
-			    is_point_in_poly(pol_rampe, dst_pt.x, dst_pt.y) != 1){
-
-				if (!is_in_boundingbox(&dst_pt))
-					return -1;
-				
-				NOTICE(E_USER_STRAT, "GOTO %"PRId32",%"PRId32"",
-				       dst_pt.x, dst_pt.y);
-
-				/* XXX virtual scape from poly, 
-				   between corns is very dangerus try to scape */
-				//strat_goto_xy_force(dst_pt.x, dst_pt.y);
-
-				robot_pt->x = dst_pt.x;
-				robot_pt->y = dst_pt.y;
-
-				return 0;
-			}
-		}
-	}
 
 	if (in_opp) {
 		if (is_crossing_poly(*robot_pt, dst_pt, &intersect_opp_pt,
@@ -670,8 +563,8 @@ static int8_t escape_from_poly(point_t *robot_pt,
 			NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
 			       dst_pt.x, dst_pt.y);
 
-			if ((is_point_in_poly(&pol_corn, dst_pt.x, dst_pt.y) && in_corn) != 1 &&
-			    is_point_in_poly(pol_rampe, dst_pt.x, dst_pt.y) != 1 ){
+//			if ((is_point_in_poly(&pol_corn, dst_pt.x, dst_pt.y) && in_corn) != 1 &&
+//			    is_point_in_poly(pol_rampe, dst_pt.x, dst_pt.y) != 1 ){
 
 				if (!is_in_boundingbox(&dst_pt))
 					return -1;
@@ -679,49 +572,17 @@ static int8_t escape_from_poly(point_t *robot_pt,
 				NOTICE(E_USER_STRAT, "GOTO %"PRId32",%"PRId32"",
 				       dst_pt.x, dst_pt.y);
 
-				/* XXX virtual scape from poly, 
-				   between corns is very dangerus try to scape */
-				//strat_goto_xy_force(dst_pt.x, dst_pt.y);
-
-				robot_pt->x = dst_pt.x;
-				robot_pt->y = dst_pt.y;
-				
-				return 0;
-			}
-		}
-	}
-
-	if (in_rampe) {
-		if (is_crossing_poly(*robot_pt, dst_pt, &intersect_rampe_pt,
-				     pol_rampe) == 1) {
-			/* we add 2 mm to be sure we are out of th polygon */ 
-			dst_pt.x = intersect_rampe_pt.x + escape_dx * 2;
-			dst_pt.y = intersect_rampe_pt.y + escape_dy * 2;
-			
-			NOTICE(E_USER_STRAT, "dst point %"PRId32",%"PRId32,
-			       dst_pt.x, dst_pt.y);
-			
-			if (is_point_in_poly(pol_opp, dst_pt.x, dst_pt.y) != 1 &&
-			    (is_point_in_poly(&pol_corn, dst_pt.x, dst_pt.y) && in_corn) != 1) {
-
-
-				if (!is_in_boundingbox(&dst_pt))
-					return -1;
-				
-				NOTICE(E_USER_STRAT, "GOTO %"PRId32",%"PRId32"",
-				       dst_pt.x, dst_pt.y);
-
-				/* XXX virtual scape from poly? */
+				/* XXX comment for virtual scape from poly */
+#ifndef HOST_VERSION
 				strat_goto_xy_force(dst_pt.x, dst_pt.y);
-
+#endif
 				robot_pt->x = dst_pt.x;
 				robot_pt->y = dst_pt.y;
-
+				
 				return 0;
-			}
+//			}
 		}
 	}
-#endif
 
 	/* should not happen */
 	return -1;
@@ -832,15 +693,15 @@ int8_t goto_and_avoid(int16_t x, int16_t y,
 	/* now start to avoid */
 	while (opp_w && opp_l) {
 
-      /* TODO: escape from opponent */
+      /* escape from opponent */
 		/* robot_pt is not updated if it fails */		
-		/* ret = escape_from_poly(&robot_pt,
-							 &pol_rampe[0],
-				       opp_x, opp_y, opp_w, opp_l, 
-				       pol_opp);
-		*/
+		ret = escape_from_poly(&robot_pt,
+				                opp_x, opp_y, opp_w, opp_l, 
+				                pol_opp);
+		
 
-		ret = 0;	/* XXX skip escape from poly */
+      /* XXX uncomment for skip escape from poly */
+		//ret = 0;	
 
 		if (ret == 0) {
 

@@ -204,7 +204,9 @@ for i in range(1,6):
       print (name, startx, starty, 0, endx, endy, oppx, oppy)
       graph(name, startx, starty, 0, endx, endy, oppx, oppy)
 
- 
+# in opponent
+graph("in_opponent_00.png", 1500, 1050, 0, 2000, 1500, 1400, 900)
+graph("in_opponent_01.png", 1500, 1050, 0, 1000, 500, 1400, 900)
 
 #random.seed(0)
 #for i in range(100):
