@@ -129,12 +129,11 @@ struct slot_info {
 #define SLOT_PRIO_SAFE		6
 
 	uint16_t flags;
-#define SLOT_BONUS				1
-#define SLOT_SAFE					2
-#define SLOT_WALL					4
-#define SLOT_CHECK_ONESIDE		8
-#define SLOT_AVOID				16
-#define SLOT_CHECKED				32
+#define SLOT_BONUS			1
+#define SLOT_SAFE				2
+#define SLOT_AVOID			4
+#define SLOT_CHECKED			8
+#define SLOT_BUSY				16
 
 	uint8_t flags_poly;
 #define SLOT_POLY_SQUARE	1
@@ -170,16 +169,11 @@ struct strat_infos {
 	/* slot position */
 	slot_index_t slot_actual;
 	slot_index_t slot_before;
-	slot_index_t slot_target;
+	//slot_index_t slot_target;
 
-	/* movement direction */
-	uint8_t go_direction;
-#define GO_XPOS			0
-#define GO_XNEG			1
-#define GO_XPOS_YPOS		2
-#define GO_XPOS_YNEG		3
-#define GO_XNEG_YNEG		4
-#define GO_XNEG_YPOS		5
+	/* tokens catched */
+	uint8_t num_tokens;
+
 
 
 };
