@@ -219,6 +219,9 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go);
 /* we suppose that there is at least one token catched */
 uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go);
 
+/* pickup near slots on an area 3x3 with center the robot */
+uint8_t strat_pickup_near_slots(void);
+
 /* in strat_static.c */
 uint8_t strat_harvest_line1(void);
 uint8_t strat_harvest_line2(void);

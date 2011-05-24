@@ -126,7 +126,7 @@ void io_pins_init(void)
 	_TRISC3 	= 1;		// SENSOR5
 	_TRISB4 	= 1;		// SENSOR6
 	_TRISC2 	= 1;		// SENSOR7
-	
+
 	/* dc motors */
 	_TRISB12 = 0;	// SLAVE_MOT_2_INA
 	_TRISB13 = 0;	// SLAVE_MOT_2_INB

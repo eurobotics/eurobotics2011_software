@@ -95,7 +95,7 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 
 	/* return if we has already a token catched */
 	if(token_catched(side))
-		ERROUT(END_TRAJ)
+		ERROUT(END_TRAJ);
 
 	/* XXX fast angle speed    -> problems with centering token */
 	/* XXX fast distance speed -> crash token */ 
@@ -507,57 +507,70 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go)
 	return END_TRAJ;
 }
 
-
-/* return 1 if found a valid pickup slot */
+/* return 1 if a valid pickup slot position is found */
 uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 {
 	int8_t i, j;
 	double d_rel;
-	double front_a_rel_rad, rear_a_rel_rad;
-	double min_a_rel_rad = M_2PI;
+	double front_a_rel_rad = 0.0, rear_a_rel_rad = 0.0;
+	uint16_t min_a_rel_rad = (uint16_t)(200.0*M_2PI);
 	slot_index_t slot;
 		
+	/* init*/
+	slot.i = -1;
+	slot.j = -1;
+
 	/* return if there's no empty side */
 	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)) {
 		DEBUG(E_USER_STRAT, "no empty side");		
 		return 0;
 	}
 
-	/* init*/
-	slot.i = -1;
-
 	/* check 3x3 area */
-	for(i=slot_origin.i-1; i<=slot_origin.i+1; i++) {
-		for(j=slot_origin.j-1; j<=slot_origin.j+1; j++) {
+	for(i=strat_infos.slot_actual.i-1; i<=strat_infos.slot_actual.i+1; i++) {
+		for(j=strat_infos.slot_actual.j-1; j<=strat_infos.slot_actual.j+1; j++) {
 	
 			/* skip actual slot */
-			if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j)
+			if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j) {
+				DEBUG(E_USER_STRAT, "skip actual slot (%d, %d)", i, j);
 				continue;
+			}
 
-			/* skip before slot */
-			if(i == strat_infos.slot_before.i && j == strat_infos.slot_before.j)
+			/* skip slot before */
+			if(i == strat_infos.slot_before.i && j == strat_infos.slot_before.j) {
+				DEBUG(E_USER_STRAT, "skip slot before (%d, %d)", i, j);
 				continue;
+			}
 
 			/* skip our color slots */
-			if(strat_infos.slot[i][j].color == mainboard.our_color)
+			if(strat_infos.slot[i][j].color == mainboard.our_color) {
+				DEBUG(E_USER_STRAT, "skip our color slot (%d, %d)", i, j);
 				continue;
+			}
 
 			/* skip checked slots */
-			if(strat_infos.slot[i][j].flags & SLOT_CHECKED)
+			if(strat_infos.slot[i][j].flags & SLOT_CHECKED) {
+				DEBUG(E_USER_STRAT, "skip checked slot (%d, %d)", i, j);
 				continue;
+			}
 
 			/* skip safe slots */
-			if(strat_infos.slot[i][j].flags & SLOT_SAFE)
+			if(strat_infos.slot[i][j].flags & SLOT_SAFE)  {
+				DEBUG(E_USER_STRAT, "skip safe slot (%d, %d)", i, j);
 				continue;
+			}
 
 			/* skip dificult access bonus slots */
 			if(strat_infos.slot_actual.i == 5 && strat_infos.slot_actual.j == 4 
-				&&	i == 4 && j == 5)
+				&&	i == 4 && j == 5) {
+				DEBUG(E_USER_STRAT, "skip danger slot (%d, %d)", i, j);
 				continue;
+			}
 			if(strat_infos.slot_actual.i == 2 && strat_infos.slot_actual.j == 4 
-				&&	i == 3 && j == 5)
+				&&	i == 3 && j == 5) {
+				DEBUG(E_USER_STRAT, "skip danger slot (%d, %d)", i, j);
 				continue;
-
+			}
 
 			/* get relative angle to front and rear sides */
 			abs_xy_to_rel_da(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y, &d_rel, &front_a_rel_rad);	
@@ -565,22 +578,24 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 
 			/* invalidate side if is busy */
 			if(token_catched(SIDE_FRONT))
-				front_a_rel_rad = M_2PI;
+				front_a_rel_rad = 2*M_2PI;
 			if(token_catched(SIDE_REAR))
-				rear_a_rel_rad = M_2PI;
+				rear_a_rel_rad = 2*M_2PI;
 
 			/* get slot with minimun angle */
-			if(ABS(front_a_rel_rad) < min_a_rel_rad) {
-				min_a_rel_rad = ABS(front_a_rel_rad);
+			if((uint16_t)ABS(front_a_rel_rad*100.0) < min_a_rel_rad) {
+				min_a_rel_rad = (uint16_t)ABS(front_a_rel_rad*100.0);
 				slot.i = i;
 				slot.j = j;
+
+				DEBUG(E_USER_STRAT, "slot (%d, %d)", slot.i, slot.j);
 			}
 
 			/* symmetrical slot */
-			if(ABS(rear_a_rel_rad) < min_a_rel_rad) {
-				min_a_rel_rad = ABS(front_a_rel_rad);
-				slot.i = (slot_origin.i << 1) - i;	
-				slot.j = (slot_origin.j << 1) - j;
+			if((uint16_t)ABS(rear_a_rel_rad*100.0) < min_a_rel_rad) {
+				min_a_rel_rad = (uint16_t)ABS(front_a_rel_rad*100.0);
+				slot.i = (strat_infos.slot_actual.i << 1) - i;	
+				slot.j = (strat_infos.slot_actual.j << 1) - j;
 			}	
 		}
 	}
@@ -591,7 +606,8 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 		return 0;
 	}
 	else {
-		*slot_pickup = slot;
+		slot_pickup->i = slot.i;
+		slot_pickup->j = slot.j;
 		DEBUG(E_USER_STRAT, "found pickup slot (%d,%d)", slot_pickup->i, slot_pickup->j);
 		return 1;
 	}
@@ -602,6 +618,7 @@ uint8_t strat_pickup_near_slots(void)
 {
 	slot_index_t pickup_slot, origin_slot;
 	uint8_t side;
+	int8_t ret;
 
 	/* save origin */
 	origin_slot = strat_infos.slot_actual;
@@ -614,18 +631,20 @@ uint8_t strat_pickup_near_slots(void)
 		
 		/* try pickup token */
 		strat_pickup_token_auto(strat_infos.slot[pickup_slot.i][pickup_slot.j].x,
-									   strat_infos.slot[pickup_slot.i][pickup_slot.j].y, side);
+									   strat_infos.slot[pickup_slot.i][pickup_slot.j].y, &side);
 
 		/* invalidate slot */
 		strat_infos.slot[pickup_slot.i][pickup_slot.j].flags |= SLOT_CHECKED;
+		DEBUG(E_USER_STRAT, "strat_infos.slot[%d][%d].flags = %d", 
+				pickup_slot.i, pickup_slot.j, strat_infos.slot[pickup_slot.i][pickup_slot.j].flags);
 
 		/* check if token catched */
 		if(token_catched(side)) {
 			DEBUG(E_USER_STRAT, "num tokens = %d", strat_infos.num_tokens);
 
 			/* back to origin slot center */
-			strat_goto_xy_force(strat_infos.slot[origin_slot.i].x, 
-									  strat_infos.slot[origin_slot.j].y);
+			strat_goto_xy_force(strat_infos.slot[origin_slot.i][origin_slot.j].x, 
+									  strat_infos.slot[origin_slot.i][origin_slot.j].y);
 		}
 
 		/* check if we are full of tokens */
@@ -639,13 +658,19 @@ uint8_t strat_pickup_near_slots(void)
 	return ret;
 }
 
-uint8_t strat_get_place_slot(slot_index_t *slot_pickup)
+/* return 1 if a place slot position is found */
+uint8_t strat_get_place_slot(slot_index_t *slot_place)
 {
 	int8_t i, j;
 	double d_rel;
 	double front_a_rel_rad, rear_a_rel_rad;
-	double min_a_rel_rad = M_2PI;
+	int16_t q_front = 0, q_rear = 0, q_max = 0;
 	slot_index_t slot;
+
+	/* init*/
+	slot.i = -1;
+	slot.j = -1;
+
 		
 	/* return if there's no token */
 	if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR)) {
@@ -653,12 +678,10 @@ uint8_t strat_get_place_slot(slot_index_t *slot_pickup)
 		return 0;
 	}
 
-	/* init*/
-	slot.i = -1;
 
 	/* check 3x3 area */
-	for(i=slot_origin.i-1; i<=slot_origin.i+1; i++) {
-		for(j=slot_origin.j-1; j<=slot_origin.j+1; j++) {
+	for(i=strat_infos.slot_actual.i-1; i<=strat_infos.slot_actual.i+1; i++) {
+		for(j=strat_infos.slot_actual.j-1; j<=strat_infos.slot_actual.j+1; j++) {
 	
 			/* skip actual slot */
 			if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j)
@@ -668,7 +691,7 @@ uint8_t strat_get_place_slot(slot_index_t *slot_pickup)
 			if(strat_infos.slot[i][j].color != mainboard.our_color)
 				continue;
 
-			/* skip checked slots */
+			/* skip busy slots */
 			if(strat_infos.slot[i][j].flags & SLOT_BUSY)
 				continue;
 
@@ -684,41 +707,48 @@ uint8_t strat_get_place_slot(slot_index_t *slot_pickup)
 			abs_xy_to_rel_da(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y, &d_rel, &front_a_rel_rad);	
 			rear_a_rel_rad = front_a_rel_rad - M_PI;
 
+
+			/* 
+			 * cost function:
+			 * Q = priority + (2PI - a_rel)/2PI
+			 */
+			q_front = strat_infos.slot[i][j].prio + (int16_t)((M_2PI - ABS(front_a_rel_rad))*100.0/M_2PI);
+			q_rear = strat_infos.slot[(strat_infos.slot_actual.i << 1) - i][(strat_infos.slot_actual.j << 1) - j].prio 
+						+ (int16_t)((M_2PI - ABS(rear_a_rel_rad))*100.0/M_2PI);
+
 			/* invalidate side if is empty */
 			if(!token_catched(SIDE_FRONT))
-				front_a_rel_rad = M_2PI;
+				q_front = 0;
 			if(!token_catched(SIDE_REAR))
-				rear_a_rel_rad = M_2PI;
+				q_rear = 0;
 
-			/* cost function:
-			 *	c = priority + (M2_PI - a_rel)/M2_PI
-			 */
 
-			/* get slot with minimun angle */
-			if(ABS(front_a_rel_rad) < min_a_rel_rad) {
-				min_a_rel_rad = ABS(front_a_rel_rad);
+			/* get slot with the maximun Q */
+			if(q_front > q_max) {
+				q_max = q_front;
 				slot.i = i;
 				slot.j = j;
 			}
 
 			/* symmetrical slot */
-			if(ABS(rear_a_rel_rad) < min_a_rel_rad) {
-				min_a_rel_rad = ABS(front_a_rel_rad);
-				slot.i = (slot_origin.i << 1) - i;	
-				slot.j = (slot_origin.j << 1) - j;
+			if(q_rear > q_max) {
+				q_max = q_rear;
+				slot.i = (strat_infos.slot_actual.i << 1) - i;	
+				slot.j = (strat_infos.slot_actual.j << 1) - j;
 			}	
 		}
 	}
 
 	/* return */
 	if(slot.i == -1) {
-		DEBUG(E_USER_STRAT, "no found pickup slot");
+		DEBUG(E_USER_STRAT, "no found place slot");
 		return 0;
 	}
 	else {
-		*slot_pickup = slot;
-		DEBUG(E_USER_STRAT, "found pickup slot (%d,%d)", slot_pickup->i, slot_pickup->j);
+		*slot_place = slot;
+		DEBUG(E_USER_STRAT, "found place slot (%d,%d)", slot_place->i, slot_place->j);
 		return 1;
 	}
 
 }
+

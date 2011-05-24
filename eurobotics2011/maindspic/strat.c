@@ -200,9 +200,16 @@ void strat_dump_infos(const char *caller)
  * here */
 void strat_reset_infos(void)
 {
+	uint8_t i, j;
+
 	strat_set_bounding_box();
 	
 	/* TODO: reset flags of slots */
+	for(i=0; i<NB_SLOT_X; i++) {
+		for(j=0; j<NB_SLOT_Y; j++) {
+			strat_infos.slot[i][j].flags = 0;
+		}
+	}
 	
 }
 

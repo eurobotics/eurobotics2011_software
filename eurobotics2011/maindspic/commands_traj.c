@@ -624,7 +624,7 @@ struct cmd_position_result {
 };
 
 #define AUTOPOS_SPEED_FAST 	500
-#define ROBOT_DIS2_WALL 		(int16_t)(ROBOT_LENGTH/2)
+#define ROBOT_DIS2_WALL 		(int16_t)((ROBOT_LENGTH/2)+17)
 static void auto_position(void)
 {
 	uint8_t err;
@@ -646,7 +646,7 @@ static void auto_position(void)
 	strat_reset_pos(0, COLOR_Y(ROBOT_DIS2_WALL), 90);
 	
 	/* prepare to x axis */
-	trajectory_d_rel(&mainboard.traj, 35);
+	trajectory_d_rel(&mainboard.traj, 40); //35
 	err = wait_traj_end(END_INTR|END_TRAJ);
 	if (err == END_INTR)
 		goto intr;
@@ -667,7 +667,7 @@ static void auto_position(void)
 	strat_reset_pos(COLOR_X(ROBOT_DIS2_WALL), DO_NOT_SET_POS, COLOR_A_ABS(0));
 
 	/* goto start position */
-	trajectory_d_rel(&mainboard.traj, 400-ROBOT_LENGTH);
+	trajectory_d_rel(&mainboard.traj, 400-(ROBOT_DIS2_WALL*2));
 	err = wait_traj_end(END_INTR|END_TRAJ);
 	if (err == END_INTR)
 		goto intr;
@@ -929,7 +929,7 @@ parse_pgm_inst_t cmd_strat_conf3 = {
 
 
 /**********************************************************/
-/* Subtraj */
+/* Subtraj 1 */
 
 /* this structure is filled when cmd_subtraj1 is parsed successfully */
 struct cmd_subtraj1_result {
@@ -966,24 +966,6 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 	else if (strcmp_P(res->arg1, PSTR("place_rb")) == 0) {
 		err = strat_place_token(res->arg2, res->arg3, SIDE_REAR, GO_BACKWARD);
 	}
-	else if (strcmp_P(res->arg1, PSTR("line1")) == 0) {
-		err = strat_harvest_line1();
-	}
-	else if (strcmp_P(res->arg1, PSTR("line2")) == 0) {
-		err = strat_harvest_line2();
-	}
-		
-	else if (strcmp_P(res->arg1, PSTR("green")) == 0) {
-		err = strat_harvest_green_area();
-	}
-	else if (strcmp_P(res->arg1, PSTR("beginning")) == 0) {
-		err = strat_beginning();
-
-	}
-	else if (strcmp_P(res->arg1, PSTR("bonus")) == 0) {
-		err = strat_bonus_point();
-
-	}
 
 	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
 	trajectory_hardstop(&mainboard.traj);
@@ -991,7 +973,7 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 
 prog_char str_subtraj1_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg0, str_subtraj1_arg0);
-prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r#place_ff#place_fb#place_rf#place_rb#line1#line2#green#beginning#bonus";
+prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r#place_ff#place_fb#place_rf#place_rb";
 parse_pgm_token_string_t cmd_subtraj1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg1, str_subtraj1_arg1);
 parse_pgm_token_num_t cmd_subtraj1_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg2, INT32);
 parse_pgm_token_num_t cmd_subtraj1_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg3, INT32);
@@ -1014,3 +996,73 @@ parse_pgm_inst_t cmd_subtraj1 = {
 	},
 };
 
+
+/**********************************************************/
+/* Subtraj 2 */
+
+/* this structure is filled when cmd_subtraj2 is parsed successfully */
+struct cmd_subtraj2_result {
+	fixed_string_t arg0;
+	fixed_string_t arg1;
+//	int32_t arg2;
+//	int32_t arg3;
+//	int32_t arg4;
+//	int32_t arg5;
+};
+
+/* function called when cmd_subtraj2 is parsed successfully */
+static void cmd_subtraj2_parsed(void *parsed_result, void *data)
+{
+	struct cmd_subtraj2_result *res = parsed_result;
+	uint8_t err = 0;
+
+
+	if (strcmp_P(res->arg1, PSTR("line1")) == 0) {
+		err = strat_harvest_line1();
+	}
+	else if (strcmp_P(res->arg1, PSTR("line2")) == 0) {
+		err = strat_harvest_line2();
+	}
+		
+	else if (strcmp_P(res->arg1, PSTR("green")) == 0) {
+		err = strat_harvest_green_area();
+	}
+	else if (strcmp_P(res->arg1, PSTR("beginning")) == 0) {
+		err = strat_beginning();
+
+	}
+	else if (strcmp_P(res->arg1, PSTR("bonus")) == 0) {
+		err = strat_bonus_point();
+	}
+	else if (strcmp_P(res->arg1, PSTR("pickup_near")) == 0) {
+		err = strat_pickup_near_slots();
+	}
+
+	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
+	trajectory_hardstop(&mainboard.traj);
+}
+
+prog_char str_subtraj2_arg0[] = "subtraj";
+parse_pgm_token_string_t cmd_subtraj2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg0, str_subtraj2_arg0);
+prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near";
+parse_pgm_token_string_t cmd_subtraj2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg1, str_subtraj2_arg1);
+//parse_pgm_token_num_t cmd_subtraj2_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg2, INT32);
+//parse_pgm_token_num_t cmd_subtraj2_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg3, INT32);
+//parse_pgm_token_num_t cmd_subtraj2_arg4 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg4, INT32);
+//parse_pgm_token_num_t cmd_subtraj2_arg5 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg5, INT32);
+//
+prog_char help_subtraj2[] = "Test sub-trajectories (a,b,c,d: specific params)";
+parse_pgm_inst_t cmd_subtraj2 = {
+	.f = cmd_subtraj2_parsed,  /* function to call */
+	.data = NULL,      /* 2nd arg of func */
+	.help_str = help_subtraj2,
+	.tokens = {        /* token list, NULL terminated */
+		(prog_void *)&cmd_subtraj2_arg0, 
+		(prog_void *)&cmd_subtraj2_arg1, 
+//		(prog_void *)&cmd_subtraj2_arg2, 
+//		(prog_void *)&cmd_subtraj2_arg3, 
+//		(prog_void *)&cmd_subtraj2_arg4, 
+//		(prog_void *)&cmd_subtraj2_arg5, 
+		NULL,
+	},
+};
