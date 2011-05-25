@@ -336,9 +336,28 @@ uint8_t opponent_is_behind(void)
 	int16_t opp_d, opp_a;
 
 	opp_there = get_opponent_da(&opp_d, &opp_a);
-	if (opp_there && (opp_a < 215 && opp_a > 145) && opp_d < 600)
+	if (opp_there && (opp_a < 215 && opp_a > 145) && opp_d < 500)
 		return 1;
 	return 0;
+}
+
+uint8_t opponent_is_infront(void)
+{
+	int8_t opp_there;
+	int16_t opp_d, opp_a;
+
+	opp_there = get_opponent_da(&opp_d, &opp_a);
+	if (opp_there && (opp_a > 325 && opp_a < 35) && opp_d < 500)
+		return 1;
+	return 0;
+}
+
+uint8_t opponent_is_opposite_side(uint8_t side)
+{
+	if(side == SIDE_FRONT)
+		return opponent_is_behind();
+	else
+		return opponent_is_infront();
 }
 
 uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
@@ -364,6 +383,8 @@ uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 	}
 	return 0;
 }
+
+
 
 
 uint8_t token_catched(uint8_t side)

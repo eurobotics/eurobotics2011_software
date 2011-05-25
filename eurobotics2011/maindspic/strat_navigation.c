@@ -124,6 +124,15 @@ void strat_update_slot_position(void)
 
 }
 
+uint8_t opponent_is_in_slot(uint8_t i, uint8_t j)
+{
+	int16 slot_x = strat_info.slot[i][j].x;
+	int16 slot_y = strat_info.slot[i][j].y;
+
+	return opponent_is_in_area(slot_x-175, slot_y+175,
+							  			slot_x+175, slot_y-175)
+}
+
 
 /* return next slot depends on direction */ 
 #if 0

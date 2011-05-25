@@ -229,8 +229,8 @@ uint8_t strat_harvest_green_area(void);
 
 /* in strat_navigation.c */
 void strat_update_slot_position(void);
+uint8_t opponent_is_in_slot(uint8_t i, uint8_t j);
 
-/* in strat_navigation.c */
 uint8_t strat_bonus_point(void);
 
 /* add here more strat functions in files */
