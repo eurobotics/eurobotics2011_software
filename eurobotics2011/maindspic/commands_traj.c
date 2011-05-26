@@ -1037,6 +1037,9 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 	else if (strcmp_P(res->arg1, PSTR("pickup_near")) == 0) {
 		err = strat_pickup_near_slots();
 	}
+	else if (strcmp_P(res->arg1, PSTR("place_near")) == 0) {
+		err = strat_place_near_slots();
+	}
 
 	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
 	trajectory_hardstop(&mainboard.traj);
@@ -1044,7 +1047,7 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 
 prog_char str_subtraj2_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg0, str_subtraj2_arg0);
-prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near";
+prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near#place_near";
 parse_pgm_token_string_t cmd_subtraj2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg1, str_subtraj2_arg1);
 //parse_pgm_token_num_t cmd_subtraj2_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg2, INT32);
 //parse_pgm_token_num_t cmd_subtraj2_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg3, INT32);

@@ -120,13 +120,13 @@ struct slot_info {
 
 	
 	uint8_t prio;
-#define SLOT_PRIO_0			0
+#define SLOT_PRIO_0			1
 #define SLOT_PRIO_1			1
-#define SLOT_PRIO_2			2
-#define SLOT_PRIO_3			3
-#define SLOT_PRIO_WALL		4
-#define SLOT_PRIO_BONUS		5
-#define SLOT_PRIO_SAFE		6
+#define SLOT_PRIO_2			1
+#define SLOT_PRIO_3			1
+#define SLOT_PRIO_WALL		1
+#define SLOT_PRIO_BONUS		1
+#define SLOT_PRIO_SAFE		1
 
 	uint16_t flags;
 #define SLOT_BONUS			1
@@ -222,6 +222,9 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go);
 /* pickup near slots on an area 3x3 with center the robot */
 uint8_t strat_pickup_near_slots(void);
 
+/* place tokens on near 3x3 area slots, return 0 if there aren't more slots */
+uint8_t strat_place_near_slots(void);
+
 /* in strat_static.c */
 uint8_t strat_harvest_line1(void);
 uint8_t strat_harvest_line2(void);
@@ -230,6 +233,7 @@ uint8_t strat_harvest_green_area(void);
 /* in strat_navigation.c */
 void strat_update_slot_position(void);
 uint8_t opponent_is_in_slot(uint8_t i, uint8_t j);
+uint8_t opponent_is_in_near_slots(void);
 
 uint8_t strat_bonus_point(void);
 

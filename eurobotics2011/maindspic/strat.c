@@ -202,15 +202,21 @@ void strat_reset_infos(void)
 {
 	uint8_t i, j;
 
+	/* bounding box */
 	strat_set_bounding_box();
 	
-	/* TODO: reset flags of slots */
+	/* reset flags of slots */
 	for(i=0; i<NB_SLOT_X; i++) {
 		for(j=0; j<NB_SLOT_Y; j++) {
 			strat_infos.slot[i][j].flags = 0;
 		}
 	}
-	
+
+	/* tokens catched */
+	strat_infos.num_tokens = 0;
+
+	/* slot position */
+	strat_infos.slot_before = strat_infos.slot_actual;	
 }
 
 /* call it just before launching the strat */

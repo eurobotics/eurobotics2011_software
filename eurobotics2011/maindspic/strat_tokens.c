@@ -328,6 +328,7 @@ uint8_t strat_pickup_token_auto(int16_t x, int16_t y, uint8_t *side)
 /* use it in near range distance */
 #define PLACE_D_TOKEN_OFFSET		((ROBOT_LENGTH/2)+10)
 #define PLACE_D_SAFE					140
+#define PLACE_D_SAFE_ABORT			70
 #define PLACE_EJECT_TIME			700
 #define PLACE_SHOW_TIME				100
 #define PLACE_EJECT_TRIES			5
@@ -338,7 +339,9 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	uint8_t err;
 	uint16_t old_spdd, old_spda;
 	int16_t d_token, d_sign;
+#ifdef TRY_FORCE_EJECT_TOKEN
 	uint8_t try = 0;
+#endif
 
 	/* check if we have token to place */
 	if(!token_catched(side))
@@ -418,6 +421,7 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 		d_sign = -d_sign;
 	}
 
+#ifdef TRY_FORCE_EJECT_TOKEN
 	/* XXX check eject error and try fixed */
 	while(token_catched(side) && (try < PLACE_EJECT_TRIES)) {
 		i2c_slavedspic_mode_token_show(side);
@@ -426,16 +430,34 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 		wait_ms(PLACE_EJECT_TIME);
 		try ++;
 	}
+
 	if(token_catched(side)) {
 		DEBUG(E_USER_STRAT, "token eject fail");
 		ERROUT(END_TRAJ);
 	}
+#else
+	if(token_catched(side)) {
+		DEBUG(E_USER_STRAT, "token eject fail, hold inside");
+		i2c_slavedspic_mode_token_take(side);
+
+		/* go backward to safe distance from token */
+		strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
+		trajectory_d_rel(&mainboard.traj, (-d_sign)*PLACE_D_SAFE_ABORT);
+		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		ERROUT(err);
+	}
+	else {
+		strat_infos.num_tokens --;
+		DEBUG(E_USER_STRAT, "num_tokens = %d", strat_infos.num_tokens);
+	}
+#endif
 
 	/* go backward to safe distance from token */
-	i2c_slavedspic_mode_token_eject(side);
+	i2c_slavedspic_mode_token_out(side);
 	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
 	trajectory_d_rel(&mainboard.traj, (-d_sign)*PLACE_D_SAFE);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	i2c_slavedspic_mode_token_stop(side);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
@@ -507,8 +529,14 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go)
 	return END_TRAJ;
 }
 
+/* return 1 if slot is a valid for pickup token */
 uint8_t strat_is_valid_pickup_slot(uint8_t i, uint8_t j)
 {
+	/* skip actual slot */
+	if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j) {
+		//DEBUG(E_USER_STRAT, "skip actual slot (%d, %d)", i, j);
+		return 0;
+	}
 
 	/* skip slot before */
 	if(i == strat_infos.slot_before.i && j == strat_infos.slot_before.j) {
@@ -546,6 +574,7 @@ uint8_t strat_is_valid_pickup_slot(uint8_t i, uint8_t j)
 		return 0;
 	}
 	
+	/* TODO: test opponent in near slot */
 	if(opponent_is_in_slot(i,j)) {
 		//DEBUG(E_USER_STRAT, "skip opponent is in slot (%d, %d)", i, j);
 		return 0;
@@ -556,91 +585,11 @@ uint8_t strat_is_valid_pickup_slot(uint8_t i, uint8_t j)
 }
 
 /* return 1 if a valid pickup slot position is found */
-#ifdef GET_PICKUP_SLOT_OLD_VERSION
 uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 {
-	int8_t i, j, ii, jj;
-	double d_rel;
-	double front_a_rel_rad = 0.0, rear_a_rel_rad = 0.0;
-	uint16_t min_a_rel_rad = (uint16_t)(200.0*M_2PI);
-	slot_index_t slot;
-		
-	/* init*/
-	slot.i = -1;
-	slot.j = -1;
-
-
-	/* return if there's no empty side */
-	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)) {
-		DEBUG(E_USER_STRAT, "no empty side");		
-		return 0;
-	}
-
-	/* check 3x3 area */
-	for(i=strat_infos.slot_actual.i-1; i<=strat_infos.slot_actual.i+1; i++) {
-		for(j=strat_infos.slot_actual.j-1; j<=strat_infos.slot_actual.j+1; j++) {
-
-			/* skip actual slot */
-			if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j) {
-				DEBUG(E_USER_STRAT, "skip actual slot (%d, %d)", i, j);
-				continue;
-			}
-	
-			/* calculate opposite slot */
-			ii = (strat_infos.slot_actual.i << 1) - i;
-			jj = (strat_infos.slot_actual.j << 1) - j;
-
-			/* get relative angle to front and rear sides */
-			abs_xy_to_rel_da(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y, &d_rel, &front_a_rel_rad);	
-			rear_a_rel_rad = front_a_rel_rad;
-
-			/* evaluate slot in front */
-			if(!token_catched(SIDE_FRONT) && strat_is_valid_pickup_slot(i,j)) { 
-
-				DEBUG(E_USER_STRAT, "front_a_rel_rad = %d",(uint16_t)ABS(front_a_rel_rad*100.0));
-				
-				/* get slot with minimun angle */
-				if((uint16_t)ABS(front_a_rel_rad*100.0) < min_a_rel_rad) {
-					min_a_rel_rad = (uint16_t)ABS(front_a_rel_rad*100.0);
-					DEBUG(E_USER_STRAT, "min_a_rel_rad %d", min_a_rel_rad);
-					slot.i = i;
-					slot.j = j;
-				}
-			}
-
-			/* evaluate rear slot */
-			if(!token_catched(SIDE_REAR) && strat_is_valid_pickup_slot(ii,jj)) { 
-
-				DEBUG(E_USER_STRAT, "rear_a_rel_rad = %d",(uint16_t)ABS(rear_a_rel_rad*100.0));
-
-				if((uint16_t)ABS(rear_a_rel_rad*100.0) < min_a_rel_rad) {
-					min_a_rel_rad = (uint16_t)ABS(rear_a_rel_rad*100.0);
-					DEBUG(E_USER_STRAT, "min_a_rel_rad %d", min_a_rel_rad);
-					slot.i = ii;	
-					slot.j = jj;
-				}	
-			}
-		}
-	}
-
-	/* return */
-	if(slot.i == -1) {
-		DEBUG(E_USER_STRAT, "no found pickup slot");
-		return 0;
-	}
-	else {
-		slot_pickup->i = slot.i;
-		slot_pickup->j = slot.j;
-		DEBUG(E_USER_STRAT, "found pickup slot (%d,%d)", slot_pickup->i, slot_pickup->j);
-		return 1;
-	}
-}
-#else
-uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
-{
-	int8_t i, j, ii, jj;
+	int8_t i, j;
 	double d_rel, a_rel_rad;
-	double min_a_rel_rad = M_2PI;
+	double a_rel_rad_min = M_2PI;
 	slot_index_t slot;
 		
 	/* init*/
@@ -657,48 +606,52 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 	/* check 3x3 area */
 	for(i=strat_infos.slot_actual.i-1; i<=strat_infos.slot_actual.i+1; i++) {
 		for(j=strat_infos.slot_actual.j-1; j<=strat_infos.slot_actual.j+1; j++) {
-
-			/* skip actual slot */
-			if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j) {
-				DEBUG(E_USER_STRAT, "skip actual slot (%d, %d)", i, j);
+	
+			/* check if is a valid slot */
+			if(!strat_is_valid_pickup_slot(i,j))
 				continue;
-			}
-	
-			/* calculate opposite slot */
-			ii = (strat_infos.slot_actual.i << 1) - i;
-			jj = (strat_infos.slot_actual.j << 1) - j;
 
-			/* get relative angle to front and rear sides */
+			/* get relative angle from front side */
 			abs_xy_to_rel_da(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y, &d_rel, &a_rel_rad);
-			a_rel_rad = ABS(a_rel_rad);	
+			a_rel_rad = ABS(a_rel_rad);
 
-			/* if is an minimun angle */
-			if(a_rel_rad < a_rel_rad_min) {
+			/* search minimun angle with front side */
+			if(!token_catched(SIDE_FRONT)) {	
 
-				DEBUG(E_USER_STRAT, "a_rel_rad = %f", a_rel_rad);
-
-				/* evaluate front slot */
-				if(!token_catched(SIDE_FRONT) && strat_is_valid_pickup_slot(i,j)) { 
+				//DEBUG(E_USER_STRAT, "front a_rel_rad = %f", a_rel_rad);
 	
+				/* if is an minimun angle */
+				if(a_rel_rad < a_rel_rad_min) {
+
 					/* update minimun angle */
 					a_rel_rad_min = a_rel_rad;
-
-					DEBUG(E_USER_STRAT, "min_a_rel_rad %f", a_rel_rad_min);
+					//DEBUG(E_USER_STRAT, "min_a_rel_rad %f", a_rel_rad_min);	
 
 					/* and slot index */
 					slot.i = i;
 					slot.j = j;
 				}
-				/* evaluate rear slot */
-				else if(!token_catched(SIDE_REAR) && strat_is_valid_pickup_slot(ii,jj)) { 
+			}
+
+			/* search minimun angle with rear side */
+			if(!token_catched(SIDE_REAR)) {
+
+				/* get angle from rear side */ 
+				a_rel_rad = M_PI - a_rel_rad;	
+
+				//DEBUG(E_USER_STRAT, "rear a_rel_rad = %f", a_rel_rad);
 	
+				/* if is an minimun angle */
+				if(a_rel_rad < a_rel_rad_min) {
+		
 					/* update minimun angle */
 					a_rel_rad_min = a_rel_rad;
-
-					DEBUG(E_USER_STRAT, "min_a_rel_rad %f", a_rel_rad_min);
-
-					slot.i = ii;
-					slot.j = jj;
+					//DEBUG(E_USER_STRAT, "min_a_rel_rad %f", a_rel_rad_min);
+	
+					/* and slot index */
+					slot.i = i;
+					slot.j = j;
+				
 				}
 			}
 		}
@@ -710,13 +663,12 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 		return 0;
 	}
 	else {
-		slot_pickup->i = slot.i;
-		slot_pickup->j = slot.j;
+		*slot_pickup = slot;
 		DEBUG(E_USER_STRAT, "found pickup slot (%d,%d)", slot_pickup->i, slot_pickup->j);
 		return 1;
 	}
 }
-#endif
+
 
 /* pickup tokens on near 3x3 area slots, return 0 if there aren't more slots */
 uint8_t strat_pickup_near_slots(void)
@@ -745,7 +697,7 @@ uint8_t strat_pickup_near_slots(void)
 		if(token_catched(side)) {
 			DEBUG(E_USER_STRAT, "num tokens = %d", strat_infos.num_tokens);
 
-			/* check opponent is not behind */
+			/* TODO: check opponent is behind */
 			if(opponent_is_opposite_side(side)) {
 				DEBUG(E_USER_STRAT, "opponent is behind!");
 				return 0;
@@ -767,21 +719,52 @@ uint8_t strat_pickup_near_slots(void)
 	return ret;
 }
 
+uint8_t strat_is_valid_place_slot(uint8_t i, uint8_t j)
+{
+	/* skip actual slot */
+	if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j)
+		return 0;
+
+	/* skip opponent color slots */
+	if(strat_infos.slot[i][j].color != mainboard.our_color)
+		return 0;
+
+	/* skip busy slots */
+	if(strat_infos.slot[i][j].flags & SLOT_BUSY)
+		return 0;
+
+	/* skip dificult access bonus slots */
+	if(strat_infos.slot_actual.i == 5 && strat_infos.slot_actual.j == 4 
+		&&	i == 4 && j == 5)
+		return 0;
+
+	if(strat_infos.slot_actual.i == 2 && strat_infos.slot_actual.j == 4 
+		&&	i == 3 && j == 5)
+		return 0;
+
+	/* TODO: test opponent in near slot */
+	if(opponent_is_in_slot(i,j)) {
+		//DEBUG(E_USER_STRAT, "skip opponent is in slot (%d, %d)", i, j);
+		return 0;
+	}
+
+	DEBUG(E_USER_STRAT, "slot (%d, %d) is valid", i, j);
+	return 1;
+}
+
 /* return 1 if a place slot position is found */
 uint8_t strat_get_place_slot(slot_index_t *slot_place)
 {
 	int8_t i, j;
-	double d_rel;
-	double front_a_rel_rad, rear_a_rel_rad;
-	int16_t q_front = 0, q_rear = 0, q_max = 0;
+	double d_rel, a_rel_rad;
+	double q = 0.0, q_max = 0.0;
 	slot_index_t slot;
 
 	/* init*/
 	slot.i = -1;
 	slot.j = -1;
 
-		
-	/* return if there's no token */
+	/* return if there's no token catched */
 	if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR)) {
 		DEBUG(E_USER_STRAT, "no tokens to place");		
 		return 0;
@@ -792,64 +775,67 @@ uint8_t strat_get_place_slot(slot_index_t *slot_place)
 	for(i=strat_infos.slot_actual.i-1; i<=strat_infos.slot_actual.i+1; i++) {
 		for(j=strat_infos.slot_actual.j-1; j<=strat_infos.slot_actual.j+1; j++) {
 	
-			/* skip actual slot */
-			if(i == strat_infos.slot_actual.i && j == strat_infos.slot_actual.j)
+			/* check if is a valid slot */
+ 			if(!strat_is_valid_place_slot(i,j))
 				continue;
 
-			/* skip opponent color slots */
-			if(strat_infos.slot[i][j].color != mainboard.our_color)
-				continue;
-
-			/* skip busy slots */
-			if(strat_infos.slot[i][j].flags & SLOT_BUSY)
-				continue;
-
-			/* skip dificult access bonus slots */
-			if(strat_infos.slot_actual.i == 5 && strat_infos.slot_actual.j == 4 
-				&&	i == 4 && j == 5)
-				continue;
-			if(strat_infos.slot_actual.i == 2 && strat_infos.slot_actual.j == 4 
-				&&	i == 3 && j == 5)
-				continue;
-
-			/* get relative angle to front and rear sides */
-			abs_xy_to_rel_da(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y, &d_rel, &front_a_rel_rad);	
-			rear_a_rel_rad = front_a_rel_rad - M_PI;
-
+			/* get relative angle to front */
+			abs_xy_to_rel_da(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y, &d_rel, &a_rel_rad);	
+			a_rel_rad = ABS(a_rel_rad);
 
 			/* 
 			 * cost function:
-			 * Q = priority + (2PI - a_rel)/2PI
+			 * q = priority + (PI - a_rel)/PI 
+			 *
+			 * priority++ -> q++
+			 * a_rel--	  -> q++
+			 *
 			 */
-			q_front = strat_infos.slot[i][j].prio + (int16_t)((M_2PI - ABS(front_a_rel_rad))*100.0/M_2PI);
-			q_rear = strat_infos.slot[(strat_infos.slot_actual.i << 1) - i][(strat_infos.slot_actual.j << 1) - j].prio 
-						+ (int16_t)((M_2PI - ABS(rear_a_rel_rad))*100.0/M_2PI);
 
-			/* invalidate side if is empty */
-			if(!token_catched(SIDE_FRONT))
-				q_front = 0;
-			if(!token_catched(SIDE_REAR))
-				q_rear = 0;
+			/* evaluate front side */
+			if(token_catched(SIDE_FRONT)) {
 
+				/* calcule q */
+				q = strat_infos.slot[i][j].prio + (M_PI - a_rel_rad)/M_PI;
 
-			/* get slot with the maximun Q */
-			if(q_front > q_max) {
-				q_max = q_front;
-				slot.i = i;
-				slot.j = j;
+				/* get slot with the maximun q */
+				if(q > q_max) {
+				
+					/* update maximun */
+					q_max = q;
+
+					/* update slot index */
+					slot.i = i;
+					slot.j = j;
+				}
 			}
 
-			/* symmetrical slot */
-			if(q_rear > q_max) {
-				q_max = q_rear;
-				slot.i = (strat_infos.slot_actual.i << 1) - i;	
-				slot.j = (strat_infos.slot_actual.j << 1) - j;
-			}	
+			/* evaluate front side */
+			if(token_catched(SIDE_REAR)) {
+
+				/* calcule q, notice: a_rel_rad_rear = M_PI - a_rel_rad */
+				q = strat_infos.slot[i][j].prio + a_rel_rad/M_PI;
+
+				/* get slot with the maximun q */
+				if(q > q_max) {
+				
+					/* update maximun */
+					q_max = q;
+
+					/* update slot index */
+					slot.i = i;
+					slot.j = j;
+				}
+			}
 		}
 	}
 
 	/* return */
-	if(slot.i == -1) {
+	if(opponent_is_in_near_slots()) {
+		DEBUG(E_USER_STRAT, "opponent is in near slots");
+		return 0;
+	}
+	else if(slot.i == -1) {
 		DEBUG(E_USER_STRAT, "no found place slot");
 		return 0;
 	}
@@ -862,20 +848,64 @@ uint8_t strat_get_place_slot(slot_index_t *slot_place)
 }
 
 
-uint8_t strat_pickup_and_place_near_tokens(void)
+/* place tokens on near 3x3 area slots, return 0 if there aren't more slots */
+uint8_t strat_place_near_slots(void)
 {
+	slot_index_t place_slot, origin_slot;
+	uint8_t side;
+	int8_t ret;
 
-	/* todo: notice END_BLOCKING */
+	/* save origin */
+	origin_slot = strat_infos.slot_actual;
 
-	/* TODO: end blocking in strat_place_token */
+	/* get the first valid pickup slot */
+	ret = strat_get_place_slot(&place_slot);
 
-	/* place near tokens */
+	/* while there is one pickup slot and we has less than 2 token catched */
+	while(ret) {
+		
+		/* try place token */
+		strat_place_token_auto(strat_infos.slot[place_slot.i][place_slot.j].x,
+									  strat_infos.slot[place_slot.i][place_slot.j].y, &side, GO_FORWARD);
 
-	/* pickup near tokens */
-	if(!strat_pickup_near_tokens())
-		return 
+		/* invalidate slot */
+		strat_infos.slot[place_slot.i][place_slot.j].flags |= SLOT_BUSY;
 
+//		/* TODO: check opponent is behind */
+//		if(opponent_is_opposite_side(side)) {
+//			DEBUG(E_USER_STRAT, "opponent is behind!");
+//			return 0;
+//		}
+//
+//		/* back to origin slot center */
+//		strat_goto_xy_force(strat_infos.slot[origin_slot.i][origin_slot.j].x, 
+//								  strat_infos.slot[origin_slot.i][origin_slot.j].y);
 
+		/* check if we are empty of tokens */
+		if(strat_infos.num_tokens == 0)
+			break;
 
+		/* get the next valid pickup slot */
+		ret = strat_get_place_slot(&place_slot);
+	}
 
+	return ret;
 }
+
+//uint8_t strat_pickup_and_place_near_tokens(void)
+//{
+//
+//	/* todo: notice END_BLOCKING */
+//
+//	/* TODO: end blocking in strat_place_token */
+//
+//	/* place near tokens */
+//
+//	/* pickup near tokens */
+//	if(!strat_pickup_near_tokens())
+//		return 
+//
+//
+//
+//
+//}
