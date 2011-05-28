@@ -188,7 +188,7 @@ static void cmd_opponent_parsed(void *parsed_result, void *data)
 
 	do {
 
-	if (get_opponent_xyda(&x, &y, &d, &a))
+	if (get_opponent_xyda(&x, &y, &d, &a) == -1)
 		printf_P(PSTR("No opponent\r\n"));
 	else
 		printf_P(PSTR("x=%d y=%d, d=%d a=%d\r\n"), x, y, d, a);
@@ -660,24 +660,28 @@ static void cmd_sensor_robot_parsed(void *parsed_result, void *data)
 					switch(i){
 						case S_START_SWITCH: strcpy(sensor_string, "START"); break;
 
-						case S_TOKEN_FRONT_R: 		strcpy(sensor_string, "T_FRONT_R"); break;
-						case S_TOKEN_FRONT_L: 		strcpy(sensor_string, "T_FRONT_L"); break;
-						case S_TOKEN_FRONT_45R: 	strcpy(sensor_string, "T_FRONT_45R"); break;
-						case S_TOKEN_FRONT_45L: 	strcpy(sensor_string, "T_FRONT_45L"); break;
-						case S_TOKEN_FRONT_TOWER: 	strcpy(sensor_string, "T_FRONT_TOWER"); break;
+						case S_TOKEN_FRONT_R: 			strcpy(sensor_string, "T_FRONT_R"); break;
+						case S_TOKEN_FRONT_L: 			strcpy(sensor_string, "T_FRONT_L"); break;
+						case S_TOKEN_FRONT_45R: 		strcpy(sensor_string, "T_FRONT_45R"); break;
+						case S_TOKEN_FRONT_45L: 		strcpy(sensor_string, "T_FRONT_45L"); break;
+						case S_TOKEN_FRONT_TOWER2H: 	strcpy(sensor_string, "S_TOKEN_FRONT_TOWER2H"); break;
+						case S_TOKEN_FRONT_TOWER1H: 	strcpy(sensor_string, "S_TOKEN_FRONT_TOWER1H"); break;
+						case S_TOKEN_FRONT_FIGURE: 	strcpy(sensor_string, "S_TOKEN_FRONT_FIGURE"); break;
 
-						case S_TOKEN_REAR_R: 		strcpy(sensor_string, "T_REAR_R"); break;
-						case S_TOKEN_REAR_L: 		strcpy(sensor_string, "T_REAR_L"); break;
-						case S_TOKEN_REAR_45R: 		strcpy(sensor_string, "T_REAR_45R"); break;
-						case S_TOKEN_REAR_45L: 		strcpy(sensor_string, "T_REAR_45L"); break;
-						case S_TOKEN_REAR_TOWER: 	strcpy(sensor_string, "T_REAR_TOWER"); break;
+						case S_TOKEN_REAR_R: 			strcpy(sensor_string, "T_REAR_R"); break;
+						case S_TOKEN_REAR_L: 			strcpy(sensor_string, "T_REAR_L"); break;
+						case S_TOKEN_REAR_45R: 			strcpy(sensor_string, "T_REAR_45R"); break;
+						case S_TOKEN_REAR_45L: 			strcpy(sensor_string, "T_REAR_45L"); break;
+						case S_TOKEN_REAR_TOWER2H: 	strcpy(sensor_string, "S_TOKEN_REAR_TOWER2H"); break;
+						case S_TOKEN_REAR_TOWER1H: 	strcpy(sensor_string, "S_TOKEN_REAR_TOWER1H"); break;
+						case S_TOKEN_REAR_FIGURE: 		strcpy(sensor_string, "S_TOKEN_REAR_FIGURE"); break;
 
-						case S_OPPONENT_FRONT_R: 	strcpy(sensor_string, "OP_FRONT_R"); break;
-						case S_OPPONENT_FRONT_L: 	strcpy(sensor_string, "OP_FRONT_L"); break;
-						case S_OPPONENT_REAR_R: 	strcpy(sensor_string, "OP_REAR_R"); break;
-						case S_OPPONENT_REAR_L: 	strcpy(sensor_string, "OP_REAR_L"); break;
-						case S_OPPONENT_RIGHT: 		strcpy(sensor_string, "OP_RIGHT"); break;
-						case S_OPPONENT_LEFT: 		strcpy(sensor_string, "OP_LEFT"); break;
+						case S_OPPONENT_FRONT_R: 		strcpy(sensor_string, "OP_FRONT_R"); break;
+						case S_OPPONENT_FRONT_L: 		strcpy(sensor_string, "OP_FRONT_L"); break;
+						case S_OPPONENT_REAR_R: 		strcpy(sensor_string, "OP_REAR_R"); break;
+						case S_OPPONENT_REAR_L: 		strcpy(sensor_string, "OP_REAR_L"); break;
+						case S_OPPONENT_RIGHT: 			strcpy(sensor_string, "OP_RIGHT"); break;
+						case S_OPPONENT_LEFT: 			strcpy(sensor_string, "OP_LEFT"); break;
 
 						default: strcpy(sensor_string, "S_UNKNOW"); continue;
 					}

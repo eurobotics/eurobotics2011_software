@@ -105,6 +105,12 @@ struct conf {
 #define STRAT_CONF_C 		0x04
 };
 
+/* token scores */
+#define NULL_SCORE		0
+#define PION_SCORE		10
+#define FIGURE_SCORE		20
+#define TOWER1H_SCORE	40
+#define TOWER2H_SCORE	60
 
 
 /* slot of token */
@@ -120,13 +126,27 @@ struct slot_info {
 
 	
 	uint8_t prio;
-#define SLOT_PRIO_0			1
-#define SLOT_PRIO_1			1
-#define SLOT_PRIO_2			1
-#define SLOT_PRIO_3			1
-#define SLOT_PRIO_WALL		1
-#define SLOT_PRIO_BONUS		1
-#define SLOT_PRIO_SAFE		1
+#define SLOT_PRIO_0		0
+#define SLOT_PRIO_1		1
+#define SLOT_PRIO_2		2
+#define SLOT_PRIO_3		3
+#define SLOT_PRIO_4		4
+#define SLOT_PRIO_5		5
+#define SLOT_PRIO_6		6
+#define SLOT_PRIO_7		7
+#define SLOT_PRIO_MAX	8
+
+/* strat areas priorities */
+#define SLOT_PRIO_GREEN			SLOT_PRIO_0	
+#define SLOT_PRIO_CENTER		SLOT_PRIO_1
+#define SLOT_PRIO_PATH			SLOT_PRIO_2	
+#define SLOT_PRIO_NEAR_GREEN	SLOT_PRIO_3
+#define SLOT_PRIO_NEAR_SAFE	SLOT_PRIO_4
+#define SLOT_PRIO_WALL			SLOT_PRIO_5
+#define SLOT_PRIO_SAFE			SLOT_PRIO_6
+#define SLOT_PRIO_BONUS_WALL	SLOT_PRIO_7
+#define SLOT_PRIO_BONUS			SLOT_PRIO_MAX
+
 
 	uint16_t flags;
 #define SLOT_BONUS			1
@@ -134,6 +154,8 @@ struct slot_info {
 #define SLOT_AVOID			4
 #define SLOT_CHECKED			8
 #define SLOT_BUSY				16
+#define SLOT_OPPONENT		32
+#define SLOT_ROBOT			64
 
 	uint8_t flags_poly;
 #define SLOT_POLY_SQUARE	1
@@ -148,7 +170,7 @@ typedef struct {
 /* infos about strat */
 #define NB_SLOT_X				8
 #define NB_SLOT_Y				6
-//#define NB_SLOT_GREEN		5
+#define NB_SLOT_GREEN		5
 #define NB_GRID_LINES_X 	9
 #define NB_GRID_LINES_Y 	7
 
@@ -160,7 +182,6 @@ struct strat_infos {
 
 	/* playing areas */
 	struct slot_info slot[NB_SLOT_X][NB_SLOT_Y];
-	//struct slot_info slot_green[I2C_COLOR_MAX][NB_SLOT_GREEN];
 
 	/* grid lines */
 	uint16_t grid_line_x[NB_GRID_LINES_X];
@@ -169,12 +190,13 @@ struct strat_infos {
 	/* slot position */
 	slot_index_t slot_actual;
 	slot_index_t slot_before;
-	//slot_index_t slot_target;
 
 	/* tokens catched */
 	uint8_t num_tokens;
 
-
+	/* thresholds */
+	uint8_t th_place_prio;
+	uint8_t th_token_score;
 
 };
 
@@ -224,6 +246,9 @@ uint8_t strat_pickup_near_slots(void);
 
 /* place tokens on near 3x3 area slots, return 0 if there aren't more slots */
 uint8_t strat_place_near_slots(void);
+
+/* pickup and place near tokens in 3x3 area where is the robot */
+uint8_t strat_pickup_and_place_near_slots(void);
 
 /* in strat_static.c */
 uint8_t strat_harvest_line1(void);

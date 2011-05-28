@@ -76,6 +76,9 @@ void strat_update_slot_position(void)
 	int8_t x_index = -1, y_index = -1;
 	int8_t i;
 
+
+	/* TODO: update opponet positon */
+
 	/* get robot possition */
 	x = position_get_x_s16(&mainboard.pos);
 	y = position_get_y_s16(&mainboard.pos);
@@ -117,6 +120,11 @@ void strat_update_slot_position(void)
 		strat_infos.slot_actual.i = x_index; 
 		strat_infos.slot_actual.j = y_index; 
 
+		/* update flags */
+		strat_infos.slot[strat_infos.slot_before.i][strat_infos.slot_before.j].flags &= ~(SLOT_ROBOT);
+		strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED);
+
+
 		DEBUG(E_USER_STRAT, "new slot position (%d,%d), before (%d, %d)",
 					strat_infos.slot_actual.i, strat_infos.slot_actual.j,
 					strat_infos.slot_before.i, strat_infos.slot_before.j);
@@ -139,8 +147,13 @@ uint8_t opponent_is_in_near_slots(void)
 	int16_t opp_d, opp_a;
 
 	opp_there = get_opponent_da(&opp_d, &opp_a);
-//	if (opp_there && opp_d < 400)
-//		return 1;
+
+	if(opp_there == -1)
+		return 0;
+
+	if (opp_d < 400)
+		return 1;
+
 	return 0;
 }
 

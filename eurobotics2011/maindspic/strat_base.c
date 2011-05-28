@@ -144,7 +144,7 @@ uint8_t strat_goto_xy_force(int16_t x, int16_t y)
 					&opp_d, &opp_a);
 		if (err == -1)
 			break;
-		if (opp_d < 600)
+		if (opp_d < 600) /* XXX i don't understood */
 			break;
 		if (hardstop == 0) {
 			strat_hardstop();
@@ -294,7 +294,7 @@ void strat_limit_speed(void)
 	if (strat_limit_speed_enabled == 0)
 		goto update;
 
-	if (get_opponent_da(&opp_d, &opp_a) != 0)
+	if (get_opponent_da(&opp_d, &opp_a) == -1)
 		goto update;
 		
 #ifdef HOMOLOGATION
@@ -412,7 +412,7 @@ uint8_t strat_obstacle(void)
 
 	/* no opponent detected */
 	if (get_opponent_xyda(&opp_x, &opp_y,
-			      &opp_d, &opp_a)) {
+			      &opp_d, &opp_a) == -1) {
 		return 0;
 	}
 
@@ -531,7 +531,7 @@ uint8_t __wait_traj_end_debug(uint8_t why, uint16_t line)
 	}
 	if (ret == END_OBSTACLE) {
 		if (get_opponent_xyda(&opp_x, &opp_y,
-				      &opp_d, &opp_a) == 0)
+				      &opp_d, &opp_a) != -1)
 			DEBUG(E_USER_STRAT, "Got %s at line %d"
 			      " xy=(%d,%d) da=(%d,%d)", get_err(ret),
 			      line, opp_x, opp_y, opp_d, opp_a);

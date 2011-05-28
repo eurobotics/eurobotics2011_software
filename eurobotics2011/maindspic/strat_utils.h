@@ -94,6 +94,12 @@ uint8_t token_catched(uint8_t side);
 uint8_t token_inside(uint8_t side);
 uint8_t belts_blocked(uint8_t side);
 
+/* return the score of a token on side */
+uint8_t token_side_score(uint8_t side);
+
+/* return 1 if there is a token on side and has the lower priority */
+uint8_t token_side_is_lower_score(uint8_t side);
+
 
 ///* goto with the empty side, prepared to catch token, return goto side */
 //uint8_t strat_goto_empty_side_xy_abs(struct trajectory *traj, double x_abs_mm, double y_abs_mm);

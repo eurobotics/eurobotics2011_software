@@ -336,8 +336,13 @@ uint8_t opponent_is_behind(void)
 	int16_t opp_d, opp_a;
 
 	opp_there = get_opponent_da(&opp_d, &opp_a);
-	if (opp_there && (opp_a < 215 && opp_a > 145) && opp_d < 500)
+
+	if(opp_there == -1)
+		return 0;
+
+	if ((opp_a < 215 && opp_a > 145) && opp_d < 500)
 		return 1;
+
 	return 0;
 }
 
@@ -347,17 +352,14 @@ uint8_t opponent_is_infront(void)
 	int16_t opp_d, opp_a;
 
 	opp_there = get_opponent_da(&opp_d, &opp_a);
-	if (opp_there && (opp_a > 325 && opp_a < 35) && opp_d < 500)
-		return 1;
-	return 0;
-}
+	
+	if(opp_there == -1)
+		return 0;
 
-uint8_t opponent_is_opposite_side(uint8_t side)
-{
-	if(side == SIDE_FRONT)
-		return opponent_is_behind();
-	else
-		return opponent_is_infront();
+	if ((opp_a > 325 && opp_a < 35) && opp_d < 500)
+		return 1;
+
+	return 0;
 }
 
 uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
@@ -384,12 +386,67 @@ uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 	return 0;
 }
 
-
+uint8_t opponent_is_opposite_side(uint8_t side)
+{
+	if(side == SIDE_FRONT)
+		return opponent_is_behind();
+	else
+		return opponent_is_infront();
+}
 
 
 uint8_t token_catched(uint8_t side)
 {
 	return slavedspic.ts[side].token_catched;
+}
+
+
+/* return the score of a token on side */ 
+uint8_t token_side_score(uint8_t side)
+{
+	if(side == SIDE_FRONT) {
+		if(sensor_get(S_TOKEN_FRONT_TOWER2H))
+			return TOWER2H_SCORE;
+		else if(sensor_get(S_TOKEN_FRONT_TOWER1H))
+			return TOWER1H_SCORE;
+		else if(sensor_get(S_TOKEN_FRONT_FIGURE))
+			return FIGURE_SCORE;
+		else if(slavedspic.ts[SIDE_FRONT].token_catched)
+			return PION_SCORE;
+	}
+	else if(side == SIDE_REAR) {
+		if(sensor_get(S_TOKEN_REAR_TOWER2H))
+			return TOWER2H_SCORE;
+		else if(sensor_get(S_TOKEN_REAR_TOWER1H))
+			return TOWER1H_SCORE;
+		else if(sensor_get(S_TOKEN_REAR_FIGURE))
+			return FIGURE_SCORE;
+		else if(slavedspic.ts[SIDE_REAR].token_catched)
+			return PION_SCORE;			
+	}
+
+	return NULL_SCORE;
+}
+
+/* return 1 if there is a token on side and has the lower priority */
+uint8_t token_side_is_lower_score(uint8_t side)
+{
+	/* no token catched */
+	if(!token_catched(side))
+		return 0;
+
+	/* check if is the lower or equal */
+	if(side == SIDE_FRONT) {
+		if(token_side_score(SIDE_FRONT) <= token_side_score(SIDE_REAR))
+			return 1;
+	}
+	else if(side == SIDE_REAR) {
+		if(token_side_score(SIDE_REAR) <= token_side_score(SIDE_FRONT))
+			return 1;
+	}
+
+	/* isn't the lowest */
+	return 0;
 }
 
 uint8_t belts_blocked(uint8_t side)
@@ -519,7 +576,7 @@ void wait_until_opponent_is_far(void)
 	int16_t opp_x, opp_y, opp_d, opp_a;
 
 	if (get_opponent_xyda(&opp_x, &opp_y,
-				      &opp_d, &opp_a))
+				      &opp_d, &opp_a) == -1)
 		return;
 
 	if(opp_d < 600 ) {
@@ -527,7 +584,7 @@ void wait_until_opponent_is_far(void)
 
 		do {
 			if (get_opponent_xyda(&opp_x, &opp_y,
-					      &opp_d, &opp_a))
+					      &opp_d, &opp_a) == -1)
 				return;
 	
 		} while(opp_d < 600);
