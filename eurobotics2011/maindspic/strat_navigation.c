@@ -122,7 +122,7 @@ void strat_update_slot_position(void)
 
 		/* update flags */
 		strat_infos.slot[strat_infos.slot_before.i][strat_infos.slot_before.j].flags &= ~(SLOT_ROBOT);
-		strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED);
+		strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED|SLOT_VISITED);
 
 
 		DEBUG(E_USER_STRAT, "new slot position (%d,%d), before (%d, %d)",

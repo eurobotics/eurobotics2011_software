@@ -175,7 +175,7 @@ void token_system_manage(token_system_t *ts)
 	static microseconds time_us = 0;
 	static uint8_t blocking_times = 0;
 
-#ifndef SENSOR_STOP_FIXED
+#ifdef SENSOR_STOP_TIME
 	static microseconds us = 0;
 #endif
 
@@ -215,16 +215,18 @@ void token_system_manage(token_system_t *ts)
 
 			if(ts->token_catched && flag_catched==0){
 				flag_catched = 1;
+#ifdef SENSOR_STOP_TIME
 				us = time_get_us2();
+#endif
 				STMCH_DEBUG("token %s catched!",
 								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
 			}
 
 			/* stop belts when sensor */
-#ifdef SENSOR_STOP_FIXED
-			if(sensor_get(ts->sensor_stop)){
-#else
+#ifdef SENSOR_STOP_TIME
 			if((time_get_us2() - us > 500000L) && (flag_catched == 1)) {
+#else
+			if(sensor_get(ts->sensor_stop)){
 #endif
 				belts_mode_set(ts->belts_side, BELTS_MODE_OUT, 0);
 

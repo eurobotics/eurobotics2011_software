@@ -771,8 +771,25 @@ uint8_t strat_is_valid_place_slot(int8_t i, int8_t j)
 		&&	i == 7 && j == 0)
 		return 0;
 
+	/* skip safe slots from dificult diagonal slot */
+	if(strat_infos.slot_actual.i == 3 && strat_infos.slot_actual.j == 4 
+		&&	i == 2 && j == 5) {
+		//DEBUG(E_USER_STRAT, "skip danger slot (%d, %d)", i, j);
+		return 0;
+	}
+	if(strat_infos.slot_actual.i == 4 && strat_infos.slot_actual.j == 4 
+		&&	i == 5 && j == 5) {
+		//DEBUG(E_USER_STRAT, "skip danger slot (%d, %d)", i, j);
+		return 0;
+	}
+
 	/* skip slot with priority lower than threshold */
 	if(strat_infos.slot[i][j].prio < strat_infos.th_place_prio)
+		return 0;
+
+
+	/* skip slot not visited */
+	if((strat_infos.slot[i][j].flags & SLOT_VISITED) == 0)
 		return 0;
 
 	/* TODO: test opponent in near slot */

@@ -154,8 +154,9 @@ struct slot_info {
 #define SLOT_AVOID			4
 #define SLOT_CHECKED			8
 #define SLOT_BUSY				16
-#define SLOT_OPPONENT		32
-#define SLOT_ROBOT			64
+#define SLOT_VISITED			32
+#define SLOT_OPPONENT		64
+#define SLOT_ROBOT			128
 
 	uint8_t flags_poly;
 #define SLOT_POLY_SQUARE	1
