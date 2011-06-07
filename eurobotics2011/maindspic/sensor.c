@@ -186,7 +186,34 @@ int16_t sensor_get_adc(uint8_t i)
 	return tmp;
 }
 
-/* TODO: sensor_get_laser_distance(uint8_t laser) */
+/* get laser distance in mm */
+
+typedef struct {
+	int16_t offset_code;
+	int16_t offset_mm;
+	double gain_mm_code;
+} laser_calib_t;
+
+
+const laser_calib_t laser_calib[2] = {
+	[ADC_LASER_R] = { 0, 150, 3.0 },
+	[ADC_LASER_L] = { 0, 150, 3.0 },
+};
+
+int16_t sensor_get_laser_distance(uint8_t i)
+{
+	double d;
+	int16_t value_code;
+	
+	/* get code */
+	value_code = sensor_get_adc(i);
+
+	/* convert to distance */
+	d = (value_code - laser_calib[i].offset_code) * laser_calib[i].gain_mm_code;
+	d += laser_calib[i].offset_mm;
+
+	return (int16_t)d;
+}
 
 /************ boolean sensors */
 

@@ -239,8 +239,8 @@ void strat_dump_infos(const char *caller)
 			strat_infos.slot_before.i, strat_infos.slot_before.j );
 
 	/* thresholds */
-	printf(PSTR("th_place_prio = %d \r\n"), strat_infos.th_place_prio);
-	printf(PSTR("th_token_score = %d \r\n"),strat_infos.th_token_score);
+	printf(PSTR("th_place_prio = %d \r\n"), strat_infos.conf.th_place_prio);
+	printf(PSTR("th_token_score = %d \r\n"),strat_infos.conf.th_token_score);
 
 	/* flags */
 
@@ -317,8 +317,8 @@ void strat_reset_infos(void)
 	strat_infos.slot_before = strat_infos.slot_actual;
 
 	/* thresholds */
-	strat_infos.th_place_prio = SLOT_PRIO_NEAR_GREEN;
-	strat_infos.th_token_score = PION_SCORE;	
+	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
+	strat_infos.conf.th_token_score = PION_SCORE;	
 }
 
 /* call it just before launching the strat */
@@ -379,7 +379,11 @@ void strat_exit(void)
 /* called periodically */
 void strat_event(void *dummy)
 {
-	/* limit speed when opponent is close */
+	/* XXX in parallel with main strat, 
+	 *	disable/enable events depends on case.
+	 */
+
+	/* limit speed when opponent or tokens(TODO) are close */
 	//strat_limit_speed();
 
 	/* update actual slot position */
@@ -387,7 +391,11 @@ void strat_event(void *dummy)
 
 	/* TODO: check towers */
 
-	/* TODO: check token in path */
+	/* TODO: catch tokens in straight travels */
+
+	/* TODO: update num of token catched */
+
+	/* TODO: check figures of green zone */
 	
 }
 

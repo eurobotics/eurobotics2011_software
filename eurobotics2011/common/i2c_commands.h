@@ -97,13 +97,22 @@ struct i2c_cmd_slavedspic_set_mode {
 #define I2C_SLAVEDSPIC_MODE_TOKEN_STOP		0x04
 #define I2C_SLAVEDSPIC_MODE_TOKEN_SHOW		0x05
 #define I2C_SLAVEDSPIC_MODE_TOKEN_OUT		0x06
+#define I2C_SLAVEDSPIC_MODE_MIRROR_POS		0x07
 	uint8_t mode;
 	union{
-		struct{
+		struct {
 			uint8_t side;
 			uint8_t speed_div4;
 		}ts;
-		
+
+		struct {
+#define I2C_MIRROR_SIDE_RIGHT	0
+#define I2C_MIRROR_SIDE_LEFT	1
+			uint8_t side;
+			uint8_t pos_h;
+			uint8_t pos_l;
+		} mirror;		
+
 		/* add more here */
 	};
 };

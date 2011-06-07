@@ -58,11 +58,16 @@
 #define TOKEN_STOP		I2C_SLAVEDSPIC_MODE_TOKEN_STOP
 #define TOKEN_SHOW		I2C_SLAVEDSPIC_MODE_TOKEN_SHOW
 #define TOKEN_OUT			I2C_SLAVEDSPIC_MODE_TOKEN_OUT
+#define MIRROR_POS		I2C_SLAVEDSPIC_MODE_MIRROR_POS
 
 static struct i2c_cmd_slavedspic_set_mode mainboard_command;
 static volatile uint8_t prev_state;
 static volatile uint8_t mode_changed = 0;
 uint8_t state_debug = 0;
+
+/* local values of mirror cmd */
+static uint8_t mirror_side;
+static uint16_t mirror_pos;
 
 
 /* set a new state, return 0 on success */
@@ -101,6 +106,18 @@ int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
 			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
+	}
+	else if (mainboard_command.mode == MIRROR_POS){
+	
+		/* save side */
+		if(mainboard_command.mirror.side == I2C_MIRROR_SIDE_RIGHT) 
+			mirror_side = I2C_MIRROR_SIDE_RIGHT;
+		else
+			mirror_side = I2C_MIRROR_SIDE_LEFT;
+	
+		/* save position */
+		mirror_pos = ((uint16_t)mainboard_command.mirror.pos_h << 8);
+		mirror_pos |= (0x00FF & (uint16_t)mainboard_command.mirror.pos_l);
 	}
 	/* one shoot mode */
 	else
@@ -142,6 +159,18 @@ static void state_do_init(void)
 		return;
 
 	state_init();
+	STMCH_DEBUG("%s mode=%d", __FUNCTION__, state_get_mode());
+}
+
+/* mirror pos mode */
+static void state_do_mirror_pos(void)
+{
+	if (!state_check_update(MIRROR_POS))
+		return;
+
+	/* set position of mirror */
+	mirror_pos_set(mirror_side, mirror_pos);
+
 	STMCH_DEBUG("%s mode=%d", __FUNCTION__, state_get_mode());
 }
 
@@ -326,6 +355,7 @@ void state_machines(void)
 {
 	state_do_init();
 	state_do_token_systems();
+	state_do_mirror_pos();
 }
 
 void state_init(void)

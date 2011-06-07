@@ -84,6 +84,11 @@ struct slavedspic {
 	/* token systems */
 	token_system_t ts[2];
 
+	/* laser mirrors */
+	uint16_t mirror_cmd_pos_right;
+	uint16_t mirror_cmd_pos_left;
+	//uint16_t mirror_real_pos;
+
 	/* infos */
 	uint8_t our_color;
 };

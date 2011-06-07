@@ -530,6 +530,52 @@ parse_pgm_inst_t cmd_slavedspic_ts = {
 	},
 };
 
+/**********************************************************/
+/* slavedspic_mirror */
+
+/* this structure is filled when cmd_slavedspic_mirror is parsed successfully */
+struct cmd_slavedspic_mirror_result {
+	fixed_string_t arg0;
+	fixed_string_t arg1;
+	uint16_t arg2;
+};
+
+/* function called when cmd_slavedspic_mirror is parsed successfully */
+static void cmd_slavedspic_mirror_parsed(void *parsed_result,
+			      __attribute__((unused)) void *data)
+{
+	struct cmd_slavedspic_mirror_result *res = parsed_result;
+
+	/* get side */
+	if (!strcmp(res->arg1, "mleft"))
+		i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_LEFT, res->arg2);
+	if (!strcmp(res->arg1, "mright"))
+		i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_RIGHT, res->arg2);
+	else if (!strcmp(res->arg1, "all")) {
+		i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_LEFT, res->arg2);
+		i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_RIGHT, res->arg2);
+	}
+}
+
+prog_char str_slavedspic_mirror_arg0[] = "slavedspic";
+parse_pgm_token_string_t cmd_slavedspic_mirror_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_mirror_result, arg0, str_slavedspic_mirror_arg0);
+prog_char str_slavedspic_mirror_arg1[] = "mleft#mright#all";
+parse_pgm_token_string_t cmd_slavedspic_mirror_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_slavedspic_mirror_result, arg1, str_slavedspic_mirror_arg1);
+parse_pgm_token_num_t cmd_slavedspic_mirror_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_slavedspic_mirror_result, arg2, UINT16);
+
+prog_char help_slavedspic_mirror[] = "set slavedspic mode";
+parse_pgm_inst_t cmd_slavedspic_mirror = {
+	.f = cmd_slavedspic_mirror_parsed,  /* function to call */
+	.data = NULL,      /* 2nd arg of func */
+	.help_str = help_slavedspic_mirror,
+	.tokens = {        /* token list, NULL terminated */
+		(prog_void *)&cmd_slavedspic_mirror_arg0,
+		(prog_void *)&cmd_slavedspic_mirror_arg1, 
+		(prog_void *)&cmd_slavedspic_mirror_arg2, 
+		NULL,
+	},
+};
+
 
 /**********************************************************/
 /* beacon */

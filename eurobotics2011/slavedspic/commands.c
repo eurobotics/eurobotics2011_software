@@ -51,6 +51,7 @@ extern parse_pgm_inst_t cmd_belts;
 extern parse_pgm_inst_t cmd_state_debug;
 extern parse_pgm_inst_t cmd_state1;
 extern parse_pgm_inst_t cmd_state2;
+extern parse_pgm_inst_t cmd_state3;
 //extern parse_pgm_inst_t cmd_state_machine;
 //extern parse_pgm_inst_t cmd_test;
 
@@ -83,6 +84,7 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_state_debug,
 	(parse_pgm_inst_t *)&cmd_state1,
 	(parse_pgm_inst_t *)&cmd_state2,	
+	(parse_pgm_inst_t *)&cmd_state3,
 	//(parse_pgm_inst_t *)&cmd_state_machine,
 	//(parse_pgm_inst_t *)&cmd_test,
 

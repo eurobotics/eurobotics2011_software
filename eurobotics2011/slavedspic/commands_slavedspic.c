@@ -332,8 +332,9 @@ static void cmd_state2_parsed(void *parsed_result,
 	struct i2c_cmd_slavedspic_set_mode command;
 
 
-	if (!strcmp(res->arg1, "rear"))
+	if (!strcmp(res->arg1, "rear")) {
 		command.ts.side = I2C_SIDE_REAR;
+	}
 	else if (!strcmp(res->arg1, "front"))
 		command.ts.side = I2C_SIDE_FRONT;
 
@@ -367,6 +368,57 @@ parse_pgm_inst_t cmd_state2 = {
 		(prog_void *)&cmd_state2_arg1, 
 		(prog_void *)&cmd_state2_arg2,
 		(prog_void *)&cmd_state2_arg3,
+		NULL,
+	},
+};
+
+
+/**********************************************************/
+/* State3 */
+
+/* this structure is filled when cmd_state3 is parsed successfully */
+struct cmd_state3_result {
+	fixed_string_t arg0;
+	fixed_string_t arg1;
+	uint16_t arg2;
+	
+};
+
+/* function called when cmd_state3 is parsed successfully */
+static void cmd_state3_parsed(void *parsed_result,
+			      __attribute__((unused)) void *data)
+{
+	struct cmd_state3_result *res = parsed_result;
+	struct i2c_cmd_slavedspic_set_mode command;
+
+
+	if (!strcmp(res->arg1, "mright")) {
+		command.mirror.side = I2C_MIRROR_SIDE_RIGHT;
+	}
+	else if (!strcmp(res->arg1, "mleft"))
+		command.mirror.side = I2C_MIRROR_SIDE_LEFT;
+
+	command.mirror.pos_h = (res->arg2 << 8);
+	command.mirror.pos_l |= (0x00FF & res->arg2);
+	
+	state_set_mode(&command);
+}
+
+prog_char str_state3_arg0[] = "state";
+parse_pgm_token_string_t cmd_state3_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state3_result, arg0, str_state3_arg0);
+prog_char str_state3_arg1[] = "mright#mleft";
+parse_pgm_token_string_t cmd_state3_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state3_result, arg1, str_state3_arg1);
+parse_pgm_token_num_t cmd_state3_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_state3_result, arg2, UINT16);
+
+prog_char help_state3[] = "set slavedspic mode";
+parse_pgm_inst_t cmd_state3 = {
+	.f = cmd_state3_parsed,  /* function to call */
+	.data = NULL,      /* 2nd arg of func */
+	.help_str = help_state3,
+	.tokens = {        /* token list, NULL terminated */
+		(prog_void *)&cmd_state3_arg0, 
+		(prog_void *)&cmd_state3_arg1, 
+		(prog_void *)&cmd_state3_arg2,
 		NULL,
 	},
 };

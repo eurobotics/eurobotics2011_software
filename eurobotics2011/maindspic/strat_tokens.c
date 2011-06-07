@@ -784,12 +784,12 @@ uint8_t strat_is_valid_place_slot(int8_t i, int8_t j)
 	}
 
 	/* skip slot with priority lower than threshold */
-	if(strat_infos.slot[i][j].prio < strat_infos.th_place_prio)
+	if(strat_infos.slot[i][j].prio < strat_infos.conf.th_place_prio)
 		return 0;
 
-
-	/* skip slot not visited */
-	if((strat_infos.slot[i][j].flags & SLOT_VISITED) == 0)
+	/* skip slot not visited for place on path */
+	if( (strat_infos.slot[i][j].prio == SLOT_PRIO_PATH)
+		&& ((strat_infos.slot[i][j].flags & SLOT_VISITED) == 0) )
 		return 0;
 
 	/* TODO: test opponent in near slot */
@@ -850,7 +850,7 @@ uint8_t strat_get_place_slot(slot_index_t *slot_place, uint8_t *side)
 
 			/* evaluate front side */
 			if(token_catched(SIDE_FRONT)
-				&& ( (token_side_score(SIDE_FRONT) <= strat_infos.th_token_score) || token_side_is_lower_score(SIDE_FRONT)) ) {
+				&& ( (token_side_score(SIDE_FRONT) <= strat_infos.conf.th_token_score) || token_side_is_lower_score(SIDE_FRONT)) ) {
 
 				/* calcule q */
 				q = strat_infos.slot[i][j].prio + (M_PI - a_rel_rad)/M_PI;
@@ -872,7 +872,7 @@ uint8_t strat_get_place_slot(slot_index_t *slot_place, uint8_t *side)
 
 			/* evaluate front side */
 			if(token_catched(SIDE_REAR)
-				&& ( (token_side_score(SIDE_REAR) <= strat_infos.th_token_score) || token_side_is_lower_score(SIDE_REAR)) ) {
+				&& ( (token_side_score(SIDE_REAR) <= strat_infos.conf.th_token_score) || token_side_is_lower_score(SIDE_REAR)) ) {
 
 				/* calcule q, notice: a_rel_rad_rear = M_PI - a_rel_rad */
 				q = strat_infos.slot[i][j].prio + a_rel_rad/M_PI;
@@ -925,15 +925,14 @@ uint8_t strat_place_near_slots(void)
 	/* get the first valid pickup slot */
 	ret = strat_get_place_slot(&place_slot, &side);
 
-	/* while there is one pickup slot and we has less than 2 token catched */
+	/* while there is one place slot and we has less than 2 token catched */
 	while(ret) {
 		
 		/* TODO: check 45deg sensors */
 
-		/* try place token */
 		strat_place_token(strat_infos.slot[place_slot.i][place_slot.j].x,
 							   strat_infos.slot[place_slot.i][place_slot.j].y, side, GO_FORWARD);
-
+		
 		/* invalidate slot */
 		strat_infos.slot[place_slot.i][place_slot.j].flags |= (SLOT_BUSY|SLOT_AVOID);
 
@@ -968,7 +967,7 @@ uint8_t strat_pickup_and_place_near_slots(void)
 	/* TODO: check timeout */ 
 
 	/* set default place priority */
-	strat_infos.th_place_prio = SLOT_PRIO_NEAR_GREEN;
+	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
 
 	/* place tokens inside */
 	strat_place_near_slots();
@@ -984,25 +983,30 @@ uint8_t strat_pickup_and_place_near_slots(void)
 			return END_TRAJ;
 	} 
 
-	/* if we are full of tokens drop one token to path */
-	if(strat_infos.num_tokens == 2) {
-		strat_infos.th_place_prio = SLOT_PRIO_PATH;
-		strat_place_near_slots();
+	if(strat_infos.conf.flags & STRAT_CONF_PLACE_ONLYEXT) {
+
 	}
+	else {
 
-	/* if we are full of tokens drop one token to center */
-	if(strat_infos.num_tokens == 2) {
-		strat_infos.th_place_prio = SLOT_PRIO_CENTER;
-		strat_place_near_slots();
+		/* if we are full of tokens drop one token to path */
+		if(strat_infos.num_tokens == 2) {
+			strat_infos.conf.th_place_prio = SLOT_PRIO_PATH;
+			strat_place_near_slots();
+		}
+	
+		/* if we are full of tokens drop one token to center */
+		if(strat_infos.num_tokens == 2) {
+			strat_infos.conf.th_place_prio = SLOT_PRIO_CENTER;
+			strat_place_near_slots();
+		}
+	
+		/* if we are full of tokens drop one token to ...? */
+		if(strat_infos.num_tokens == 2) {
+			//strat_infos.th_place_prio = SLOT_PRIO_CENTER;
+			//strat_place_near_slots();
+		}
+	
+		/* restore default place priority */
+		strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
 	}
-
-	/* if we are full of tokens drop one token to ...? */
-	if(strat_infos.num_tokens == 2) {
-		//strat_infos.th_place_prio = SLOT_PRIO_CENTER;
-		//strat_place_near_slots();
-	}
-
-	/* restore default place priority */
-	strat_infos.th_place_prio = SLOT_PRIO_NEAR_GREEN;
-
 }

@@ -848,12 +848,12 @@ static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
 	else
 		on = 0;
 	
-	if (!strcmp_P(res->arg1, PSTR("conf_a")))
-		bit = STRAT_CONF_A;
-	else if (!strcmp_P(res->arg1, PSTR("conf_b")))
-		bit = STRAT_CONF_B;
-	else if (!strcmp_P(res->arg1, PSTR("conf_c")))
-		bit = STRAT_CONF_C;
+//	if (!strcmp_P(res->arg1, PSTR("conf_a")))
+//		bit = STRAT_CONF_A;
+//	else if (!strcmp_P(res->arg1, PSTR("conf_b")))
+//		bit = STRAT_CONF_B;
+//	else if (!strcmp_P(res->arg1, PSTR("conf_c")))
+//		bit = STRAT_CONF_C;
 
 	if (on)
 		strat_infos.conf.flags |= bit;

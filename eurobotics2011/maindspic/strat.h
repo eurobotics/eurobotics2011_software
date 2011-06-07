@@ -99,10 +99,12 @@ struct conf {
  * do one things or anothers */
 
 	uint8_t flags;
-/* example : */
-#define STRAT_CONF_A		 	0x01
-#define STRAT_CONF_B			0x02
-#define STRAT_CONF_C 		0x04
+#define STRAT_CONF_PLACE_ONLYEXT		 	0x01
+
+	/* thresholds */
+	uint8_t th_place_prio;
+	uint8_t th_token_score;
+
 };
 
 /* token scores */
@@ -194,10 +196,6 @@ struct strat_infos {
 
 	/* tokens catched */
 	uint8_t num_tokens;
-
-	/* thresholds */
-	uint8_t th_place_prio;
-	uint8_t th_token_score;
 
 };
 

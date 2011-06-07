@@ -34,9 +34,12 @@
 #define BELTS_MODE_LEFT		2
 #define BELTS_MODE_RIGHT	3
 
+/* belts */
 void belts_mode_set(uint8_t side, uint8_t mode, uint16_t speed);
 uint16_t belts_load_get(uint8_t side);
 
+/* mirrors */
+void mirror_pos_set(uint8_t side, uint16_t pos);
 
 /* init actuators */
 void actuator_init(void);
