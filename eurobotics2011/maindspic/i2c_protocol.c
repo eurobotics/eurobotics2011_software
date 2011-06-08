@@ -611,8 +611,8 @@ int8_t i2c_slavedspic_mode_mirror_pos(uint8_t side, uint16_t pos)
 	buf.hdr.cmd = I2C_CMD_SLAVEDSPIC_SET_MODE;
 	buf.mode = I2C_SLAVEDSPIC_MODE_MIRROR_POS;
 	buf.mirror.side = side;
-	buf.mirror.pos_h = (pos << 8);
-	buf.mirror.pos_l |= (0x00FF & pos);
+	buf.mirror.pos_h = (uint8_t)(pos >> 8);
+	buf.mirror.pos_l = (uint8_t)(0x00FF & pos);
 
 	/* send command and return */
 	return i2c_send_command(I2C_SLAVEDSPIC_ADDR, (uint8_t*)&buf, sizeof(buf));

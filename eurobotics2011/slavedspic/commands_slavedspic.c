@@ -398,10 +398,14 @@ static void cmd_state3_parsed(void *parsed_result,
 	else if (!strcmp(res->arg1, "mleft"))
 		command.mirror.side = I2C_MIRROR_SIDE_LEFT;
 
-	command.mirror.pos_h = (res->arg2 << 8);
-	command.mirror.pos_l |= (0x00FF & res->arg2);
-	
+	command.mirror.pos_h = (uint8_t)(res->arg2 >> 8);
+	command.mirror.pos_l = (uint8_t)(0x00FF & res->arg2);
+
+	command.mode = I2C_SLAVEDSPIC_MODE_MIRROR_POS;
+
 	state_set_mode(&command);
+
+	printf("done\n\r");
 }
 
 prog_char str_state3_arg0[] = "state";

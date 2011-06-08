@@ -784,8 +784,11 @@ static void cmd_lasers_parsed(void *parsed_result, void *data)
 		if (!strcmp_P(res->arg1, PSTR("loop_show")))
 			loop = 1;
 		do {
-			printf_P(PSTR("lasers measure: "));
-			printf_P(PSTR("\r\n"));
+			printf_P(PSTR("d(mm): rigth = %.4d / left = %.4d"),
+						sensor_get_laser_distance(ADC_LASER_R),
+						sensor_get_laser_distance(ADC_LASER_L));
+			printf_P(PSTR("\n\r"));
+
 			wait_ms(100);
 		} while (loop && !cmdline_keypressed());
 	}

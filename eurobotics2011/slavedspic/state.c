@@ -78,43 +78,43 @@ int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 	STMCH_DEBUG("%s mode=%d", __FUNCTION__, mainboard_command.mode);
 
 	/* state machines based modes */
-	if (mainboard_command.mode == TOKEN_TAKE){
+	if (mainboard_command.mode == TOKEN_TAKE) {
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_TAKE;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
 			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
 	}
-	else if (mainboard_command.mode == TOKEN_EJECT){
+	else if (mainboard_command.mode == TOKEN_EJECT) {
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_EJECT;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
 			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;	
 	}
-	else if (mainboard_command.mode == TOKEN_STOP){
+	else if (mainboard_command.mode == TOKEN_STOP) {
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_STOP;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst = 0;
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;	
 	}
-	else if (mainboard_command.mode == TOKEN_SHOW){
+	else if (mainboard_command.mode == TOKEN_SHOW) {
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_SHOW;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
 			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
 	}
-	else if (mainboard_command.mode == TOKEN_OUT){
+	else if (mainboard_command.mode == TOKEN_OUT) {
 		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_OUT;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
 			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
 	}
-	else if (mainboard_command.mode == MIRROR_POS){
-	
+	else if (mainboard_command.mode == MIRROR_POS) {
+
+		/* mode_changed */
+		mode_changed = 1;
+
 		/* save side */
-		if(mainboard_command.mirror.side == I2C_MIRROR_SIDE_RIGHT) 
-			mirror_side = I2C_MIRROR_SIDE_RIGHT;
-		else
-			mirror_side = I2C_MIRROR_SIDE_LEFT;
-	
+		mirror_side = mainboard_command.mirror.side;
+
 		/* save position */
 		mirror_pos = ((uint16_t)mainboard_command.mirror.pos_h << 8);
 		mirror_pos |= (0x00FF & (uint16_t)mainboard_command.mirror.pos_l);

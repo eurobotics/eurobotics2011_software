@@ -195,22 +195,42 @@ typedef struct {
 } laser_calib_t;
 
 
+#define LASER_L_D_MIN_MM 		120
+
+#define LASER_L_D_CAL_MM 		2080
+#define LASER_L_D_MIN_CODE		1
+#define LASER_L_D_CAL_CODE		468
+#define LASER_L_G_MM_CODE		4.4540
+
+#define LASER_R_D_MIN_MM 		130
+#define LASER_R_D_CAL_MM 		2087
+#define LASER_R_D_MIN_CODE		1
+#define LASER_R_D_CAL_CODE		850
+#define LASER_R_G_MM_CODE		2.4581
+
+#define LASER_D_CENTER_MM		-13
+
 const laser_calib_t laser_calib[2] = {
-	[ADC_LASER_R] = { 0, 150, 3.0 },
-	[ADC_LASER_L] = { 0, 150, 3.0 },
+	[ADC_LASER_R] = { LASER_R_D_MIN_CODE, LASER_R_D_MIN_MM, LASER_R_G_MM_CODE },
+	[ADC_LASER_L] = { LASER_L_D_MIN_CODE, LASER_L_D_MIN_MM, LASER_L_G_MM_CODE },
 };
 
 int16_t sensor_get_laser_distance(uint8_t i)
 {
-	double d;
+	double d = 0.0;
 	int16_t value_code;
 	
 	/* get code */
 	value_code = sensor_get_adc(i);
 
-	/* convert to distance */
-	d = (value_code - laser_calib[i].offset_code) * laser_calib[i].gain_mm_code;
-	d += laser_calib[i].offset_mm;
+	/* if code is more than code of minimun distance */
+	if(value_code > laser_calib[i].offset_code) {
+
+		/* convert to distance */
+		d = (value_code - laser_calib[i].offset_code) * laser_calib[i].gain_mm_code;
+		d += laser_calib[i].offset_mm;
+		d += (ROBOT_WIDTH/2.0);
+	}
 
 	return (int16_t)d;
 }
@@ -398,6 +418,12 @@ uint8_t sensor_token_side(uint8_t side)
 		return (sensor_get(S_TOKEN_FRONT_R) && sensor_get(S_TOKEN_FRONT_L));
 	else 
 		return (sensor_get(S_TOKEN_REAR_R) && sensor_get(S_TOKEN_REAR_L));
+}
+
+/* TODO */
+void sensor_tower_detection(void)
+{
+
 }
 
 /************ global sensor init */
