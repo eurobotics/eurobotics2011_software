@@ -389,7 +389,8 @@ void strat_event(void *dummy)
 	/* update actual slot position */
 	strat_update_slot_position();	
 
-	/* TODO: check towers */
+	/* loook for opponent towers */
+	//strat_look_for_towers();
 
 	/* TODO: catch tokens in straight travels */
 

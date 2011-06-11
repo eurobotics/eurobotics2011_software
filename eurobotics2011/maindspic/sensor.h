@@ -80,9 +80,10 @@
 #define S_GP3_7		 39
 #define SENSOR_MAX    40
 
-/* TODO: map lasers */
+/* lasers map */
 #define ADC_LASER_R		ADC_LASER_1
 #define ADC_LASER_L		ADC_LASER_2
+#define ADC_LASER_MAX	2
 
 /* token sensors */
 #define S_TOKEN_FRONT_R			S_GP3_4
@@ -135,4 +136,7 @@ uint8_t sensor_token_side(uint8_t side);
 
 /* return distance of a laser in mm */
 int16_t sensor_get_laser_distance(uint8_t i);
+
+/* get distance and angle (+/- PI) of laser point */
+int16_t sensor_get_laser_point_da(uint8_t i, int16_t *d, double *a_rad);
 

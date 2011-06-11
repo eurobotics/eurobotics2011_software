@@ -37,6 +37,7 @@
 #include "main.h"
 #include "sensor.h"
 #include "strat.h"
+#include "strat_utils.h"
 
 /************ ADC */
 
@@ -208,7 +209,8 @@ typedef struct {
 #define LASER_R_D_CAL_CODE		850
 #define LASER_R_G_MM_CODE		2.4581
 
-#define LASER_D_CENTER_MM		-13
+#define LASER_D_CENTER		 	13
+#define LASER_D_OUT_OF_RANGE	5000
 
 const laser_calib_t laser_calib[2] = {
 	[ADC_LASER_R] = { LASER_R_D_MIN_CODE, LASER_R_D_MIN_MM, LASER_R_G_MM_CODE },
@@ -217,14 +219,14 @@ const laser_calib_t laser_calib[2] = {
 
 int16_t sensor_get_laser_distance(uint8_t i)
 {
-	double d = 0.0;
+	double d = LASER_D_OUT_OF_RANGE;
 	int16_t value_code;
 	
 	/* get code */
 	value_code = sensor_get_adc(i);
 
 	/* if code is more than code of minimun distance */
-	if(value_code > laser_calib[i].offset_code) {
+	if(value_code > (3*laser_calib[i].offset_code)) {
 
 		/* convert to distance */
 		d = (value_code - laser_calib[i].offset_code) * laser_calib[i].gain_mm_code;
@@ -233,6 +235,41 @@ int16_t sensor_get_laser_distance(uint8_t i)
 	}
 
 	return (int16_t)d;
+}
+
+/* get distance and angle (+/- PI) of laser point */
+int16_t sensor_get_laser_point_da(uint8_t i, int16_t *d, double *a_rad)
+{
+	double d_laser = sensor_get_laser_distance(i);
+	double d_pt, a_pt_rad;
+
+	/* return if no valid laser distance */
+	if(((int16_t) d_laser ) == LASER_D_OUT_OF_RANGE)
+		return 0;
+
+#ifdef LASER_POINT_WITH_PRECISSION
+	/* distance and relative angle to laser point */
+	d_pt = norm(d_laser, LASER_D_CENTER);
+	a_pt_rad = acos(d_laser/d_pt);	
+	
+	if(i == ADC_LASER_R)
+		a_pt_rad = -(M_PI/2) - a_pt_rad;
+	else
+		a_pt_rad = 	(M_PI/2) + a_pt_rad;
+#else
+
+	d_pt = d_laser;
+	if(i == ADC_LASER_R)
+		a_pt_rad = -(M_PI/2);
+	else
+		a_pt_rad = 	(M_PI/2);
+	
+#endif
+	
+	*d = (int16_t)d_pt;
+	*a_rad = a_pt_rad;
+
+	return 1;
 }
 
 /************ boolean sensors */
@@ -434,6 +471,9 @@ static void do_sensors(void *dummy)
 	do_adc(NULL);
 	do_boolean_sensors(NULL);
 	sensor_obstacle_update();
+
+	/* loook for opponent towers */
+	strat_look_for_towers();
 }
 
 void sensor_init(void)

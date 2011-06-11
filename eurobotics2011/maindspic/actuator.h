@@ -28,4 +28,5 @@ void dac_set_and_save(void *dac, int32_t val);
 /* lasers on/off */
 void lasers_set_on(void);
 void lasers_set_off(void);
+uint8_t lasers_get_state(void);
 

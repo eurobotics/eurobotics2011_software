@@ -69,6 +69,9 @@ void abs_xy_to_rel_da(double x_abs, double y_abs, double *d_rel, double *a_rel_r
 void rotate(double *x, double *y, double rot);
 
 uint8_t is_in_area(int16_t x, int16_t y, int16_t margin);
+uint8_t point_is_in_area(int16_t px, int16_t py,
+								 int16_t x_up, int16_t y_up,
+								 int16_t x_down, int16_t y_down);
 uint8_t robot_is_in_area(int16_t margin);
 
 uint8_t y_is_more_than(int16_t y);

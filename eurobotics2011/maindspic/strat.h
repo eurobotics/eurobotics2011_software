@@ -73,7 +73,7 @@
 #define SPEED_ANGLE_FAST 		2000
 #else
 #define SPEED_DIST_FAST 		4000
-#define SPEED_ANGLE_FAST 		4000
+#define SPEED_ANGLE_FAST 		1000 //4000
 #endif
 #define SPEED_DIST_SLOW 		1000
 #define SPEED_ANGLE_SLOW 		1000
@@ -208,7 +208,9 @@ extern struct strat_infos strat_infos;
  * Functions headers of strat files
  ************************************************************/
 
-/* in strat.c */
+/********************************************
+ * in strat.c 
+ *******************************************/
 void strat_dump_infos(const char *caller);
 void strat_dump_conf(void);
 void strat_reset_infos(void);
@@ -222,7 +224,9 @@ uint8_t strat_beginning(void);
 void strat_event(void *dummy);
 
 
-/* in strat_tokens.c */
+/*********************************************
+ * in strat_tokens.c 
+ ********************************************/
 
 /* pick up a token */
 /* use it in short distance ranges */
@@ -249,17 +253,27 @@ uint8_t strat_place_near_slots(void);
 /* pickup and place near tokens in 3x3 area where is the robot */
 uint8_t strat_pickup_and_place_near_slots(void);
 
-/* in strat_static.c */
+/* look for tower of 2 or 3 levels */
+void strat_look_for_towers(void);
+
+
+/**************************************************
+ * in strat_static.c 
+ *************************************************/
 uint8_t strat_harvest_line1(void);
 uint8_t strat_harvest_line2(void);
 uint8_t strat_harvest_green_area(void);
 
-/* in strat_navigation.c */
+/**************************************************
+ * in strat_navigation.c 
+ *************************************************/
 void strat_update_slot_position(void);
 uint8_t opponent_is_in_slot(uint8_t i, uint8_t j);
 uint8_t opponent_is_in_near_slots(void);
 
 uint8_t strat_bonus_point(void);
+
+
 
 /* add here more strat functions in files */
 

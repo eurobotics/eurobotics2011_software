@@ -937,13 +937,14 @@ uint8_t strat_place_near_slots(void)
 		strat_infos.slot[place_slot.i][place_slot.j].flags |= (SLOT_BUSY|SLOT_AVOID);
 
 
-		/* TODO: go back if we are far */
 
 		/* TODO: check opponent is behind */
 		if(opponent_is_opposite_side(side)) {
 			DEBUG(E_USER_STRAT, "opponent is behind!");
 			return 0;
 		}
+
+		/* TODO: go back if we are far */
 
 		/* back to origin slot center */
 		strat_goto_xy_force(strat_infos.slot[origin_slot.i][origin_slot.j].x, 
@@ -1010,3 +1011,172 @@ uint8_t strat_pickup_and_place_near_slots(void)
 		strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
 	}
 }
+
+
+typedef struct {
+#define RISE_TRIGGER	0
+#define FALL_TRIGGER	1
+	uint8_t state;
+		
+	int16_t d_pt_old;
+
+	int16_t x_pt_rise;
+	int16_t y_pt_rise;
+
+	int16_t x_pt_fall;
+	int16_t y_pt_fall;
+	
+	int16_t x;
+	int16_t y;
+
+} match_tower_t;
+
+/* matching of a tower with a laser measure */
+uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
+{
+
+#define TOWER_D_TRIGGER	200
+#define TOWER_WIDTH_MAX 150
+
+	uint8_t ret = 0;
+	int16_t obj_width;
+
+	/* laser point coordinates */
+	int16_t x_pt, y_pt;
+	int16_t d_pt;
+	double a_pt_rad;
+
+	/* robot coordinates */
+	int16_t x = position_get_x_s16(&mainboard.pos); 
+	int16_t y = position_get_y_s16(&mainboard.pos);
+	double a = position_get_a_rad_double(&mainboard.pos);
+
+	/* return if we are stoped */
+	if(ABS(mainboard.speed_d) < 10 && ABS(mainboard.speed_a) < 10) {
+	//	lasers_set_off();
+		mt->state = RISE_TRIGGER;
+		mt->x_pt_rise = 0;
+		mt->y_pt_rise = 0;
+		mt->x_pt_fall = 0;
+		mt->y_pt_fall = 0;
+		goto end;
+	}
+	//else if(!lasers_get_state())
+	//	lasers_set_on();
+
+	/* return if no valid laser point */
+	if(!sensor_get_laser_point_da(laser_id, &d_pt, &a_pt_rad)) {
+		//DEBUG(E_USER_STRAT, "no valid laser point");
+		d_pt = 5000;
+		a_pt_rad = (laser_id == ADC_LASER_R? -(M_PI/2): (M_PI/2));
+	}
+
+	//DEBUG(E_USER_STRAT, "laser point (d,a) = (%d,%d)", d_pt, (int16_t)DEG(a_pt_rad));
+
+	/* absolute laser point coordinates */
+	if(a < 0)
+		a += (2 * M_PI);
+
+	x_pt = (int16_t)((double)d_pt * cos(a + a_pt_rad));
+	x_pt += x;
+	y_pt = (int16_t)((double)d_pt * sin(a + a_pt_rad));
+	y_pt += y;
+
+	//DEBUG(E_USER_STRAT, "pt_abs (%d,%d)", x_pt, y_pt);
+
+	/* TODO return if laser point near opponent */
+
+	/* towers matching */
+	switch(mt->state)
+	{
+		case RISE_TRIGGER:
+
+			/* return if laser point is out of accesible playground */
+			if(!point_is_in_area(x_pt, y_pt, 450, 1750-90, 2550, 90)) {
+				//DEBUG(E_USER_STRAT, "point is out of area");
+				break;
+			}
+
+			/* d_new < d_old */
+			if(mt->d_pt_old - d_pt > TOWER_D_TRIGGER) {
+				mt->x_pt_rise = x_pt;
+				mt->y_pt_rise = y_pt;
+				mt->x_pt_fall = x_pt;
+				mt->y_pt_fall = y_pt;
+				mt->state = FALL_TRIGGER;
+				//DEBUG(E_USER_STRAT, "rise trigger");
+			}
+			//DEBUG(E_USER_STRAT, "rise d_pt diff = %d", mt->d_pt_old - d_pt);
+			
+			break;
+
+		case FALL_TRIGGER:
+
+			/* abort if width of object is too hi */
+			obj_width = distance_between(mt->x_pt_fall, mt->y_pt_fall, mt->x_pt_rise, mt->y_pt_rise);
+			if( obj_width > TOWER_WIDTH_MAX) {
+				mt->x_pt_rise = 0;
+				mt->y_pt_rise = 0;
+				mt->x_pt_fall = 0;
+				mt->y_pt_fall = 0;
+				mt->state = RISE_TRIGGER;	
+				//DEBUG(E_USER_STRAT, "object too wide");
+				break;
+			}	
+			//DEBUG(E_USER_STRAT, "object width = %d", obj_width);
+			//DEBUG(E_USER_STRAT, "fall d_pt diff = %d", d_pt - mt->d_pt_old);
+
+			/* d_new > d_old */
+			if(d_pt - mt->d_pt_old > TOWER_D_TRIGGER && obj_width != 0) {
+
+				/* found valid tower, we hope! :S */
+
+				/* tower coordinates */
+				if(mt->x_pt_fall > mt->x_pt_rise)
+					mt->x = mt->x_pt_rise + (mt->x_pt_fall - mt->x_pt_rise)/2;
+				else
+					mt->x = mt->x_pt_fall + (mt->x_pt_rise - mt->x_pt_fall)/2;
+
+				if(mt->y_pt_fall > mt->y_pt_rise)
+					mt->y = mt->y_pt_rise + (mt->y_pt_fall - mt->y_pt_rise)/2;
+				else
+					mt->y = mt->y_pt_fall + (mt->y_pt_rise - mt->y_pt_fall)/2;
+
+
+				ret = 1;
+				mt->state = RISE_TRIGGER; 
+
+				DEBUG(E_USER_STRAT, "laser %s: tower (%d, %d), w = %d",
+											 laser_id == ADC_LASER_R? "R": "L", mt->x, mt->y, obj_width);
+
+			}
+			else {
+				mt->x_pt_fall = x_pt;
+				mt->y_pt_fall = y_pt;
+			}
+
+			break;
+
+
+		default:
+			mt->state = RISE_TRIGGER; 
+			break;
+	}
+
+ end:
+	/* update d_pt_old */
+	mt->d_pt_old = d_pt;
+	return ret;
+}
+
+/* look for tower of 2 or 3 levels */
+void strat_look_for_towers(void)
+{
+	static match_tower_t mt_left, mt_right;
+
+	/* TODO add found tower to strat_infos */
+
+	strat_match_tower( &mt_right, ADC_LASER_R);
+	strat_match_tower( &mt_left, ADC_LASER_L);
+}
+

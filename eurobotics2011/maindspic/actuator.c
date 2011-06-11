@@ -60,3 +60,8 @@ void lasers_set_off(void)
 {
 	_LATC7 = 0;
 }
+
+uint8_t lasers_get_state(void)
+{
+	return _LATC7;
+}

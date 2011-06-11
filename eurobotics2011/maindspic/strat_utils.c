@@ -183,6 +183,21 @@ uint8_t is_in_area(int16_t x, int16_t y, int16_t margin)
 	return 1;
 }
 
+uint8_t point_is_in_area(int16_t px, int16_t py,
+								 int16_t x_up, int16_t y_up,
+								 int16_t x_down, int16_t y_down)
+{
+	if (px < x_up)
+		return 0;
+	if (px > x_down)
+		return 0;
+	if (py > y_up)
+		return 0;
+	if (py < y_down)
+		return 0;
+
+	return 1;
+}
 
 /* return true if the point is in area */
 uint8_t robot_is_in_area(int16_t margin)
@@ -361,6 +376,7 @@ uint8_t opponent_is_infront(void)
 
 	return 0;
 }
+
 
 uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 									 int16_t x_down, int16_t y_down)

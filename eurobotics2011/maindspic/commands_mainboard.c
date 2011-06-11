@@ -772,31 +772,53 @@ struct cmd_lasers_result {
 static void cmd_lasers_parsed(void *parsed_result, void *data)
 {
 	struct cmd_lasers_result *res = parsed_result;
-	uint8_t loop = 0;
+
+	int16_t d_pt_left, d_pt_right;
+	double a_pt_left_rad, a_pt_right_rad;
 
 	if (!strcmp_P(res->arg1, PSTR("on")))
 		lasers_set_on();
 	else if (!strcmp_P(res->arg1, PSTR("off")))
 		lasers_set_off();
-	else if ( !strcmp_P(res->arg1, PSTR("loop_show"))
-				|| !strcmp_P(res->arg1, PSTR("show")) )
+	else if ( !strcmp_P(res->arg1, PSTR("dist")))
 	{
-		if (!strcmp_P(res->arg1, PSTR("loop_show")))
-			loop = 1;
 		do {
-			printf_P(PSTR("d(mm): rigth = %.4d / left = %.4d"),
+			printf_P(PSTR("dist: rigth = %.4d / left = %.4d"),
 						sensor_get_laser_distance(ADC_LASER_R),
 						sensor_get_laser_distance(ADC_LASER_L));
 			printf_P(PSTR("\n\r"));
 
 			wait_ms(100);
-		} while (loop && !cmdline_keypressed());
+		} while (!cmdline_keypressed());
+	}
+	else if ( !strcmp_P(res->arg1, PSTR("pt")))
+	{
+		do {
+			sensor_get_laser_point_da(ADC_LASER_R, &d_pt_right, &a_pt_right_rad);
+			sensor_get_laser_point_da(ADC_LASER_L, &d_pt_left, &a_pt_left_rad);
+
+			printf_P(PSTR("pt: rigth = (%.4d, %.3d) / left = (%.4d, %.3d)"),
+						d_pt_right, (int16_t)DEG(a_pt_right_rad),
+						d_pt_left, (int16_t)DEG(a_pt_left_rad));			
+
+			printf_P(PSTR("\n\r"));
+
+			wait_ms(100);
+		} while (!cmdline_keypressed());
+	}
+
+	else if ( !strcmp_P(res->arg1, PSTR("towers")))
+	{
+		do {
+			strat_look_for_towers();
+			wait_ms(100);
+		} while (!cmdline_keypressed());
 	}
 }
 
 prog_char str_lasers_arg0[] = "lasers";
 parse_pgm_token_string_t cmd_lasers_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg0, str_lasers_arg0);
-prog_char str_lasers_arg1[] = "on#off#show#loop_show";
+prog_char str_lasers_arg1[] = "on#off#dist#pt#towers";
 parse_pgm_token_string_t cmd_lasers_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg1, str_lasers_arg1);
 
 prog_char help_lasers[] = "Show lasers values";
