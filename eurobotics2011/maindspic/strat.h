@@ -73,7 +73,7 @@
 #define SPEED_ANGLE_FAST 		2000
 #else
 #define SPEED_DIST_FAST 		4000
-#define SPEED_ANGLE_FAST 		1000 //4000
+#define SPEED_ANGLE_FAST 		4000
 #endif
 #define SPEED_DIST_SLOW 		1000
 #define SPEED_ANGLE_SLOW 		1000
@@ -178,6 +178,16 @@ typedef struct {
 #define NB_GRID_LINES_Y 	7
 
 
+#define NB_TOWER_MAX	6
+typedef struct {
+	int8_t i;
+	int8_t j;
+	int16_t x;
+	int16_t y;
+	int16_t w;
+	int8_t c;		
+} tower_t;
+
 struct strat_infos {
 	uint8_t dump_enabled;
 	struct conf conf;
@@ -190,12 +200,20 @@ struct strat_infos {
 	uint16_t grid_line_x[NB_GRID_LINES_X];
 	uint16_t grid_line_y[NB_GRID_LINES_Y];
 
-	/* slot position */
+	/* our slot position */
 	slot_index_t slot_actual;
 	slot_index_t slot_before;
 
 	/* tokens catched */
 	uint8_t num_tokens;
+
+	/* towers found */
+	uint8_t num_towers;
+	tower_t towers[NB_TOWER_MAX];
+
+	/* TODO opponent stadistics */
+
+	/* TODO working zones */
 
 };
 
@@ -253,8 +271,14 @@ uint8_t strat_place_near_slots(void);
 /* pickup and place near tokens in 3x3 area where is the robot */
 uint8_t strat_pickup_and_place_near_slots(void);
 
-/* look for tower of 2 or 3 levels */
+/* look for tower of 2 or 3 levels, if find any tower, it's added to infos */
 void strat_look_for_towers(void);
+
+/* return 1 if a new tower is added succesfully */ 
+uint8_t strat_info_add_tower(int16_t x, int16_t y, int16_t w);
+
+/* return 1 if an exist tower is deleted succesfully */
+uint8_t strat_info_del_tower(int8_t i, int8_t j);
 
 
 /**************************************************

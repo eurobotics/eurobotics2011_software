@@ -187,6 +187,11 @@ void strat_dump_conf(void)
 		return;
 
 	printf_P(PSTR("-- conf --\r\n"));
+
+	/* thresholds */
+	printf(PSTR("th_place_prio = %d \r\n"), strat_infos.conf.th_place_prio);
+	printf(PSTR("th_token_score = %d \r\n"),strat_infos.conf.th_token_score);
+
 	
 }
 
@@ -228,7 +233,6 @@ void strat_dump_infos(const char *caller)
 
 	printf(PSTR("%s() dump strat infos:\r\n"), caller);
 
-
 	/* tokens catched */
 	printf(PSTR("num_tokens = %d \r\n"), strat_infos.num_tokens);
 
@@ -238,12 +242,8 @@ void strat_dump_infos(const char *caller)
 	printf(PSTR("slot_before = (%d,%d) \r\n"),
 			strat_infos.slot_before.i, strat_infos.slot_before.j );
 
-	/* thresholds */
-	printf(PSTR("th_place_prio = %d \r\n"), strat_infos.conf.th_place_prio);
-	printf(PSTR("th_token_score = %d \r\n"),strat_infos.conf.th_token_score);
 
-	/* flags */
-
+	/* slots flags */
 	for(j=5; j>=0; j--) { 
 		if(j==5) {
 			printf(PSTR("y  _______________  \r\n"));
@@ -286,6 +286,19 @@ void strat_dump_infos(const char *caller)
 //	printf(PSTR("   0 1 2 3 4 5 6 7 x\r\n"));
 
 
+	/* towers found */
+	printf(PSTR(" num_towers = %d \r\n"), strat_infos.num_towers);
+
+	if(strat_infos.num_towers) {
+		printf(PSTR(" tower n: i, j, x, y, w c \r\n"));		
+		for(j = 0; j < strat_infos.num_towers; j++) {
+			printf(PSTR(" tower %d: %d, %d, %.4d, %.4d, %.3d %.2d"), j+1,
+					 strat_infos.towers[j].i, strat_infos.towers[j].j,
+					 strat_infos.towers[j].x, strat_infos.towers[j].y,
+					 strat_infos.towers[j].w, strat_infos.towers[j].c);
+			printf(PSTR(" \r\n"));
+		}		
+	}
 }
 
 /* init current area state before a match. Dump update user conf
@@ -318,7 +331,11 @@ void strat_reset_infos(void)
 
 	/* thresholds */
 	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
-	strat_infos.conf.th_token_score = PION_SCORE;	
+	strat_infos.conf.th_token_score = PION_SCORE;
+
+	/* towers found */
+	strat_infos.num_towers = 0;
+	memset(&strat_infos.towers, 0, sizeof(strat_infos.towers));	
 }
 
 /* call it just before launching the strat */

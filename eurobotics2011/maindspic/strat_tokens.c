@@ -1028,6 +1028,7 @@ typedef struct {
 	
 	int16_t x;
 	int16_t y;
+	int16_t w;
 
 } match_tower_t;
 
@@ -1035,8 +1036,9 @@ typedef struct {
 uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 {
 
-#define TOWER_D_TRIGGER	200
-#define TOWER_WIDTH_MAX 150
+#define TOWER_D_TRIGGER				200
+#define TOWER_WIDTH_MAX 			150
+#define DIST_PT_OPPOPONENT_MIN 	250
 
 	uint8_t ret = 0;
 	int16_t obj_width;
@@ -1046,25 +1048,17 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 	int16_t d_pt;
 	double a_pt_rad;
 
+	/* opponent coordinates */
+	int16_t x_opp;
+	int16_t y_opp;
+	int16_t dist_pt_opp;
+
 	/* robot coordinates */
 	int16_t x = position_get_x_s16(&mainboard.pos); 
 	int16_t y = position_get_y_s16(&mainboard.pos);
 	double a = position_get_a_rad_double(&mainboard.pos);
 
-	/* return if we are stoped */
-	if(ABS(mainboard.speed_d) < 10 && ABS(mainboard.speed_a) < 10) {
-	//	lasers_set_off();
-		mt->state = RISE_TRIGGER;
-		mt->x_pt_rise = 0;
-		mt->y_pt_rise = 0;
-		mt->x_pt_fall = 0;
-		mt->y_pt_fall = 0;
-		goto end;
-	}
-	//else if(!lasers_get_state())
-	//	lasers_set_on();
-
-	/* return if no valid laser point */
+	/* no valid laser point */
 	if(!sensor_get_laser_point_da(laser_id, &d_pt, &a_pt_rad)) {
 		//DEBUG(E_USER_STRAT, "no valid laser point");
 		d_pt = 5000;
@@ -1084,7 +1078,39 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 
 	//DEBUG(E_USER_STRAT, "pt_abs (%d,%d)", x_pt, y_pt);
 
+	/* return if we are stoped */
+	if(ABS(mainboard.speed_d) < 50 && ABS(mainboard.speed_a) < 50) {
+//		lasers_set_off();
+		mt->state = RISE_TRIGGER;
+		mt->x_pt_rise = 0;
+		mt->y_pt_rise = 0;
+		mt->x_pt_fall = 0;
+		mt->y_pt_fall = 0;
+		goto end;
+	}
+//	else if(!lasers_get_state() || !laset_t_setup) {
+//		lasers_set_on();
+//	}
+
 	/* TODO return if laser point near opponent */
+	if(get_opponent_xy(&x_opp, &y_opp) == 0) {
+
+		dist_pt_opp = distance_between(x_opp, y_opp, x_pt, y_pt);
+		dist_pt_opp = ABS(dist_pt_opp);
+		
+		if(dist_pt_opp < DIST_PT_OPPOPONENT_MIN) {
+
+			//DEBUG(E_USER_STRAT, "dist pt-opp = %d", dist_pt_opp);
+			//DEBUG(E_USER_STRAT, "pt discarted is near opponent");
+
+			mt->state = RISE_TRIGGER;
+			mt->x_pt_rise = 0;
+			mt->y_pt_rise = 0;
+			mt->x_pt_fall = 0;
+			mt->y_pt_fall = 0;
+			goto end;	
+		}
+	}
 
 	/* towers matching */
 	switch(mt->state)
@@ -1142,12 +1168,14 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 				else
 					mt->y = mt->y_pt_fall + (mt->y_pt_rise - mt->y_pt_fall)/2;
 
+				/* width of tower */
+				mt->w = obj_width;
 
 				ret = 1;
 				mt->state = RISE_TRIGGER; 
 
-				DEBUG(E_USER_STRAT, "laser %s: tower (%d, %d), w = %d",
-											 laser_id == ADC_LASER_R? "R": "L", mt->x, mt->y, obj_width);
+				//DEBUG(E_USER_STRAT, "laser %s: tower (%d, %d), w = %d",
+				//							 laser_id == ADC_LASER_R? "R": "L", mt->x, mt->y, obj_width);
 
 			}
 			else {
@@ -1169,14 +1197,90 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 	return ret;
 }
 
+/* return 1 a new tower is added succesfully */ 
+uint8_t strat_info_add_tower(int16_t x, int16_t y, int16_t w)
+{
+
+#define SLOT_SIZE 350
+
+	int8_t i, j, k;
+
+	/* if there is rooms */
+	if(strat_infos.num_towers >= NB_TOWER_MAX) {
+		ERROR(E_USER_STRAT, "NO MORE TOWER ROOMS");
+		return 0;
+	}
+
+	/* slot index */
+	i = (int8_t)((x-strat_infos.grid_line_x[1])/SLOT_SIZE) + 1;
+	j = (int8_t)(y/SLOT_SIZE);
+
+	/* check if already exist in the list */
+	for(k = 0; k < strat_infos.num_towers; k++) {
+		if(strat_infos.towers[k].i == i && strat_infos.towers[k].j == j) {
+			strat_infos.towers[k].c ++;
+			return 0; 
+		}
+	}
+
+	/* add new tower */
+	strat_infos.towers[strat_infos.num_towers].i = i;
+	strat_infos.towers[strat_infos.num_towers].j = j;
+	strat_infos.towers[strat_infos.num_towers].x = x;
+	strat_infos.towers[strat_infos.num_towers].y = y;
+	strat_infos.towers[strat_infos.num_towers].w = w;
+	strat_infos.towers[strat_infos.num_towers].c = 1;
+
+
+	/* increment number of towers */
+	strat_infos.num_towers ++;
+
+	return 1;
+}
+
+/* return 1 a exist tower is deleted succesfully */
+uint8_t strat_info_del_tower(int8_t i, int8_t j)
+{
+	int8_t k;
+
+	/* find index */
+	for(k = 0; k < strat_infos.num_towers; k++) {
+		if(strat_infos.towers[k].i == i && strat_infos.towers[k].j == j)	
+			break;
+	}
+
+	/* no entry found */
+	if(k == strat_infos.num_towers)
+		return 0;
+
+	/* del and adjust list elements */
+	strat_infos.num_towers --;
+	for(k = k; k < strat_infos.num_towers; k++) {
+		strat_infos.towers[k] = strat_infos.towers[k+1]; 
+	}
+	strat_infos.towers[strat_infos.num_towers].i = 0;
+	strat_infos.towers[strat_infos.num_towers].j = 0;
+	strat_infos.towers[strat_infos.num_towers].x = 0;
+	strat_infos.towers[strat_infos.num_towers].y = 0;
+	strat_infos.towers[strat_infos.num_towers].w = 0;
+	strat_infos.towers[strat_infos.num_towers].c = 0;
+
+	return 1;
+}
+
 /* look for tower of 2 or 3 levels */
 void strat_look_for_towers(void)
 {
 	static match_tower_t mt_left, mt_right;
 
-	/* TODO add found tower to strat_infos */
+	/* matching with right laser */
+	if(strat_match_tower( &mt_right, ADC_LASER_R)) {
+		strat_info_add_tower(mt_right.x, mt_right.y, mt_right.w);
+	}
 
-	strat_match_tower( &mt_right, ADC_LASER_R);
-	strat_match_tower( &mt_left, ADC_LASER_L);
+	/* matching with left laser */
+	if(strat_match_tower( &mt_left, ADC_LASER_L)) {
+		strat_info_add_tower(mt_left.x, mt_left.y, mt_left.w);
+	}
 }
 
