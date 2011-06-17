@@ -198,7 +198,7 @@ static void cmd_opponent_parsed(void *parsed_result, void *data)
 //		beacon_opponent_pulling();
 //	}
 
-	wait_ms(100);
+	wait_ms(200);
 
 	} while (!cmdline_keypressed());
 }
@@ -402,7 +402,7 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 	{
 
 		/* remap UART */
-		set_uart_mux(SLAVEDSPIC_CHANNEL);
+		//set_uart_mux(SLAVEDSPIC_CHANNEL);
 		
 		/* init vt100 character set */
 		vt100_init(&vt100);
@@ -426,7 +426,7 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 		}
 
 		/* remap UART */
-		set_uart_mux(BEACON_CHANNEL);
+		//set_uart_mux(BEACON_CHANNEL);
 	}	
 	else if (!strcmp(res->arg1, "init")){
 		i2c_slavedspic_mode_init();
@@ -599,7 +599,7 @@ static void cmd_beacon_parsed(void * parsed_result, void * data)
 	if(!strcmp_P(res->arg1, "raw"))
 	{
 		/* remap UART */
-		set_uart_mux(BEACON_CHANNEL);
+		//set_uart_mux(BEACON_CHANNEL);
 
 		/* init vt100 character set */
 		vt100_init(&vt100);
@@ -641,7 +641,8 @@ static void cmd_beacon_parsed(void * parsed_result, void * data)
 		beacon_cmd_color();
 	}
 	else if(!strcmp_P(res->arg1, "opponent")){
-		beacon_cmd_opponent();
+		//beacon_cmd_opponent();
+		beacon_pull_opponent();
 	}
 
 	printf("Done\n\r");
@@ -809,16 +810,24 @@ static void cmd_lasers_parsed(void *parsed_result, void *data)
 
 	else if ( !strcmp_P(res->arg1, PSTR("towers")))
 	{
-		do {
-			strat_look_for_towers();
-			wait_ms(100);
-		} while (!cmdline_keypressed());
+//		do {
+//			strat_look_for_towers();
+//			wait_ms(100);
+//		} while (!cmdline_keypressed());
+		
+		mirrors_set_mode(MODE_LOOK_FOR_TOWERS);
 	}
+
+	else if ( !strcmp_P(res->arg1, PSTR("figures")))
+	{
+		mirrors_set_mode(MODE_LOOK_FOR_FIGURES);
+	}
+
 }
 
 prog_char str_lasers_arg0[] = "lasers";
 parse_pgm_token_string_t cmd_lasers_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg0, str_lasers_arg0);
-prog_char str_lasers_arg1[] = "on#off#dist#pt#towers";
+prog_char str_lasers_arg1[] = "on#off#dist#pt#towers#figures";
 parse_pgm_token_string_t cmd_lasers_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg1, str_lasers_arg1);
 
 prog_char help_lasers[] = "Show lasers values";

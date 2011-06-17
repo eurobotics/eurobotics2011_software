@@ -406,14 +406,14 @@ void strat_event(void *dummy)
 	/* update actual slot position */
 	strat_update_slot_position();	
 
-	/* loook for opponent towers */
-	//strat_look_for_towers();
-
 	/* TODO: catch tokens in straight travels */
 
 	/* TODO: update num of token catched */
 
 	/* TODO: check figures of green zone */
+
+	/* manage mirrors position */
+	mirrors_state_machine();
 	
 }
 

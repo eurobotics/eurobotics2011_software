@@ -183,22 +183,22 @@ void i2c_poll_slaves(void *dummy)
 		running_op = OP_READY;
 		i2c_errors = 0;
 
-		/* reset slavedspic */
-		set_uart_mux(SLAVEDSPIC_CHANNEL);
-		uart_send(MUX_UART,'\n');
-		uart_send(MUX_UART,'\r');
-		uart_send(MUX_UART,'r');
-		uart_send(MUX_UART,'e');
-		uart_send(MUX_UART,'s');
-		uart_send(MUX_UART,'e');
-		uart_send(MUX_UART,'t');
-		uart_send(MUX_UART,'\n');
-		uart_send(MUX_UART,'\r');
+		/* XXX reset slavedspic */
+//		set_uart_mux(SLAVEDSPIC_CHANNEL);
+//		uart_send(MUX_UART,'\n');
+//		uart_send(MUX_UART,'\r');
+//		uart_send(MUX_UART,'r');
+//		uart_send(MUX_UART,'e');
+//		uart_send(MUX_UART,'s');
+//		uart_send(MUX_UART,'e');
+//		uart_send(MUX_UART,'t');
+//		uart_send(MUX_UART,'\n');
+//		uart_send(MUX_UART,'\r');
 
 		/* XXX wait send reset */
 		//wait_ms(10);
 
-		set_uart_mux(BEACON_CHANNEL);
+//		set_uart_mux(BEACON_CHANNEL);
 
 		/* reset local i2c */
 		i2c_reset();
@@ -286,16 +286,16 @@ void i2c_poll_slaves(void *dummy)
 		      "err=%d i2c_status=%x", !!command_size, i2c_state, err, i2c_status());
 		
 		/* reset slavedspic */
-		set_uart_mux(SLAVEDSPIC_CHANNEL);
-		uart_send(MUX_UART,'\n');
-		uart_send(MUX_UART,'\r');
-		uart_send(MUX_UART,'r');
-		uart_send(MUX_UART,'e');
-		uart_send(MUX_UART,'s');
-		uart_send(MUX_UART,'e');
-		uart_send(MUX_UART,'t');
-		uart_send(MUX_UART,'\n');
-		uart_send(MUX_UART,'\r');
+//		set_uart_mux(SLAVEDSPIC_CHANNEL);
+//		uart_send(MUX_UART,'\n');
+//		uart_send(MUX_UART,'\r');
+//		uart_send(MUX_UART,'r');
+//		uart_send(MUX_UART,'e');
+//		uart_send(MUX_UART,'s');
+//		uart_send(MUX_UART,'e');
+//		uart_send(MUX_UART,'t');
+//		uart_send(MUX_UART,'\n');
+//		uart_send(MUX_UART,'\r');
 
 		/* XXX wait send reset */
 		//wait_ms(10);

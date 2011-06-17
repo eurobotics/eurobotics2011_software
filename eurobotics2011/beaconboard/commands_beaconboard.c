@@ -246,12 +246,12 @@ static void cmd_opponent_parsed(void * parsed_result, void *data)
 	int32_t opponent_x, opponent_y, opponent_dist, opponent_angle;
 	uint8_t flags;
 //	static int16_t i=0;
-	int16_t checksum;
+	uint16_t checksum;
 	
 	IRQ_LOCK(flags);
-	beacon.robot_x = res->robot_x;
-	beacon.robot_y = res->robot_y;
-	beacon.robot_a = res->robot_a;
+	beacon.robot_x = (int32_t)res->robot_x;
+	beacon.robot_y = (int32_t)res->robot_y;
+	beacon.robot_a = (int32_t)res->robot_a;
 	
 	opponent_x = beacon.opponent_x;
 	opponent_y = beacon.opponent_y;
@@ -259,26 +259,19 @@ static void cmd_opponent_parsed(void * parsed_result, void *data)
 	opponent_dist = beacon.opponent_dist;
 	IRQ_UNLOCK(flags);
 
+
 	/* get actual value of (x,y) */
 	if(opponent_x != I2C_OPPONENT_NOT_THERE){
 		/* calculate (x,y) coordenates relative to (0,0) */
 		beacon_angle_dist_to_x_y(opponent_angle, opponent_dist, &opponent_x, &opponent_y);
 	}
 
+
 	/* calculate checksum */
-	checksum  = (int16_t)opponent_x;
-	checksum += (int16_t)opponent_y;
-	checksum += (int16_t)opponent_angle;
-	checksum += (int16_t)opponent_dist;
-
-
-//	printf("opponent is %d %d %d %d %lx \n\r",
-//	 			(int16_t)opponent_x, (int16_t)opponent_y,
-//			   (int16_t)opponent_angle, (int16_t)opponent_dist, checksum);
-
-//	printf("opponent is %d %d %d %d %lx \n\r",
-//	 			(int16_t)i, (int16_t)i,
-//			   (int16_t)i, (int16_t)i, (int32_t)(i*4));
+	checksum  = (uint16_t)opponent_x;
+	checksum += (uint16_t)opponent_y;
+	checksum += (uint16_t)opponent_angle;
+	checksum += (uint16_t)opponent_dist;
 
 	
 //	/* debug */
@@ -302,18 +295,23 @@ static void cmd_opponent_parsed(void * parsed_result, void *data)
 	uart_send(CMDLINE_UART,'o');
 
 	/* send data */
-	uart_send(CMDLINE_UART,(int8_t)(opponent_x & 0x00FF));
-	uart_send(CMDLINE_UART,(int8_t)((opponent_x>>8) & 0x00FF));
-	uart_send(CMDLINE_UART,(int8_t)(opponent_y & 0x00FF));
-	uart_send(CMDLINE_UART,(int8_t)((opponent_y>>8) & 0x00FF));
-	uart_send(CMDLINE_UART,(int8_t)(opponent_angle & 0x00FF));
-	uart_send(CMDLINE_UART,(int8_t)((opponent_angle>>8) & 0x00FF));
-	uart_send(CMDLINE_UART,(int8_t)(opponent_dist & 0x00FF));
-	uart_send(CMDLINE_UART,(int8_t)((opponent_dist>>8) & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)(opponent_x & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)((opponent_x>>8) & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)(opponent_y & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)((opponent_y>>8) & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)(opponent_angle & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)((opponent_angle>>8) & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)(opponent_dist & 0x00FF));
+	uart_send(CMDLINE_UART,(uint8_t)((opponent_dist>>8) & 0x00FF));
 
 	/* send checksum */
 	uart_send(CMDLINE_UART,(int8_t)(checksum & 0x00FF));
 	uart_send(CMDLINE_UART,(int8_t)((checksum>>8) & 0x00FF));
+
+//	printf("\n\r");
+//	printf("opponent is %d %d %d %d %x \n\r",
+//	 			(int16_t)opponent_x, (int16_t)opponent_y,
+//			   (int16_t)opponent_angle, (int16_t)opponent_dist, checksum);
 
 }
 

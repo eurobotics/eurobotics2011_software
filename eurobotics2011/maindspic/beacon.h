@@ -39,4 +39,7 @@ void beacon_cmd_beacon_off(void);
 
 void beacon_opponent_pulling(void);
 
+/* pull opponent position */
+void beacon_pull_opponent(void);
+
 #endif

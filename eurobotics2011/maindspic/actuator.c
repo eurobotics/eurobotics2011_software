@@ -24,6 +24,7 @@
 #include <encoders_dspic.h>
 #include <dac_mc.h>
 
+#include "i2c_protocol.h"
 #include "actuator.h"
 #include "main.h"
 
@@ -65,3 +66,81 @@ uint8_t lasers_get_state(void)
 {
 	return _LATC7;
 }
+
+
+
+/* manage mirrors position */
+
+#define IDLE							0
+#define WAITING_DUMMY_POSSITION	1
+#define WAITING_CMD_POSSITION		2
+
+#define DUMMY_POSSITION				300
+#define AX12_T_SETUP_US				500000UL
+
+static uint8_t state = IDLE;
+static uint8_t mirror_update_pos = 0;
+static uint16_t mirror_right_pos;
+static uint16_t mirror_left_pos;
+
+void mirrors_state_machine(void)
+{
+	static microseconds t_setup_us;
+
+	switch(state) {
+
+		case IDLE:
+			if(mirror_update_pos) {
+				mirror_update_pos = 0;
+				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_RIGHT, DUMMY_POSSITION);
+				t_setup_us = time_get_us2();
+				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_LEFT, DUMMY_POSSITION);
+				t_setup_us = time_get_us2();
+				state = WAITING_DUMMY_POSSITION;			
+			}
+			break;
+
+		case WAITING_DUMMY_POSSITION:
+
+			if(time_get_us2() - t_setup_us > AX12_T_SETUP_US) {
+				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_RIGHT, mirror_right_pos);
+				t_setup_us = time_get_us2();
+				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_LEFT, mirror_left_pos);
+				t_setup_us = time_get_us2();
+				state = WAITING_CMD_POSSITION;
+			}
+			break;
+
+		case WAITING_CMD_POSSITION:
+			if(time_get_us2() - t_setup_us > AX12_T_SETUP_US) {
+				state = IDLE;
+			}
+			break;
+
+		default:
+			state = IDLE;
+			break;
+	}
+}
+
+/* set mirrors mode */
+
+#define MIRROR_R_TOWERS_POS	227
+#define MIRROR_L_TOWERS_POS	207
+#define MIRROR_R_FIGURES_POS	210
+#define MIRROR_L_FIGURES_POS	190
+
+void mirrors_set_mode(uint8_t mode)
+{
+	if(mode == MODE_LOOK_FOR_TOWERS) {
+		mirror_right_pos = MIRROR_R_TOWERS_POS;
+		mirror_left_pos = MIRROR_L_TOWERS_POS;
+	}
+	else if(mode == MODE_LOOK_FOR_FIGURES) {
+		mirror_right_pos = MIRROR_R_FIGURES_POS;
+		mirror_left_pos = MIRROR_L_FIGURES_POS;
+	} 
+
+	mirror_update_pos = 1;
+}
+

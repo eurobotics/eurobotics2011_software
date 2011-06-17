@@ -141,8 +141,8 @@
 
 /* EVENTS PERIODS */
 #define EVENT_PERIOD_LED 			1000000L
-#define EVENT_PERIOD_BEACON_PULL	 100000L
 #define EVENT_PERIOD_STRAT			  25000L
+#define EVENT_PERIOD_BEACON_PULL	  10000L
 #define EVENT_PERIOD_SENSORS		  10000L
 #define EVENT_PERIOD_I2C_POLL		   8000L
 #define EVENT_PERIOD_CS 			   5000L
@@ -268,11 +268,11 @@ static inline void set_uart_mux(uint8_t channel)
 		_U2RXR 	= 9;	/* U2RX <- RP9(RB9)  <- BEACON_UART_RX */
 		_TRISB9 	= 1;	/* U2RX is input								*/	  	_RP25R 	= 5;	/* U2TX -> RP25(RC9) -> BEACON_UART_TX */		_TRISC9	= 0;	/* U2TX is output								*/
 	}
-	else
-	{
-		_U2RXR 	= 2;	/* U2RX <- RP2(RB2) <- SLAVE_UART_TX	*/
-		_TRISB2 	= 1;	/* U2RX is input								*/	  	_RP3R 	= 5;	/* U2TX -> RP3(RB3) -> SLAVE_UART_RX	*/		_TRISB3	= 0;	/* U2TX is output								*/
-	}
+//	else
+//	{
+//		_U2RXR 	= 2;	/* U2RX <- RP2(RB2) <- SLAVE_UART_TX	*/
+//		_TRISB2 	= 1;	/* U2RX is input								*///	  	_RP3R 	= 5;	/* U2TX -> RP3(RB3) -> SLAVE_UART_RX	*///		_TRISB3	= 0;	/* U2TX is output								*/
+//	}
 
 	IRQ_UNLOCK(flags);
 

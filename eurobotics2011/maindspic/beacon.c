@@ -36,7 +36,7 @@
 #include "main.h"
 #include "beacon.h"
 
-#define LINE_BUFF_SIZE 	64
+#define LINE_BUFF_SIZE 	128
 #define CMD_LINE_SIZE 	16
 
 /* local header functions */
@@ -50,8 +50,6 @@ int16_t error_id = 0;
 char line_buff[LINE_BUFF_SIZE];
 int8_t cmd_buff[CMD_LINE_SIZE];
 uint16_t cmd_size = 0;
-int8_t i=0;
-
 
 
 /*******************************************************************
@@ -127,7 +125,7 @@ void beacon_cmd_wt11_close(void)
  ***********************************************************/
 
 /* send command to beacon */
-void beacon_send_cmd(int8_t *buff, uint16_t size){
+void beacon_send_cmd(int8_t *buff, uint16_t size) {
 	int16_t i;
 
 	/* set uart mux */
@@ -154,6 +152,7 @@ void beacon_send_cmd(int8_t *buff, uint16_t size){
 void parse_line(char * buff) 
 {
 	int16_t ret;
+//#define PARSE_OPPONENT_ASCII_VERSION
 #ifdef PARSE_OPPONENT_ASCII_VERSION
 	uint8_t flags;
 	int16_t arg0, arg1, arg2, arg3;
@@ -186,6 +185,8 @@ void parse_line(char * buff)
  							 &arg0, &arg1, &arg2, &arg3, &arg4);
 	if(ret == 5){
 
+		DEBUG(E_USER_BEACON,"opponent ans parsed");
+
 		/* check checksum */
 		checksum  = arg0;
 		checksum += arg1;
@@ -211,7 +212,8 @@ void parse_line(char * buff)
 /* process and parse line */
 void line_char_in(char c)
 {
-	
+	static uint8_t i = 0;
+
 	if(c == '\r' || c == '\n'){
 		if(i!=0){			
 			line_buff[i] = '\0';
@@ -221,17 +223,19 @@ void line_char_in(char c)
 	}
 	else{
 		line_buff[i++] = c;
-		i &= 0x3F;
+		i &= 0x003F;
 	}		
 }
 
 /* parse beacon opponent command raw answer */
-void beacon_parse_opponent_answer(int16_t c)
+uint8_t beacon_parse_opponent_answer(int16_t c)
 {
 	static uint8_t state = 0, i = 0;
-	static int16_t opp_x=0, opp_y=0, opp_d=0, opp_a=0, checksum=0;
+	static int16_t opp_x=0, opp_y=0, opp_d=0, opp_a=0;
+	static uint16_t checksum = 0;
+	uint16_t local_checksum;
 	uint8_t flags;
-	
+
 	switch(state) {
 		case 0:
 			/* parse header */
@@ -256,15 +260,16 @@ void beacon_parse_opponent_answer(int16_t c)
 			break;
 
 		case 1:
+
 			/* read data */
-			if(i==8)  { opp_x  = ((uint16_t)c); 		}
-			if(i==9)  { opp_x |= ((uint16_t)c << 8);	}
-			if(i==10) {	opp_y  = ((uint16_t)c); 		}
-			if(i==11) { opp_y |= ((uint16_t)c << 8); }
-			if(i==12) {	opp_a  = ((uint16_t)c); 		}
-			if(i==13) {	opp_a |= ((uint16_t)c << 8); }
-			if(i==14) {	opp_d  = ((uint16_t)c); 		}
-			if(i==15) {	opp_d |= ((uint16_t)c << 8); }
+			if(i==8)  { opp_x  = ((int16_t)c); 		}
+			if(i==9)  { opp_x |= ((int16_t)c << 8);	}
+			if(i==10) {	opp_y  = ((int16_t)c); 		}
+			if(i==11) { opp_y |= ((int16_t)c << 8); }
+			if(i==12) {	opp_a  = ((int16_t)c); 		}
+			if(i==13) {	opp_a |= ((int16_t)c << 8); }
+			if(i==14) {	opp_d  = ((int16_t)c); 		 } //printf("c(14) = %d\n\r", (int16_t)c);}
+			if(i==15) {	opp_d |= ((int16_t)c << 8); } //printf("c(15) = %d\n\r", ((int16_t)c << 8));}
 
 			if(i==16) {	checksum  = ((uint16_t)c); 		}
 			if(i==17) {	checksum |= ((uint16_t)c << 8); }
@@ -273,10 +278,16 @@ void beacon_parse_opponent_answer(int16_t c)
 
 			if(i==18) {
 
-				NOTICE(E_USER_BEACON,"data: %d %d %d %d %d\n\r", (int16_t)opp_x, (int16_t)opp_y, (int16_t)opp_a, (int16_t)opp_d, (int16_t)checksum);
+				NOTICE(E_USER_BEACON,"data: %d %d %d %d %d\n\r", (int16_t)opp_x, (int16_t)opp_y, (int16_t)opp_a, (int16_t)opp_d, (uint16_t)checksum);
+
+				/* checksum */
+				local_checksum  = (uint16_t)opp_x;
+				local_checksum += (uint16_t)opp_y;
+				local_checksum += (uint16_t)opp_a;
+				local_checksum += (uint16_t)opp_d;
 
 				/* save data */
-				if(checksum == (opp_x + opp_y + opp_a + opp_d)) {
+				if(checksum == local_checksum) {
 					IRQ_LOCK(flags);
 					beaconboard.opponent_x = (int16_t)opp_x;
 					beaconboard.opponent_y = (int16_t)opp_y;		
@@ -290,6 +301,7 @@ void beacon_parse_opponent_answer(int16_t c)
 
 				i=0;
 				state = 0;
+				return 1;
 			}
 			break;	
 
@@ -298,6 +310,8 @@ void beacon_parse_opponent_answer(int16_t c)
 			state = 0;
 			break;
 	}
+
+	return 0;
 }
 
 
@@ -402,7 +416,11 @@ void beacon_opponent_pulling(void)
 					IRQ_UNLOCK(flags);		
 				}		
 				else {
-					NOTICE(E_USER_STRAT, "opponent checksum fails");		
+					NOTICE(E_USER_STRAT, "opponent checksum fails");
+
+					/* flush enque */
+					while(uart_recv_nowait(BEACON_UART) != -1);
+		
 				}
 
 				i=0;
@@ -425,14 +443,16 @@ void beacon_protocol(void * dummy)
 	int16_t i;
 	static uint8_t a = 0;
 	int16_t c = 0;
+	uint8_t ret = 0;
+	static microseconds pull_time_us = 0;
 	
 	/* beacon config commads */
 	if((mainboard.flags & DO_OPP) == 0) {
 		/* parse commands asnwers */
-		while(c != -1){	
-			c=uart_recv_nowait(BEACON_UART);
+		while(c != -1) {	
+			c = uart_recv_nowait(BEACON_UART);
 			if(c != -1)
-				line_char_in(c);	
+				line_char_in((char)(c & 0x00FF));	
 		}
 
 		/* send commands */
@@ -441,10 +461,15 @@ void beacon_protocol(void * dummy)
 				uart_send(BEACON_UART, cmd_buff[i]);	
 			}	
 			cmd_size = 0;
-	
+
 			uart_send(BEACON_UART, '\n');
 			uart_send(BEACON_UART, '\r');		
 		}
+
+//		/* request opponent possition*/
+//		if(mainboard.flags & DO_OPP)
+//			beacon_pull_opponent();	
+
 	}
 	/* beacon data pulling */
 	else {
@@ -455,14 +480,17 @@ void beacon_protocol(void * dummy)
 			LED3_TOGGLE();
 
 		/* parse answers */
+		c = uart_recv_nowait(BEACON_UART);
 		while(c != -1){	
+			ret = beacon_parse_opponent_answer(c);
 			c = uart_recv_nowait(BEACON_UART);
-			if(c != -1)
-				beacon_parse_opponent_answer(c);
 		}
 
-		/* request opponent possition*/
-		beacon_pull_opponent();	
+		/* request opponent possition */
+		if((time_get_us2() - pull_time_us > 100000UL)) {
+			beacon_pull_opponent();	
+			pull_time_us = time_get_us2();
+		}
 	}	
 }
 
@@ -492,24 +520,24 @@ void beacon_cmd_color(void)
 
 
 /* get opponent */
-void beacon_cmd_opponent(void)
-{
-	int8_t buff[32];
-	uint16_t size;
-	int16_t robot_x, robot_y, robot_a;
-	uint8_t flags;
-	
-	IRQ_LOCK(flags);
-	robot_x = position_get_x_s16(&mainboard.pos);
-	robot_y = position_get_y_s16(&mainboard.pos);
-	robot_a = position_get_a_deg_s16(&mainboard.pos);
-	IRQ_UNLOCK(flags);
-
-	size = sprintf((char *)buff,"opponent %d %d %d",
-								robot_x, robot_y, robot_a);
-
-	beacon_send_cmd(buff, size);
-}
+//void beacon_cmd_opponent(void)
+//{
+//	int8_t buff[32];
+//	uint16_t size;
+//	int16_t robot_x, robot_y, robot_a;
+//	uint8_t flags;
+//	
+//	IRQ_LOCK(flags);
+//	robot_x = position_get_x_s16(&mainboard.pos);
+//	robot_y = position_get_y_s16(&mainboard.pos);
+//	robot_a = position_get_a_deg_s16(&mainboard.pos);
+//	IRQ_UNLOCK(flags);
+//
+//	size = sprintf((char *)buff,"opponent %d %d %d",
+//								robot_x, robot_y, robot_a);
+//
+//	beacon_send_cmd(buff, size);
+//}
 
 
 /* beacon on */
@@ -540,13 +568,11 @@ void beacon_cmd_beacon_off(void)
 /* pull opponent position */
 void beacon_pull_opponent(void)
 {
-	int8_t buff[32];
+	char buff[32];
 	uint16_t size;
 	int16_t robot_x, robot_y, robot_a;
 	uint8_t flags;
-
-	/* set uart mux */
-	//set_uart_mux(BEACON_CHANNEL);
+	uint8_t i;
 	
 	IRQ_LOCK(flags);
 	robot_x = position_get_x_s16(&mainboard.pos);
@@ -554,13 +580,14 @@ void beacon_pull_opponent(void)
 	robot_a = position_get_a_deg_s16(&mainboard.pos);
 	IRQ_UNLOCK(flags);
 
-	size = sprintf((char *)buff,"opponent %d %d %d",
+
+	size = sprintf(buff,"opponent %d %d %d",
 								robot_x, robot_y, robot_a);
 
 	for(i=0; i<size; i++){
 		uart_send(BEACON_UART, buff[i]);	
 	}	
-	
+
 	uart_send(BEACON_UART, '\n');
 	uart_send(BEACON_UART, '\r');		
 

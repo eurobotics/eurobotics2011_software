@@ -20,6 +20,10 @@
  *  Javier Baliñas Santos <javier@arc-robots.org>
  */
 
+#ifndef _ACTUATOR_H_
+#define _ACTUATOR_H_
+
+
 #include <stdint.h>
 
 /* used by cs, correct offset and save values */
@@ -29,4 +33,15 @@ void dac_set_and_save(void *dac, int32_t val);
 void lasers_set_on(void);
 void lasers_set_off(void);
 uint8_t lasers_get_state(void);
+
+
+/* manage mirrors position */
+void mirrors_state_machine(void);
+
+/* set mirrors mode */
+#define MODE_LOOK_FOR_TOWERS	0
+#define MODE_LOOK_FOR_FIGURES	1
+void mirrors_set_mode(uint8_t mode);
+
+#endif
 
