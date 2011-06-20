@@ -352,9 +352,9 @@ void set_slots_poly_in_path(poly_t **pol,
 		{			
 	
 #ifndef HOST_VERSION		
-//			if((strat_infos.slot[i][j].flags & SLOT_AVOID) 
-//				& (strat_infos.slot[i][j].color == mainboard.our_color)) /* TODO enable avoid flag */
-			if((strat_infos.slot[i][j].color == mainboard.our_color))
+			if((strat_infos.slot[i][j].flags & SLOT_AVOID) 
+				& (strat_infos.slot[i][j].color == mainboard.our_color)) /* TODO enable avoid flag */
+//			if((strat_infos.slot[i][j].color == mainboard.our_color))
 #else
 			if((strat_infos.slot[i][j].color == SLOT_BLUE)) /* XXX: test one color */
 //			if(0)                                          /* XXX: test without slots poly */

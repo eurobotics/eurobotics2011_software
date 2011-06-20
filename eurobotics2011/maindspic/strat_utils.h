@@ -92,6 +92,9 @@ uint8_t opponent_is_infront(void);
 uint8_t opponent_is_opposite_side(uint8_t side);
 uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 									 int16_t x_down, int16_t y_down);
+uint8_t opponent_is_in_slot(int8_t i, int8_t j);
+uint8_t opponent_is_in_near_slots(void);
+
 
 uint8_t token_catched(uint8_t side);
 uint8_t token_inside(uint8_t side);
@@ -124,5 +127,9 @@ void strat_d_rel_side(struct trajectory*traj, double d_mm, uint8_t side);
 /* return 1 if the opponent is near */
 /* only compile with HOMOLOGATION define */
 void wait_until_opponent_is_far(void);
+
+
+/* apply flags to slot */
+void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags);
 
 #endif

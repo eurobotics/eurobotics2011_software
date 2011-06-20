@@ -84,7 +84,7 @@ struct strat_infos strat_infos = {
 	.slot[1][1] = { 625,	525,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[1][2] = { 625,	875,		SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[1][3] = { 625,	1225,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
-	.slot[1][4] = { 625,	1575,		SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
+	.slot[1][4] = { 625,	1575,		SLOT_RED,			SLOT_PRIO_NEAR_SAFE,		0, 				0, },
 	.slot[1][5] = { 625,	1865+10,	SLOT_BLUE,			SLOT_PRIO_SAFE,			SLOT_SAFE,		0, },
 
 	.slot[2][0] = { 975,	175,		SLOT_BLUE, 			SLOT_PRIO_WALL,			0, 				0, },

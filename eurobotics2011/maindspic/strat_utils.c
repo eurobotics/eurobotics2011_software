@@ -402,6 +402,12 @@ uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 	return 0;
 }
 
+uint8_t opponent_is_in_slot(int8_t i, int8_t j)
+{
+	return opponent_is_in_area(strat_infos.slot[i][j].x - SLOT_SIZE_HALF, strat_infos.slot[i][j].y + SLOT_SIZE_HALF,
+									   strat_infos.slot[i][j].x + SLOT_SIZE_HALF, strat_infos.slot[i][j].y + SLOT_SIZE_HALF);
+}
+
 uint8_t opponent_is_opposite_side(uint8_t side)
 {
 	if(side == SIDE_FRONT)
@@ -410,6 +416,22 @@ uint8_t opponent_is_opposite_side(uint8_t side)
 		return opponent_is_infront();
 }
 
+
+uint8_t opponent_is_in_near_slots(void)
+{
+	int8_t opp_there;
+	int16_t opp_d, opp_a;
+
+	opp_there = get_opponent_da(&opp_d, &opp_a);
+
+	if(opp_there == -1)
+		return 0;
+
+	if (opp_d < 400)
+		return 1;
+
+	return 0;
+}
 
 uint8_t token_catched(uint8_t side)
 {
@@ -606,4 +628,17 @@ void wait_until_opponent_is_far(void)
 		} while(opp_d < 600);
 	}
 #endif
+}
+
+/* apply flags to slot */
+void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags)
+{
+	int8_t i, j;
+
+	/* slot index */
+	i = (int8_t)(x/SLOT_SIZE);
+	j = (int8_t)(y/SLOT_SIZE);
+
+	/* apply flags */
+	strat_infos.slot[i][j].flags |= (SLOT_BUSY|SLOT_AVOID);
 }

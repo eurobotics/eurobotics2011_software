@@ -95,9 +95,6 @@ void beacon_cmd_wt11_call(void)
 /* close connection with beacon wt11 */
 void beacon_cmd_wt11_close(void)
 {
-	/* set uart mux */
-	//set_uart_mux(BEACON_CHANNEL);
-
 	/* change to cmd mode */
 	wait_ms(1200);
 	uart_send(BEACON_UART,'+');	
@@ -125,12 +122,10 @@ void beacon_cmd_wt11_close(void)
  ***********************************************************/
 
 /* send command to beacon */
-void beacon_send_cmd(int8_t *buff, uint16_t size) {
+void beacon_send_cmd(int8_t *buff, uint16_t size) 
+{
 	int16_t i;
 
-	/* set uart mux */
-	//set_uart_mux(BEACON_CHANNEL);
-	
 	/* check length */
 	if(size > CMD_LINE_SIZE){
 		ERROR(E_USER_BEACON, "Command size is too large");	

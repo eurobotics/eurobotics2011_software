@@ -397,12 +397,22 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 	static uint8_t led_flag = 0;
 	int16_t c;
 	int8_t cmd = 0;
-	struct vt100 vt100;
+	struct vt100 vt100;
+	uint8_t mainboard_flags;
+	uint8_t flags;
 	if(!strcmp_P(res->arg1, "raw"))
 	{
+		/* disable opponent event */
+		IRQ_LOCK(flags);
+		mainboard_flags = mainboard.flags;
+		mainboard.flags &= ~(DO_OPP);
+		IRQ_UNLOCK(flags);
+
+		/* flush rx buffer */
+		while(uart_recv_nowait(MUX_UART) != -1);
 
 		/* remap UART */
-		//set_uart_mux(SLAVEDSPIC_CHANNEL);
+		set_uart_mux(SLAVEDSPIC_CHANNEL);
 		
 		/* init vt100 character set */
 		vt100_init(&vt100);
@@ -426,7 +436,13 @@ static void cmd_slavedspic_parsed(void *parsed_result, void *data)
 		}
 
 		/* remap UART */
-		//set_uart_mux(BEACON_CHANNEL);
+		set_uart_mux(BEACON_CHANNEL);
+
+		/* restore opponent event */
+		IRQ_LOCK(flags);
+		mainboard.flags = mainboard_flags;
+		IRQ_UNLOCK(flags);
+
 	}	
 	else if (!strcmp(res->arg1, "init")){
 		i2c_slavedspic_mode_init();
@@ -598,9 +614,6 @@ static void cmd_beacon_parsed(void * parsed_result, void * data)
 	
 	if(!strcmp_P(res->arg1, "raw"))
 	{
-		/* remap UART */
-		//set_uart_mux(BEACON_CHANNEL);
-
 		/* init vt100 character set */
 		vt100_init(&vt100);
 		
@@ -779,8 +792,11 @@ static void cmd_lasers_parsed(void *parsed_result, void *data)
 
 	if (!strcmp_P(res->arg1, PSTR("on")))
 		lasers_set_on();
-	else if (!strcmp_P(res->arg1, PSTR("off")))
+	else if (!strcmp_P(res->arg1, PSTR("off"))) {
 		lasers_set_off();
+		strat_look_for_figures_disable();
+		strat_look_for_towers_disable();
+	}
 	else if ( !strcmp_P(res->arg1, PSTR("dist")))
 	{
 		do {
@@ -816,11 +832,13 @@ static void cmd_lasers_parsed(void *parsed_result, void *data)
 //		} while (!cmdline_keypressed());
 		
 		mirrors_set_mode(MODE_LOOK_FOR_TOWERS);
+		strat_look_for_towers_enable();
 	}
 
 	else if ( !strcmp_P(res->arg1, PSTR("figures")))
 	{
 		mirrors_set_mode(MODE_LOOK_FOR_FIGURES);
+		strat_look_for_figures_enable();
 	}
 
 }

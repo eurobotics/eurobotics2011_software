@@ -115,6 +115,11 @@ struct conf {
 #define TOWER2H_SCORE	60
 
 
+/* slot dimensions */
+#define SLOT_SIZE 		350
+#define SLOT_SIZE_HALF	175
+#define SLOT_DIAGONAL	495
+
 /* slot of token */
 struct slot_info {
 	int16_t x;
@@ -129,19 +134,20 @@ struct slot_info {
 	
 	uint8_t prio;
 #define SLOT_PRIO_0		0
-#define SLOT_PRIO_1		1
-#define SLOT_PRIO_2		2
-#define SLOT_PRIO_3		3
-#define SLOT_PRIO_4		4
-#define SLOT_PRIO_5		5
-#define SLOT_PRIO_6		6
-#define SLOT_PRIO_7		7
-#define SLOT_PRIO_MAX	8
+#define SLOT_PRIO_1		10
+#define SLOT_PRIO_2		20
+#define SLOT_PRIO_3		30
+#define SLOT_PRIO_4		40
+#define SLOT_PRIO_5		50
+#define SLOT_PRIO_6		60
+#define SLOT_PRIO_7		70
+#define SLOT_PRIO_MAX	80
+#define SLOT_PRIOR_INC	10
 
 /* strat areas priorities */
 #define SLOT_PRIO_GREEN			SLOT_PRIO_0	
-#define SLOT_PRIO_CENTER		SLOT_PRIO_1
-#define SLOT_PRIO_PATH			SLOT_PRIO_2	
+#define SLOT_PRIO_PATH			SLOT_PRIO_1	
+#define SLOT_PRIO_CENTER		SLOT_PRIO_2
 #define SLOT_PRIO_NEAR_GREEN	SLOT_PRIO_3
 #define SLOT_PRIO_NEAR_SAFE	SLOT_PRIO_4
 #define SLOT_PRIO_WALL			SLOT_PRIO_5
@@ -159,6 +165,7 @@ struct slot_info {
 #define SLOT_VISITED			32
 #define SLOT_OPPONENT		64
 #define SLOT_ROBOT			128
+#define SLOT_FIGURE			256
 
 	uint8_t flags_poly;
 #define SLOT_POLY_SQUARE	1
@@ -262,6 +269,9 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go);
 /* we suppose that there is at least one token catched */
 uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go);
 
+/* push a token in order to get out an opponent token from slot */
+uint8_t strat_push_slot_token(int8_t i, int8_t j);
+
 /* pickup near slots on an area 3x3 with center the robot */
 uint8_t strat_pickup_near_slots(void);
 
@@ -271,6 +281,10 @@ uint8_t strat_place_near_slots(void);
 /* pickup and place near tokens in 3x3 area where is the robot */
 uint8_t strat_pickup_and_place_near_slots(void);
 
+/* enable/disable look for towers */
+void strat_look_for_towers_enable(void);
+void strat_look_for_towers_disable(void);
+
 /* look for tower of 2 or 3 levels, if find any tower, it's added to infos */
 void strat_look_for_towers(void);
 
@@ -279,6 +293,13 @@ uint8_t strat_info_add_tower(int16_t x, int16_t y, int16_t w);
 
 /* return 1 if an exist tower is deleted succesfully */
 uint8_t strat_info_del_tower(int8_t i, int8_t j);
+
+/* enable/disable look for figures */
+void strat_look_for_figures_enable(void);
+void strat_look_for_figures_disable(void);
+
+/* try to find figures from line 1 */
+void strat_look_for_figures(void);
 
 
 /**************************************************
@@ -292,9 +313,6 @@ uint8_t strat_harvest_green_area(void);
  * in strat_navigation.c 
  *************************************************/
 void strat_update_slot_position(void);
-uint8_t opponent_is_in_slot(uint8_t i, uint8_t j);
-uint8_t opponent_is_in_near_slots(void);
-
 uint8_t strat_bonus_point(void);
 
 
