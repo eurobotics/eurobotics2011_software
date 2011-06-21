@@ -299,6 +299,12 @@ void strat_dump_infos(const char *caller)
 			printf(PSTR(" \r\n"));
 		}		
 	}
+
+	/* figures found */
+	for(j = 1; j < 6; j++) {
+		if(strat_infos.slot[0][j].flags & SLOT_FIGURE)
+			printf(PSTR(" found figure at position %d\n\r"), j);	
+	}
 }
 
 /* init current area state before a match. Dump update user conf

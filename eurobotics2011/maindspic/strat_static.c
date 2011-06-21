@@ -174,6 +174,11 @@ uint8_t strat_harvest_line1(void)
 			
 	}
 
+	/* XXX enable look for figures */
+	mirrors_set_mode(MODE_LOOK_FOR_FIGURES);
+	lasers_set_on();
+	strat_look_for_figures_enable();
+
 	/* wait beacon update */
 	time_wait_ms(100);
 
@@ -267,11 +272,22 @@ uint8_t strat_harvest_line1(void)
 
 place_origin:
 
+	/* XXX disable look for figures */
+	strat_look_for_figures_disable();
+	lasers_set_off();
+	mirrors_set_mode(MODE_LOOK_FOR_TOWERS);
+	goto end;
+
 	/* go to place origin */
 	wait_until_opponent_is_far();
+//	trajectory_goto_xy_abs(&mainboard.traj,
+//								 COLOR_X(strat_infos.slot[3][4].x),  
+//								 strat_infos.slot[3][4].y);
+
 	trajectory_goto_xy_abs(&mainboard.traj,
 								 COLOR_X(strat_infos.slot[3][4].x),  
 								 strat_infos.slot[3][4].y);
+
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (err & END_OBSTACLE) {
 		wait_ms(5000);			/* XXX wait to sensor re-enable, we not avoid the opponent */

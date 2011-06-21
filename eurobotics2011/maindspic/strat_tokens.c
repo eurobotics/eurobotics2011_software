@@ -1493,17 +1493,25 @@ void strat_look_for_towers(void)
  *************************************************************************/
 
 static uint8_t look_for_figures_enable = 0;
+static uint8_t num_figures = 0;
 
 /* enable look for figures */
 void strat_look_for_figures_enable(void)
 {
 	look_for_figures_enable = 1;
+	num_figures = 0;
 }
 
 /* disable look for figures */
 void strat_look_for_figures_disable(void)
 {
 	look_for_figures_enable = 0;
+
+	/* deduce last position */
+	if(num_figures <2) {
+		strat_infos.slot[0][5].flags |= SLOT_FIGURE;	
+		strat_infos.slot[7][5].flags |= SLOT_FIGURE;	
+	}
 }
 
 /* try to find figures from line 1 */
@@ -1541,10 +1549,6 @@ void strat_look_for_figures(void)
 	else
 		laser_d = sensor_get_laser_distance(ADC_LASER_L);
 
-	DEBUG(E_USER_STRAT, "robot (y,a) = (%d, %d)", robot_y, robot_a_deg);
-	DEBUG(E_USER_STRAT, "laser d = %d", laser_d);
-
-
 	/* return if angle is diferent of +/- 90 deg */
 	if( ABS(robot_a_deg) > ANGLE_ABS_MAX || ABS(robot_a_deg) < ANGLE_ABS_MIN)
 		return;
@@ -1553,24 +1557,35 @@ void strat_look_for_figures(void)
 	if( laser_d < FIGURE_D_MIN || laser_d > FIGURE_D_MAX)
 		return;
 
+	//DEBUG(E_USER_STRAT, "robot (y,a) = (%d, %d)", robot_y, robot_a_deg);
+	//DEBUG(E_USER_STRAT, "laser d = %d", laser_d);
+
 	/* what position */
-	if( robot_y > FIGURE_1_Y_MIN && robot_y < FIGURE_1_Y_MAX) {
-		strat_infos.slot[0][1].flags &= SLOT_FIGURE; 
-		strat_infos.slot[7][1].flags &= SLOT_FIGURE; 
+	if( robot_y > FIGURE_1_Y_MIN && robot_y < FIGURE_1_Y_MAX
+		 && (strat_infos.slot[0][1].flags & SLOT_FIGURE) == 0) {
+		strat_infos.slot[0][1].flags |= SLOT_FIGURE; 
+		strat_infos.slot[7][1].flags |= SLOT_FIGURE; 
+		num_figures ++;
 	}
-	else if( robot_y > FIGURE_2_Y_MIN && robot_y < FIGURE_2_Y_MAX) {
-		strat_infos.slot[0][2].flags &= SLOT_FIGURE; 
-		strat_infos.slot[7][2].flags &= SLOT_FIGURE; 
+	else if( robot_y > FIGURE_2_Y_MIN && robot_y < FIGURE_2_Y_MAX
+	&& (strat_infos.slot[0][2].flags & SLOT_FIGURE) == 0) {
+		strat_infos.slot[0][2].flags |= SLOT_FIGURE; 
+		strat_infos.slot[7][2].flags |= SLOT_FIGURE; 
+		num_figures ++;
 	}
-	else if( robot_y > FIGURE_3_Y_MIN && robot_y < FIGURE_3_Y_MAX) {
-		strat_infos.slot[0][3].flags &= SLOT_FIGURE; 
-		strat_infos.slot[7][3].flags &= SLOT_FIGURE; 
+	else if( robot_y > FIGURE_3_Y_MIN && robot_y < FIGURE_3_Y_MAX
+	&& (strat_infos.slot[0][3].flags & SLOT_FIGURE) == 0) {
+		strat_infos.slot[0][3].flags |= SLOT_FIGURE; 
+		strat_infos.slot[7][3].flags |= SLOT_FIGURE; 
+		num_figures ++;
 	}
-	else if( robot_y > FIGURE_4_Y_MIN && robot_y < FIGURE_4_Y_MAX) {
-		strat_infos.slot[0][4].flags &= SLOT_FIGURE; 
-		strat_infos.slot[7][4].flags &= SLOT_FIGURE; 
+	else if( robot_y > FIGURE_4_Y_MIN && robot_y < FIGURE_4_Y_MAX
+	&& (strat_infos.slot[0][4].flags & SLOT_FIGURE) == 0) {
+		strat_infos.slot[0][4].flags |= SLOT_FIGURE; 
+		strat_infos.slot[7][4].flags |= SLOT_FIGURE; 
+		num_figures ++;
 	}
-	else
-		ERROR(E_USER_STRAT, "no figure pos matched", laser_d);
+//	else
+//		ERROR(E_USER_STRAT, "no figure pos matched", laser_d);
 
 }

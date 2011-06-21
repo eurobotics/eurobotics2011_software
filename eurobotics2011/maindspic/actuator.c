@@ -127,8 +127,8 @@ void mirrors_state_machine(void)
 
 #define MIRROR_R_TOWERS_POS	227
 #define MIRROR_L_TOWERS_POS	207
-#define MIRROR_R_FIGURES_POS	210
-#define MIRROR_L_FIGURES_POS	190
+#define MIRROR_R_FIGURES_POS	208 //210
+#define MIRROR_L_FIGURES_POS	187 //190
 
 void mirrors_set_mode(uint8_t mode)
 {
