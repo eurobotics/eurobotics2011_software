@@ -378,6 +378,7 @@ uint8_t opponent_is_infront(void)
 }
 
 
+/* return 1 if opp is in area, COLOR is take in acount!! */
 uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 									 int16_t x_down, int16_t y_down)
 {
@@ -402,10 +403,65 @@ uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 	return 0;
 }
 
+
+/* return 1 if opponent is in slot (i,j) */
 uint8_t opponent_is_in_slot(int8_t i, int8_t j)
 {
-	return opponent_is_in_area(strat_infos.slot[i][j].x - SLOT_SIZE_HALF, strat_infos.slot[i][j].y + SLOT_SIZE_HALF,
-									   strat_infos.slot[i][j].x + SLOT_SIZE_HALF, strat_infos.slot[i][j].y + SLOT_SIZE_HALF);
+	int8_t opp_there, opp_i, opp_j;
+	int16_t opp_x, opp_y;
+
+	opp_there = get_opponent_xy(&opp_x, &opp_y);
+
+	if(opp_there == -1)
+		return 0;
+
+	get_slot_index(opp_x, opp_y, &opp_i, &opp_j);
+	
+	if(i == opp_i && j == opp_j)
+		return 1;
+	else
+		return 0;
+}
+
+uint8_t opponent_is_near_to_slot(int8_t i, int8_t j)
+{
+	int8_t opp_there, opp_i, opp_j;
+	int16_t opp_x, opp_y;
+
+	opp_there = get_opponent_xy(&opp_x, &opp_y);
+
+	if(opp_there == -1)
+		return 0;
+
+	get_slot_index(opp_x, opp_y, &opp_i, &opp_j);
+	
+	if( (ABS(i-opp_i) < 2)
+		&& (ABS(j-opp_j) < 2) ) {
+		return 1;
+	}
+
+	return 0;
+}
+
+
+uint8_t opponent_is_near_to_target_slot(int8_t i, int8_t j)
+{
+	int8_t opp_there, opp_i, opp_j;
+	int16_t opp_x, opp_y;
+
+	opp_there = get_opponent_xy(&opp_x, &opp_y);
+
+	if(opp_there == -1)
+		return 0;
+
+	get_slot_index(opp_x, opp_y, &opp_i, &opp_j);
+	
+	if( (ABS(i-opp_i) < 2) && (ABS(j-opp_j) < 2)
+		&& (i == opp_i || j == opp_j) ) {
+		return 1;
+	}
+
+	return 0;
 }
 
 uint8_t opponent_is_opposite_side(uint8_t side)
@@ -640,5 +696,13 @@ void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags)
 	j = (int8_t)(y/SLOT_SIZE);
 
 	/* apply flags */
-	strat_infos.slot[i][j].flags |= (SLOT_BUSY|SLOT_AVOID);
+	strat_infos.slot[i][j].flags |= flags;
+}
+
+
+/* get index (i,j) of slot from (x,y) coordinates */
+void get_slot_index(int16_t x, int16_t y, int8_t *i, int8_t *j)
+{
+	*i = (int8_t)(x/SLOT_SIZE);
+	*j = (int8_t)(y/SLOT_SIZE);
 }

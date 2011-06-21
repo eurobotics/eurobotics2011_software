@@ -94,6 +94,8 @@ uint8_t opponent_is_in_area(int16_t x_up, int16_t y_up,
 									 int16_t x_down, int16_t y_down);
 uint8_t opponent_is_in_slot(int8_t i, int8_t j);
 uint8_t opponent_is_in_near_slots(void);
+uint8_t opponent_is_near_to_slot(int8_t i, int8_t j);
+uint8_t opponent_is_near_to_target_slot(int8_t i, int8_t j);
 
 
 uint8_t token_catched(uint8_t side);
@@ -131,5 +133,8 @@ void wait_until_opponent_is_far(void);
 
 /* apply flags to slot */
 void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags);
+
+/* get index (i,j) of slot from (x,y) coordinates */
+void get_slot_index(int16_t x, int16_t y, int8_t *i, int8_t *j);
 
 #endif

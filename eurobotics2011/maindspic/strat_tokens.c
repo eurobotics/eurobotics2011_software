@@ -61,6 +61,7 @@
 #include "sensor.h"
 #include "actuator.h"
 #include "beacon.h"
+#include "cmdline.h"
 
 
 #define ERROUT(e) do {\
@@ -656,8 +657,8 @@ uint8_t strat_is_valid_pickup_slot(int8_t i, int8_t j)
 		&&	i == 7 && j == 0)
 		return 0;
 
-	/* TODO: test opponent in near slot */
-	if(opponent_is_in_slot(i,j)) {
+	/* test opponent is near to slot */
+	if(opponent_is_near_to_target_slot(i,j)) {
 		//DEBUG(E_USER_STRAT, "skip opponent is in slot (%d, %d)", i, j);
 		return 0;
 	}
@@ -687,10 +688,12 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 
 
 	/* return if there's no empty side */
-//	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)) {
-//		DEBUG(E_USER_STRAT, "no empty side");		
-//		return 0;
-//	}
+#ifdef RETURN_WHEN_FULL_OF_TOKENS
+	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)) {
+		DEBUG(E_USER_STRAT, "no empty side");		
+		return 0;
+	}
+#endif
 
 	/* check 3x3 area */
 	for(i=strat_infos.slot_actual.i-1; i<=strat_infos.slot_actual.i+1; i++) {
@@ -828,6 +831,8 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 /* pickup tokens on near 3x3 area slots, return 0 if there aren't more slots */
 uint8_t strat_pickup_near_slots(void)
 {
+#define TIMEOUT_GO_BACK_MS	2000
+
 	slot_index_t pickup_slot, origin_slot;
 	uint8_t side;
 	int8_t ret;
@@ -855,21 +860,30 @@ uint8_t strat_pickup_near_slots(void)
 		}
 
 
-		/* TODO: check opponent is behind */
+		/* check opponent is behind */
+		WAIT_COND_OR_TIMEOUT((!opponent_is_opposite_side(side)), TIMEOUT_GO_BACK_MS);
 		if(opponent_is_opposite_side(side)) {
 			DEBUG(E_USER_STRAT, "opponent is behind!");
-			return 0;
+			return END_OBSTACLE;
 		}
 
 		/* back to origin slot center */
-		strat_goto_xy_force(strat_infos.slot[origin_slot.i][origin_slot.j].x, 
-								  strat_infos.slot[origin_slot.i][origin_slot.j].y);
+		if(distance_from_robot(strat_infos.slot[origin_slot.i][origin_slot.j].x,
+									  strat_infos.slot[origin_slot.i][origin_slot.j].y) > 10) {
+
+			strat_goto_xy_force(strat_infos.slot[origin_slot.i][origin_slot.j].x, 
+									  strat_infos.slot[origin_slot.i][origin_slot.j].y);
+		}
+
+		/* debug */
+//		strat_dump_infos(__FUNCTION__);
+//		while(!cmdline_keypressed());
 
 		/* get the next valid pickup slot */
 		ret = strat_get_pickup_slot(&pickup_slot);
 	}
 
-	return ret;
+	return END_TRAJ;
 }
 
 /* return 1 if a slot is valid to place */
@@ -933,8 +947,8 @@ uint8_t strat_is_valid_place_slot(int8_t i, int8_t j)
 		&& ((strat_infos.slot[i][j].flags & SLOT_VISITED) == 0) )
 		return 0;
 
-	/* TODO: test opponent in near slot */
-	if(opponent_is_in_slot(i,j)) {
+	/* TODO: test opponent near to place slot */
+	if(opponent_is_near_to_target_slot(i,j)) {
 		//DEBUG(E_USER_STRAT, "skip opponent is in slot (%d, %d)", i, j);
 		return 0;
 	}
@@ -1069,16 +1083,20 @@ uint8_t strat_place_near_slots(void)
 		strat_place_token(strat_infos.slot[place_slot.i][place_slot.j].x,
 							   strat_infos.slot[place_slot.i][place_slot.j].y, side, GO_FORWARD);
 		
-
-		/* TODO: check opponent is behind */
+		/* check opponent is behind */
+		WAIT_COND_OR_TIMEOUT((!opponent_is_opposite_side(side)), TIMEOUT_GO_BACK_MS);
 		if(opponent_is_opposite_side(side)) {
 			DEBUG(E_USER_STRAT, "opponent is behind!");
-			return 0;
+			return END_OBSTACLE;
 		}
 
 		/* back to origin slot center */
-		strat_goto_xy_force(strat_infos.slot[origin_slot.i][origin_slot.j].x, 
-								  strat_infos.slot[origin_slot.i][origin_slot.j].y);
+		if(distance_from_robot(strat_infos.slot[origin_slot.i][origin_slot.j].x,
+									  strat_infos.slot[origin_slot.i][origin_slot.j].y) > 10) {
+
+			strat_goto_xy_force(strat_infos.slot[origin_slot.i][origin_slot.j].x, 
+									  strat_infos.slot[origin_slot.i][origin_slot.j].y);
+		}
 
 		/* check if we are empty of tokens */
 		if(strat_infos.num_tokens == 0)
@@ -1088,7 +1106,7 @@ uint8_t strat_place_near_slots(void)
 		ret = strat_get_place_slot(&place_slot, &side);
 	}
 
-	return ret;
+	return END_TRAJ;
 }
 
 /* pickup and place near tokens in 3x3 area where is the robot */
@@ -1173,6 +1191,8 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 #define TOWER_WIDTH_MAX 			150
 #define DIST_PT_OPPOPONENT_MIN 	250
 
+//#define ANY_PT_IS_TOWER
+
 	uint8_t ret = 0;
 	int16_t obj_width;
 
@@ -1250,7 +1270,7 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 	/* return if laser point is out of accesible playground */
 	if(!point_is_in_area(x_pt, y_pt, 450, 1750-90, 2550, 90)) {
 		//DEBUG(E_USER_STRAT, "point is out of area");
-		break;
+		return 0;
 	}
 
 	/* found valid tower, we hope! :S */
@@ -1304,8 +1324,12 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 			//DEBUG(E_USER_STRAT, "fall d_pt diff = %d", d_pt - mt->d_pt_old);
 
 			/* d_new > d_old */
+#define TOWER_WITH_MINIMUM_WIDTH
+#ifdef TOWER_WITH_MINIMUM_WIDTH
 			if(d_pt - mt->d_pt_old > TOWER_D_TRIGGER && obj_width != 0) {
-
+#else
+			if(d_pt - mt->d_pt_old > TOWER_D_TRIGGER) {
+#endif
 				/* found valid tower, we hope! :S */
 
 				/* tower coordinates */
@@ -1355,12 +1379,6 @@ uint8_t strat_info_add_tower(int16_t x, int16_t y, int16_t w)
 {
 	int8_t i, j, k;
 
-	/* if there is rooms */
-	if(strat_infos.num_towers >= NB_TOWER_MAX) {
-		ERROR(E_USER_STRAT, "NO MORE TOWER ROOMS");
-		return 0;
-	}
-
 #ifdef ANY_PT_IS_TOWER
 
 	/* reduce precision */
@@ -1379,6 +1397,12 @@ uint8_t strat_info_add_tower(int16_t x, int16_t y, int16_t w)
 			strat_infos.towers[k].c ++;
 			return 0; 
 		}
+	}
+
+	/* if there is rooms */
+	if(strat_infos.num_towers >= NB_TOWER_MAX) {
+		ERROR(E_USER_STRAT, "NO MORE TOWER ROOMS");
+		return 0;
 	}
 
 	/* add new tower */

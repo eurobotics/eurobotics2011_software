@@ -146,8 +146,8 @@ struct slot_info {
 
 /* strat areas priorities */
 #define SLOT_PRIO_GREEN			SLOT_PRIO_0	
-#define SLOT_PRIO_PATH			SLOT_PRIO_1	
-#define SLOT_PRIO_CENTER		SLOT_PRIO_2
+#define SLOT_PRIO_CENTER		SLOT_PRIO_1
+#define SLOT_PRIO_PATH			SLOT_PRIO_2
 #define SLOT_PRIO_NEAR_GREEN	SLOT_PRIO_3
 #define SLOT_PRIO_NEAR_SAFE	SLOT_PRIO_4
 #define SLOT_PRIO_WALL			SLOT_PRIO_5
