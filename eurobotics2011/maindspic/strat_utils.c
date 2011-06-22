@@ -472,6 +472,14 @@ uint8_t opponent_is_opposite_side(uint8_t side)
 		return opponent_is_infront();
 }
 
+uint8_t opponent_is_infront_side(uint8_t side)
+{
+	if(side == SIDE_REAR)
+		return opponent_is_behind();
+	else
+		return opponent_is_infront();
+}
+
 
 uint8_t opponent_is_in_near_slots(void)
 {

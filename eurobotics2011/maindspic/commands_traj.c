@@ -848,12 +848,15 @@ static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
 	else
 		on = 0;
 	
-//	if (!strcmp_P(res->arg1, PSTR("conf_a")))
-//		bit = STRAT_CONF_A;
-//	else if (!strcmp_P(res->arg1, PSTR("conf_b")))
-//		bit = STRAT_CONF_B;
-//	else if (!strcmp_P(res->arg1, PSTR("conf_c")))
-//		bit = STRAT_CONF_C;
+	if (!strcmp_P(res->arg1, PSTR("on_bonus")))
+		bit = LINE1_CONF_2TOKENS_ON_BONUS;
+	else if (!strcmp_P(res->arg1, PSTR("near_wall")))
+		bit = LINE1_CONF_2TOKENS_NEAR_WALL;
+	else if (!strcmp_P(res->arg1, PSTR("first")))
+		bit = LINE1_CONF_OPP_TOKEN_FIRST;
+	else if (!strcmp_P(res->arg1, PSTR("last")))
+		bit = LINE1_CONF_OPP_TOKEN_LAST;
+
 
 	if (on)
 		strat_infos.conf.flags |= bit;
@@ -866,7 +869,7 @@ static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
 
 prog_char str_strat_conf2_arg0[] = "strat_conf";
 parse_pgm_token_string_t cmd_strat_conf2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg0, str_strat_conf2_arg0);
-prog_char str_strat_conf2_arg1[] = "conf_a#conf_b#conf_b";
+prog_char str_strat_conf2_arg1[] = "on_bonus#near_wall#first#last";
 parse_pgm_token_string_t cmd_strat_conf2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg1, str_strat_conf2_arg1);
 prog_char str_strat_conf2_arg2[] = "on#off";
 parse_pgm_token_string_t cmd_strat_conf2_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg2, str_strat_conf2_arg2);

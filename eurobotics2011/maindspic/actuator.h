@@ -41,6 +41,7 @@ void mirrors_state_machine(void);
 /* set mirrors mode */
 #define MODE_LOOK_FOR_TOWERS	0
 #define MODE_LOOK_FOR_FIGURES	1
+#define MODE_HIDE_MIRRORS		2
 void mirrors_set_mode(uint8_t mode);
 
 #endif

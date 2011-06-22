@@ -115,6 +115,11 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 	
+	/* return if opponent is in front */
+	if(opponent_is_infront_side(side))  {
+		ERROUT(END_OBSTACLE);
+	}
+
 	/* check sensor range */
 	d_token = distance_from_robot(x, y);
 	if(d_token > PICKUP_D_SENSOR_RANGE){
@@ -348,7 +353,9 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	uint8_t try = 0;
 #endif
 
-	/* check if we have token to place */
+	/* TODO return if opponent near place point */
+
+	/* return if we have not token to place */
 	if(!token_catched(side))
 		ERROUT(END_TRAJ);
 
@@ -390,6 +397,20 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 
+
+	/* return if opponent is in front */
+	if(go == GO_FORWARD) {
+
+		if(opponent_is_infront_side(side))  {
+			ERROUT(END_OBSTACLE);
+		}
+	}
+	else {
+		if(opponent_is_opposite_side(side))  {
+			ERROUT(END_OBSTACLE);
+		}
+	}
+
 	/* go to place */
 	if(go == GO_FORWARD) {
 		
@@ -427,7 +448,7 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	}
 
 #ifdef TRY_FORCE_EJECT_TOKEN
-	/* XXX check eject error and try fixed */
+	/* XXX check eject error and try to fixed */
 	while(token_catched(side) && (try < PLACE_EJECT_TRIES)) {
 		i2c_slavedspic_mode_token_show(side);
 		wait_ms(PLACE_SHOW_TIME);
@@ -544,7 +565,7 @@ uint8_t strat_push_slot_token(int8_t i, int8_t j)
 	int8_t err = 1;
 
 
-	/* TODO check opponent */
+	/* return if opponent is in pushing slot */
 	if(opponent_is_in_slot(i,j)) {
 		DEBUG(E_USER_STRAT, "opponent in pushing slot!");
 		ERROUT(END_OBSTACLE);
@@ -1517,8 +1538,8 @@ void strat_look_for_figures_disable(void)
 /* try to find figures from line 1 */
 void strat_look_for_figures(void)
 {
-#define ANGLE_ABS_MAX	91
-#define ANGLE_ABS_MIN	89
+#define ANGLE_ABS_MAX	92
+#define ANGLE_ABS_MIN	88
 
 #define FIGURE_D_MAX		1100
 #define FIGURE_D_MIN		750

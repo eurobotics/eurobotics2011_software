@@ -99,7 +99,11 @@ struct conf {
  * do one things or anothers */
 
 	uint8_t flags;
-#define STRAT_CONF_PLACE_ONLYEXT		 	0x01
+#define LINE1_CONF_2TOKENS_ON_BONUS		1
+#define LINE1_CONF_2TOKENS_NEAR_WALL	2
+#define LINE1_CONF_OPP_TOKEN_FIRST		4
+#define LINE1_CONF_OPP_TOKEN_LAST		8
+#define STRAT_CONF_PLACE_ONLYEXT		  16
 
 	/* thresholds */
 	uint8_t th_place_prio;

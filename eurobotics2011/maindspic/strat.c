@@ -188,9 +188,23 @@ void strat_dump_conf(void)
 
 	printf_P(PSTR("-- conf --\r\n"));
 
-	/* thresholds */
-	printf(PSTR("th_place_prio = %d \r\n"), strat_infos.conf.th_place_prio);
-	printf(PSTR("th_token_score = %d \r\n"),strat_infos.conf.th_token_score);
+	/* flags */
+	printf(PSTR("line1: \r\n"));
+	if(strat_infos.conf.flags & LINE1_CONF_2TOKENS_ON_BONUS)
+		printf(PSTR(" 2TOKENS_ON_BONUS \r\n"));
+	if(strat_infos.conf.flags & LINE1_CONF_2TOKENS_NEAR_WALL)
+		printf(PSTR(" 2TOKENS_NEAR_WALL \r\n"));
+	if(strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_FIRST)
+		printf(PSTR(" OPP_TOKEN_FIRST \r\n"));
+	if(strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_LAST)
+		printf(PSTR(" OPP_TOKEN_LAST \r\n"));
+	else
+		printf(PSTR(" DEFAULT \r\n"));
+
+	/* place thresholds */
+	printf(PSTR("place thresholds: \r\n"));
+	printf(PSTR(" th_place_prio = %d \r\n"), strat_infos.conf.th_place_prio);
+	printf(PSTR(" th_token_score = %d \r\n"),strat_infos.conf.th_token_score);
 
 	
 }
