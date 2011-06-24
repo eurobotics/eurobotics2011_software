@@ -125,7 +125,7 @@ void strat_update_slot_position(void)
 
 		/* update flags */
 		strat_infos.slot[strat_infos.slot_before.i][strat_infos.slot_before.j].flags &= ~(SLOT_ROBOT);
-		strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED|SLOT_VISITED);
+		strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED);
 		
 		IRQ_UNLOCK(flags);
 
@@ -229,6 +229,7 @@ uint8_t strat_bonus_point(void)
 					break;			
 				}
 	
+				DEBUG(E_USER_STRAT, "WAIT_OPP");
 				state = WAIT_OPP;		
 				break;
 	
@@ -264,12 +265,12 @@ uint8_t strat_bonus_point(void)
 					break;
 				}
 
-
+				DEBUG(E_USER_STRAT, "WAIT_OPP");
 				state = WAIT_OPP;		
 				break;
 	
 			case WAIT_OPP:
-				DEBUG(E_USER_STRAT, "WAIT_OPP");
+
 				/* test opponent xy */
 				time_wait_ms(300);
 				opp_there = get_opponent_xy(&opp_x, &opp_y);

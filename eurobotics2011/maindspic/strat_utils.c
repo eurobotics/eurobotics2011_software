@@ -692,7 +692,7 @@ void wait_until_opponent_is_far(void)
 }
 
 /* apply flags to slot */
-void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags)
+void strat_set_slot_flags(int16_t x, int16_t y, uint16_t flags)
 {
 	int8_t i, j;
 
@@ -709,12 +709,27 @@ void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags)
 	/* apply flags */
 	strat_infos.slot[i][j].flags |= flags;
 
-	/* dump infos */
-	//strat_infos.dump_enabled = 1;
-	//strat_dump_infos(__FUNCTION__);
-	//DEBUG(E_USER_STRAT, "set flag 0x%X @ (%d, %d)", flags, i,j);
-	
 }
+
+/* apply flags to slot */
+void strat_clear_slot_flags(int16_t x, int16_t y, uint16_t flags)
+{
+	int8_t i, j;
+
+	/* slot index */
+	i = (int8_t)(x/SLOT_SIZE);
+	j = (int8_t)(y/SLOT_SIZE);
+
+	/* saturators */
+	if(i >= NB_SLOT_X)
+		i = (NB_SLOT_X-1);
+	if(j >= NB_SLOT_Y)
+		j = (NB_SLOT_Y-1);
+
+	/* apply flags */
+	strat_infos.slot[i][j].flags &= ~(flags);
+}
+
 
 
 /* get index (i,j) of slot from (x,y) coordinates */

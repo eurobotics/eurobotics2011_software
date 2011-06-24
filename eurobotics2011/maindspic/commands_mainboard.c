@@ -794,8 +794,6 @@ static void cmd_lasers_parsed(void *parsed_result, void *data)
 		lasers_set_on();
 	else if (!strcmp_P(res->arg1, PSTR("off"))) {
 		lasers_set_off();
-		strat_look_for_figures_disable();
-		strat_look_for_towers_disable();
 	}
 	else if ( !strcmp_P(res->arg1, PSTR("dist")))
 	{
@@ -838,14 +836,21 @@ static void cmd_lasers_parsed(void *parsed_result, void *data)
 	else if ( !strcmp_P(res->arg1, PSTR("figures")))
 	{
 		mirrors_set_mode(MODE_LOOK_FOR_FIGURES);
-		strat_look_for_figures_enable();
+		//strat_look_for_figures_enable();
+	}
+	else if ( !strcmp_P(res->arg1, PSTR("init")))
+	{
+		mirrors_set_mode(MODE_HIDE_MIRRORS);
+		strat_look_for_figures_disable();
+		strat_look_for_towers_disable();
+		lasers_set_off();
 	}
 
 }
 
 prog_char str_lasers_arg0[] = "lasers";
 parse_pgm_token_string_t cmd_lasers_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg0, str_lasers_arg0);
-prog_char str_lasers_arg1[] = "on#off#dist#pt#towers#figures";
+prog_char str_lasers_arg1[] = "on#off#dist#pt#towers#figures#init";
 parse_pgm_token_string_t cmd_lasers_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_lasers_result, arg1, str_lasers_arg1);
 
 prog_char help_lasers[] = "Show lasers values";

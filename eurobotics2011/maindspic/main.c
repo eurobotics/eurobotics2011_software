@@ -273,7 +273,6 @@ int main(void)
 
 
 	/* strat-related event */
-	strat_reset_infos();
 	scheduler_add_periodical_event_priority(strat_event, NULL,
 						EVENT_PERIOD_STRAT / SCHEDULER_UNIT, EVENT_PRIORITY_STRAT);
 
@@ -286,13 +285,18 @@ int main(void)
  	gen.log_level = 5;
 	
 	/* reset strat infos */
-	//strat_reset_infos();
+	strat_reset_infos();
+
+	/* wait to init of slavedspic */
+	wait_ms(600);
 
 	/* enable interrupts */
 	sei();
 
-	/* wait a bit */
-	wait_ms(500);
+	/* init mirrors */
+	//mirrors_set_mode(MODE_HIDE_MIRRORS);
+	//time_wait_ms(500);
+	//mirrors_set_mode(MODE_LOOK_FOR_FIGURES);
 	
 	/* say hello */
 	printf("\r\n");

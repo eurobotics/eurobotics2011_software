@@ -357,7 +357,7 @@ read_fig4:
 
 	/* if token in last position, try to place oppopent token in safe zone */
 	if(line1_last_pos_token 
-		&& (strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_FIRST)) {
+		&& (strat_infos.conf.flags & LINE1_OPP_TOKEN_BEFORE_PLACE)) {
 
 		/* push opp token */
 		err = line1_push_last_opp_token();
@@ -376,7 +376,7 @@ read_fig4:
 
 	/* place two tokens in bonus slot SLOWLY */
 	if(!opponent_is_in_area(COLOR_X(1500), 2100, COLOR_X(2025), 1400) 
-		&& (strat_infos.conf.flags & LINE1_CONF_2TOKENS_ON_BONUS)) {
+		&& (strat_infos.conf.flags & LINE1_TOKENS_ON_BONUS_OLD)) {
 
 		/* goto near place slot */
 place_pt_1:
@@ -468,7 +468,7 @@ place_pt_1:
 
 	/* place two tokens near wall */
 	else if(!opponent_is_in_area(COLOR_X(1500), 2100, COLOR_X(1850), 1400) 
-		     && (strat_infos.conf.flags & LINE1_CONF_2TOKENS_NEAR_WALL)) {
+		     && (strat_infos.conf.flags & LINE1_TOKENS_NEAR_WALL)) {
 
 		/* goto near place slot */
 place_pt_2:
@@ -506,7 +506,7 @@ place_pt_2:
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
 
-		/* turn pushing firs token placed */
+		/* turn pushing firsT token placed */
 		strat_set_speed(SPEED_DIST_FAST, 1500);
 		wait_until_opponent_is_far();
 		trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(180));
@@ -516,6 +516,8 @@ place_pt_2:
 
 		/* place second token near first */
 		wait_until_opponent_is_far();
+		strat_clear_slot_flags(COLOR_X(1500-30),
+							 strat_infos.slot[3][5].y + 60, SLOT_BUSY);
 		err = strat_place_token_auto(COLOR_X(1500-30),
 							 strat_infos.slot[3][5].y + 60, 
 							 &side, GO_FORWARD);
@@ -534,7 +536,7 @@ place_pt_2:
 			ERROUT(err);
 
 	}
-	else {
+	else { /* place two tokens in bonus slot FASTER */
 
 place_pt_3:
 
@@ -582,8 +584,10 @@ place_pt_3:
 							 side, GO_FORWARD);
 #else
 		/* and the other protecting the last */
-		err = strat_place_token(COLOR_X(strat_infos.slot[3][5].x + 70), // XXX tested with 80
-							 strat_infos.slot[3][5].y - 70, 
+		strat_clear_slot_flags(COLOR_X(strat_infos.slot[3][5].x + 70),
+							 strat_infos.slot[3][5].y - 60, SLOT_BUSY);	// XXX tested with 70
+		err = strat_place_token(COLOR_X(strat_infos.slot[3][5].x + 70),
+							 strat_infos.slot[3][5].y - 60, 					// XXX tested with 70
 							 side, GO_FORWARD);
 #endif
 		if (!TRAJ_SUCCESS(err))
@@ -593,7 +597,7 @@ place_pt_3:
 
 	/* if token in last position, try to place oppopent token in safe zone */
 	if(line1_last_pos_token 
-		&& (strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_LAST)) {
+		&& (strat_infos.conf.flags & LINE1_OPP_TOKEN_AFTER_PLACE)) {
 
 		/* push opp token */
 		err = line1_push_last_opp_token();
@@ -629,6 +633,7 @@ back_origin:
 
 
  end:
+	mirrors_set_mode(MODE_HIDE_MIRRORS);
 	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
 	i2c_slavedspic_mode_token_stop(SIDE_REAR);
 	strat_set_speed(old_spdd, old_spda);
@@ -833,7 +838,7 @@ place_pt:
 	}
 
 	/* choose location of tokens depends on opponent */
-	//time_wait_ms(200);
+	time_wait_ms(100);
 	if(opponent_is_in_area(COLOR_X(1500), 350, COLOR_X(1850), 0)
 		|| opponent_is_in_area(COLOR_X(1150), 700, COLOR_X(1500), 0)) {
 
@@ -872,7 +877,7 @@ place_pt:
 
 		/* go near slot */
 		wait_until_opponent_is_far();
-		strat_d_rel_side(&mainboard.traj, -400, side);
+		strat_d_rel_side(&mainboard.traj, -600, side);
 		err = wait_traj_end(TRAJ_FLAGS_STD);
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
@@ -880,6 +885,7 @@ place_pt:
 	}
 
  end:
+	mirrors_set_mode(MODE_HIDE_MIRRORS);
 	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
 	i2c_slavedspic_mode_token_stop(SIDE_REAR);
 	strat_set_speed(old_spdd, old_spda);
@@ -1378,7 +1384,7 @@ uint8_t strat_pickup_green_token(uint8_t type, uint8_t color)
 		else { /* type == TYPE_FIGURE */
 			/* we look for a slolt with a figure and not checked before */
 			if((strat_infos.slot[i][j].flags & SLOT_FIGURE)
-				&& (strat_infos.slot[i][j].flags & SLOT_BUSY)) {
+				&& (strat_infos.slot[i][j].flags & SLOT_BUSY) == 0) {
 				
 				break;
 			}
@@ -1386,9 +1392,10 @@ uint8_t strat_pickup_green_token(uint8_t type, uint8_t color)
 	}	
 
 	/* return if no tokens found */
-	if(j == 6)
+	if(j == 6) {
+		DEBUG(E_USER_STRAT, "%s not found in gree area", type == TYPE_PION? "PION" : "FIGURE");
 		ERROUT(END_ERROR);
-
+	}
 
 	/* turn to infront of token */
 	side = strat_turnto_pickup_token(&mainboard.traj, x_infront, strat_infos.slot[i][j].y);
@@ -1442,7 +1449,7 @@ uint8_t strat_pickup_green_token(uint8_t type, uint8_t color)
 
 
 	/* pick token */
-	//DEBUG(E_USER_STRAT, "pickup token @ (%d, %d)", i,j);
+	DEBUG(E_USER_STRAT, "pickup token @ (%d, %d)", i,j);
 	err = strat_pickup_token_auto(strat_infos.slot[i][j].x,
 									 		strat_infos.slot[i][j].y, &side);
 	if (!TRAJ_SUCCESS(err))
@@ -1497,6 +1504,9 @@ uint8_t strat_harvest_green_area_smart(void)
 	uint8_t color = get_color();
 	int8_t i, j;
 
+	/* update num of tokens */
+	strat_update_num_tokens();
+
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
@@ -1514,22 +1524,22 @@ near_green:
 	}
 
 	/* pickup two pions */
-	if(strat_infos.num_tokens < 2) {
+	//if(strat_infos.num_tokens < 2) {
 		err = strat_pickup_green_token(TYPE_PION, color);
 		
 		/* TODO END_OBSTACLE */
 
 		//if (!TRAJ_SUCCESS(err))
 		//	ERROUT(err);
-	}
-	if(strat_infos.num_tokens < 2) {
+	//}
+	//if(strat_infos.num_tokens < 2) {
 		err = strat_pickup_green_token(TYPE_PION, color);
 
 		/* TODO END_OBSTACLE */
 
 		//if (!TRAJ_SUCCESS(err))
 		//	ERROUT(err);
-	}
+	//}
 
 	/* goto near the nearest place slot */
 	i = (get_color() == I2C_COLOR_BLUE? 1 : 6);
@@ -1540,6 +1550,8 @@ near_green:
 
 		/* place */
 		j = (y_is_more_than(1050)? 5 : 1);
+
+		/* XXX if both are pions */
 		err = strat_place_token_auto(strat_infos.slot[i][j].x,
 								           strat_infos.slot[i][j].y, &side, GO_FORWARD);
 		//if (!TRAJ_SUCCESS(err))
@@ -1555,6 +1567,8 @@ near_green:
 
 		/* place */
 		j = (y_is_more_than(1050)? 5 : 1);
+
+		/* XXX if both are pions */
 		err = strat_place_token_auto(strat_infos.slot[i][j].x,
 								           strat_infos.slot[i][j].y, &side, GO_FORWARD);
 		//if (!TRAJ_SUCCESS(err))
@@ -1583,6 +1597,7 @@ near_green:
 		ERROUT(err);
 
 end:	
+	mirrors_set_mode(MODE_HIDE_MIRRORS);
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }

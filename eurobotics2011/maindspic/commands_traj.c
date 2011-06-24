@@ -803,8 +803,25 @@ static void cmd_strat_conf_parsed(void *parsed_result, void *data)
 	struct cmd_strat_conf_result *res = parsed_result;
 
 	if (!strcmp_P(res->arg1, PSTR("base"))) {
-		
+
+		/* thresholds */
+		strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
+		strat_infos.conf.th_token_score = PION_SCORE;
+
+		/* flags */
+		strat_infos.conf.flags  = 0;
+		//strat_infos.conf.flags |= LINE1_TOKENS_ON_BONUS_OLD;
+		//strat_infos.conf.flags |= LINE1_TOKENS_NEAR_WALL;
+		strat_infos.conf.flags |= LINE1_OPP_TOKEN_BEFORE_PLACE;
+		strat_infos.conf.flags |= LINE1_OPP_TOKEN_AFTER_PLACE;
+
 	}
+
+	/* init mirrors */
+	mirrors_set_mode(MODE_HIDE_MIRRORS);
+	time_wait_ms(700);
+	mirrors_set_mode(MODE_LOOK_FOR_FIGURES);
+	lasers_set_on();
 
 	strat_infos.dump_enabled = 1;
 	strat_dump_conf();
@@ -848,14 +865,14 @@ static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
 	else
 		on = 0;
 	
-	if (!strcmp_P(res->arg1, PSTR("on_bonus")))
-		bit = LINE1_CONF_2TOKENS_ON_BONUS;
+	if (!strcmp_P(res->arg1, PSTR("bonus_old")))
+		bit = LINE1_TOKENS_ON_BONUS_OLD;
 	else if (!strcmp_P(res->arg1, PSTR("near_wall")))
-		bit = LINE1_CONF_2TOKENS_NEAR_WALL;
-	else if (!strcmp_P(res->arg1, PSTR("first")))
-		bit = LINE1_CONF_OPP_TOKEN_FIRST;
-	else if (!strcmp_P(res->arg1, PSTR("last")))
-		bit = LINE1_CONF_OPP_TOKEN_LAST;
+		bit = LINE1_TOKENS_NEAR_WALL;
+	else if (!strcmp_P(res->arg1, PSTR("before")))
+		bit = LINE1_OPP_TOKEN_BEFORE_PLACE;
+	else if (!strcmp_P(res->arg1, PSTR("after")))
+		bit = LINE1_OPP_TOKEN_AFTER_PLACE;
 
 
 	if (on)
@@ -869,7 +886,7 @@ static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
 
 prog_char str_strat_conf2_arg0[] = "strat_conf";
 parse_pgm_token_string_t cmd_strat_conf2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg0, str_strat_conf2_arg0);
-prog_char str_strat_conf2_arg1[] = "on_bonus#near_wall#first#last";
+prog_char str_strat_conf2_arg1[] = "bonus_old#near_wall#before#after";
 parse_pgm_token_string_t cmd_strat_conf2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg1, str_strat_conf2_arg1);
 prog_char str_strat_conf2_arg2[] = "on#off";
 parse_pgm_token_string_t cmd_strat_conf2_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg2, str_strat_conf2_arg2);
@@ -973,10 +990,10 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 		
 		/* set figures flags */
 		if(res->arg2 != 0 && res->arg3 != 0) {
-			strat_infos.slot[0][res->arg2].flags |= SLOT_FIGURE;
-			strat_infos.slot[0][res->arg3].flags |= SLOT_FIGURE;
-			strat_infos.slot[7][res->arg2].flags |= SLOT_FIGURE;
-			strat_infos.slot[7][res->arg3].flags |= SLOT_FIGURE;
+			strat_infos.slot[0][res->arg2].flags = SLOT_FIGURE;
+			strat_infos.slot[0][res->arg3].flags = SLOT_FIGURE;
+			strat_infos.slot[7][res->arg2].flags = SLOT_FIGURE;
+			strat_infos.slot[7][res->arg3].flags = SLOT_FIGURE;
 		}
 		err = strat_harvest_green_area_smart();
 	}

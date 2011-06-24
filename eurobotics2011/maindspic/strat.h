@@ -99,11 +99,12 @@ struct conf {
  * do one things or anothers */
 
 	uint8_t flags;
-#define LINE1_CONF_2TOKENS_ON_BONUS		1
-#define LINE1_CONF_2TOKENS_NEAR_WALL	2
-#define LINE1_CONF_OPP_TOKEN_FIRST		4
-#define LINE1_CONF_OPP_TOKEN_LAST		8
+#define LINE1_TOKENS_ON_BONUS_OLD		1
+#define LINE1_TOKENS_NEAR_WALL			2
+#define LINE1_OPP_TOKEN_BEFORE_PLACE	4
+#define LINE1_OPP_TOKEN_AFTER_PLACE		8
 #define STRAT_CONF_PLACE_ONLYEXT		  16
+
 
 	/* thresholds */
 	uint8_t th_place_prio;
@@ -167,10 +168,9 @@ struct slot_info {
 #define SLOT_AVOID			4
 #define SLOT_CHECKED			8
 #define SLOT_BUSY				16
-#define SLOT_VISITED			32
+#define SLOT_FIGURE			32
 #define SLOT_OPPONENT		64
 #define SLOT_ROBOT			128
-#define SLOT_FIGURE			256
 
 	uint8_t flags_poly;
 #define SLOT_POLY_SQUARE	1
@@ -257,6 +257,9 @@ void strat_event(void *dummy);
 /*********************************************
  * in strat_tokens.c 
  ********************************************/
+
+/* update number of token inside */
+void strat_update_num_tokens(void);
 
 /* pick up a token */
 /* use it in short distance ranges */

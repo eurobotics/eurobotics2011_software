@@ -133,7 +133,9 @@ void wait_until_opponent_is_far(void);
 
 
 /* apply flags to slot */
-void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags);
+void strat_set_slot_flags(int16_t x, int16_t y, uint16_t flags);
+void strat_clear_slot_flags(int16_t x, int16_t y, uint16_t flags);
+
 
 /* get index (i,j) of slot from (x,y) coordinates */
 void get_slot_index(int16_t x, int16_t y, int8_t *i, int8_t *j);

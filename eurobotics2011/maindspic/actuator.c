@@ -92,23 +92,23 @@ void mirrors_state_machine(void)
 		case IDLE:
 			if(mirror_update_pos) {
 				mirror_update_pos = 0;
-				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_RIGHT, DUMMY_POSSITION);
-				time_wait_ms(20); /* little HACK */
-				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_LEFT, DUMMY_POSSITION);
-				t_setup_us = time_get_us2();
+//				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_RIGHT, DUMMY_POSSITION);
+//				time_wait_ms(20); /* little HACK */
+//				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_LEFT, DUMMY_POSSITION);
+//				t_setup_us = time_get_us2();
 				state = WAITING_DUMMY_POSSITION;			
 			}
 			break;
 
 		case WAITING_DUMMY_POSSITION:
 
-			if(time_get_us2() - t_setup_us > AX12_T_SETUP_US) {
+//			if(time_get_us2() - t_setup_us > AX12_T_SETUP_US) {
 				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_RIGHT, mirror_right_pos);
-				time_wait_ms(20); /* little HACK */
+				time_wait_ms(50); /* little HACK */
 				i2c_slavedspic_mode_mirror_pos(I2C_MIRROR_SIDE_LEFT, mirror_left_pos);
 				t_setup_us = time_get_us2();
 				state = WAITING_CMD_POSSITION;
-			}
+//			}
 			break;
 
 		case WAITING_CMD_POSSITION:
@@ -127,8 +127,8 @@ void mirrors_state_machine(void)
 
 #define MIRROR_R_TOWERS_POS	227
 #define MIRROR_L_TOWERS_POS	207
-#define MIRROR_R_FIGURES_POS	208 //210
-#define MIRROR_L_FIGURES_POS	187 //190
+#define MIRROR_R_FIGURES_POS	210 //208 //210
+#define MIRROR_L_FIGURES_POS	190 //187 //190
 #define MIRROR_HIDE_POS			300
 
 void mirrors_set_mode(uint8_t mode)
@@ -145,6 +145,7 @@ void mirrors_set_mode(uint8_t mode)
 		mirror_right_pos = MIRROR_HIDE_POS;
 		mirror_left_pos = MIRROR_HIDE_POS;
 	}
+
 	mirror_update_pos = 1;
 }
 

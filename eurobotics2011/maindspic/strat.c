@@ -85,14 +85,14 @@ struct strat_infos strat_infos = {
 	.slot[1][2] = { 625,	875,		SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[1][3] = { 625,	1225,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[1][4] = { 625,	1575,		SLOT_RED,			SLOT_PRIO_NEAR_SAFE,		0, 				0, },
-	.slot[1][5] = { 625,	1865,		SLOT_BLUE,			SLOT_PRIO_SAFE,			SLOT_SAFE,		0, },
+	.slot[1][5] = { 625,	1865+10,	SLOT_BLUE,			SLOT_PRIO_SAFE,			SLOT_SAFE,		0, },
 
 	.slot[2][0] = { 975,	175,		SLOT_BLUE, 			SLOT_PRIO_WALL,			0, 				0, },
 	.slot[2][1] = { 975,	525,		SLOT_RED,			SLOT_PRIO_PATH,			0, 				0, },
 	.slot[2][2] = { 975,	875,		SLOT_BLUE,			SLOT_PRIO_PATH,			0, 				0, },
 	.slot[2][3] = { 975,	1225,		SLOT_RED,			SLOT_PRIO_PATH,			0, 				0, },
 	.slot[2][4] = { 975,	1575,		SLOT_BLUE,			SLOT_PRIO_NEAR_SAFE,		0, 				0,	},
-	.slot[2][5] = { 975, 1865,		SLOT_RED,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
+	.slot[2][5] = { 975, 1865+10,	SLOT_RED,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
 
 	.slot[3][0] = { 1325, 175,		SLOT_RED, 			SLOT_PRIO_WALL,			0, 				0, },
 	.slot[3][1] = { 1325, 525,		SLOT_BLUE,			SLOT_PRIO_PATH,			0, 				0, },
@@ -113,14 +113,14 @@ struct strat_infos strat_infos = {
 	.slot[5][2] = { 2025, 875,		SLOT_RED,			SLOT_PRIO_PATH,			0, 				0, },
 	.slot[5][3] = { 2025, 1225,	SLOT_BLUE,			SLOT_PRIO_PATH,			0, 				0, },
 	.slot[5][4] = { 2025, 1575,	SLOT_RED,			SLOT_PRIO_NEAR_SAFE,		0, 				0, },
-	.slot[5][5] = { 2025, 1865,	SLOT_BLUE,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
+	.slot[5][5] = { 2025, 1865+10,SLOT_BLUE,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
 
 	.slot[6][0] = { 2375, 175,		SLOT_BLUE, 			SLOT_PRIO_WALL,			0, 				0, },
 	.slot[6][1] = { 2375, 525,		SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[6][2] = { 2375, 875,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[6][3] = { 2375, 1225,	SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[6][4] = { 2375, 1575,	SLOT_BLUE,			SLOT_PRIO_NEAR_SAFE,		0, 				0, },
-	.slot[6][5] = { 2375, 1865,	SLOT_RED,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
+	.slot[6][5] = { 2375, 1865+10,SLOT_RED,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
 
 	.slot[7][0] = { 2800, 200,		SLOT_RED,			SLOT_PRIO_GREEN,			0, 				0, },
 	.slot[7][1] = { 2800, 690,		SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
@@ -190,20 +190,19 @@ void strat_dump_conf(void)
 
 	/* flags */
 	printf(PSTR("line1: \r\n"));
-	if(strat_infos.conf.flags & LINE1_CONF_2TOKENS_ON_BONUS)
-		printf(PSTR(" 2TOKENS_ON_BONUS (slow) \r\n"));
-	else if(strat_infos.conf.flags & LINE1_CONF_2TOKENS_NEAR_WALL)
-		printf(PSTR(" 2TOKENS_NEAR_WALL \r\n"));
+	if(strat_infos.conf.flags & LINE1_TOKENS_ON_BONUS_OLD)
+		printf(PSTR(" TOKENS_ON_BONUS_OLD \r\n"));
+	else if(strat_infos.conf.flags & LINE1_TOKENS_NEAR_WALL)
+		printf(PSTR(" TOKENS_NEAR_WALL \r\n"));
 	else
-		printf(PSTR("2TOKENS_ON_BONUS (fast) \r\n"));	
+		printf(PSTR(" TOKENS_ON_BONUS \r\n"));	
 
-	if(strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_FIRST)
-		printf(PSTR(" OPP_TOKEN_FIRST \r\n"));
-	if(strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_LAST)
-		printf(PSTR(" OPP_TOKEN_LAST \r\n"));
-	else if((strat_infos.conf.flags & (LINE1_CONF_OPP_TOKEN_LAST || LINE1_CONF_OPP_TOKEN_FIRST)) == 0)
-		printf(PSTR(" NO OPP_TOKEN \r\n"));
-
+	if(strat_infos.conf.flags & LINE1_OPP_TOKEN_BEFORE_PLACE)
+		printf(PSTR(" OPP_TOKEN_BEFORE_PLACE \r\n"));
+	if(strat_infos.conf.flags & LINE1_OPP_TOKEN_AFTER_PLACE)
+		printf(PSTR(" OPP_TOKEN_AFTER_PLACE \r\n"));
+	else if((strat_infos.conf.flags & (LINE1_OPP_TOKEN_BEFORE_PLACE | LINE1_OPP_TOKEN_AFTER_PLACE)) == 0)
+		printf(PSTR(" NOT PLACE OPP_TOKEN \r\n"));
 
 	/* place thresholds */
 	printf(PSTR("place thresholds: \r\n"));
@@ -224,10 +223,6 @@ int8_t strat_print_flag(uint8_t i, uint8_t j)
 	if(strat_infos.slot[i][j].flags & SLOT_OPPONENT)
 		return 'P';	
 
-	/* slot figure */
-	if(strat_infos.slot[i][j].flags & SLOT_FIGURE)
-		return 'F';	
-
 	/* slot busy */
 	if(strat_infos.slot[i][j].flags & SLOT_BUSY)
 		return 'O';	
@@ -235,6 +230,11 @@ int8_t strat_print_flag(uint8_t i, uint8_t j)
 	/* slot checked */
 	if(strat_infos.slot[i][j].flags & SLOT_CHECKED)
 		return 'X';	
+
+	/* slot figure */
+	if(strat_infos.slot[i][j].flags & SLOT_FIGURE)
+		return 'F';	
+
 
 	/* green area */
 	if( (i == 0 || i == 7) && j > 0)
@@ -369,10 +369,6 @@ void strat_reset_infos(void)
 	/* slot position */
 	strat_infos.slot_before = strat_infos.slot_actual;
 
-	/* thresholds */
-	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
-	strat_infos.conf.th_token_score = PION_SCORE;
-
 	/* towers found */
 	strat_infos.num_towers = 0;
 	memset(&strat_infos.towers, 0, sizeof(strat_infos.towers));	
@@ -388,6 +384,9 @@ void strat_init(void)
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 	time_reset();
 	interrupt_traj_reset();
+
+	/* lasers off */
+	lasers_set_off();
 
 	/* used in strat_base for END_TIMER */
 	mainboard.flags = DO_ENCODERS | DO_CS | DO_RS | 
@@ -433,13 +432,10 @@ void strat_exit(void)
 
 }
 
-void update_num_tokens_catched(void)
+void strat_update_num_tokens(void)
 {
 	uint8_t cnt_tokens = 0;
-	uint8_t differents = 0;
 	uint8_t flags;
-	
-	IRQ_LOCK(flags);
 	
 	if(token_catched(SIDE_FRONT))
 		cnt_tokens ++;
@@ -447,16 +443,11 @@ void update_num_tokens_catched(void)
 	if(token_catched(SIDE_REAR))
 		cnt_tokens ++;
 
-	if(strat_infos.num_tokens != cnt_tokens) {
-		strat_infos.num_tokens = cnt_tokens;
-		differents = 1;
-	}
-	
+	IRQ_LOCK(flags);
+	strat_infos.num_tokens = cnt_tokens;
 	IRQ_UNLOCK(flags);
 
-	if(differents)
-		DEBUG(E_USER_STRAT, "NUM_TOKENS DIFFERS!!");
-
+	DEBUG(E_USER_STRAT, "num_tokens = %d", strat_infos.num_tokens);
 }
 
 /* called periodically */
@@ -473,9 +464,6 @@ void strat_event(void *dummy)
 	strat_update_slot_position();	
 
 	/* TODO update opponent slot position */
-
-	/* update num_tokens */
-	//update_num_tokens_catched();
 
 	/* manage mirrors position */
 	mirrors_state_machine();
@@ -511,7 +499,7 @@ uint8_t strat_beginning(void)
 
 	/* go out of start position */
 	wait_until_opponent_is_far();
-	trajectory_d_rel(&mainboard.traj, 200);
+	trajectory_d_rel(&mainboard.traj, 250);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
@@ -528,7 +516,7 @@ uint8_t strat_beginning(void)
 		ERROUT(err);
 
 	/* pick & place tokens on green area */
-	err = strat_harvest_green_area();
+	err = strat_harvest_green_area_smart();
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 #endif

@@ -90,8 +90,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	uint16_t old_spdd, old_spda;
 	int16_t d_token, d_sign;
 	uint8_t try = 0;
-	uint8_t flags;
-	int8_t i, j;
 
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
@@ -99,13 +97,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	/* return if we has already a token catched */
 	if(token_catched(side))
 		ERROUT(END_TRAJ);
-
-	/* XXX return if slot was visited before */
-	get_slot_index(x, y, &i, &j);
-	if(strat_infos.slot[i][j].flags & SLOT_CHECKED) {
-		DEBUG(E_USER_STRAT, "slot already CHECKED");
-		ERROUT(END_ERROR);
-	}
 
 	/* XXX fast angle speed    -> problems with centering token */
 	/* XXX fast distance speed -> crash token */ 
@@ -252,10 +243,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 			trajectory_stop(&mainboard.traj);
 			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 		
-			IRQ_LOCK(flags);
-			strat_infos.num_tokens++;
-			IRQ_UNLOCK(flags);
-
 			ERROUT(END_TRAJ);
 		}
 		else if(TRAJ_SUCCESS(err)) {
@@ -267,10 +254,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	WAIT_COND_OR_TIMEOUT(token_catched(side), PICKUP_CATCHED_TIME);
 	if(token_catched(side)) {
 		DEBUG(E_USER_STRAT, "token catched!");
-
-		IRQ_LOCK(flags);
-		strat_infos.num_tokens++;
-		IRQ_UNLOCK(flags);
 
 		ERROUT(END_TRAJ);
 	}
@@ -286,10 +269,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 
 	if(token_catched(side)) {
 		DEBUG(E_USER_STRAT, "token catched!");
-
-		IRQ_LOCK(flags);
-		strat_infos.num_tokens++;
-		IRQ_UNLOCK(flags);
 
 		trajectory_stop(&mainboard.traj);
 		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
@@ -309,9 +288,12 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	}
 
  end:
+	/* update num of tokens */
+	strat_update_num_tokens();
 
 	/* slot checked */
 	strat_set_slot_flags(x, y, SLOT_CHECKED);
+	strat_clear_slot_flags(x, y, (SLOT_BUSY|SLOT_FIGURE));
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }
@@ -372,7 +354,6 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	uint8_t err;
 	uint16_t old_spdd, old_spda;
 	int16_t d_token, d_sign;
-	uint8_t flags;
 	int8_t i, j;
 	int8_t cnt_tries = 0;
 #ifdef TRY_FORCE_EJECT_TOKEN
@@ -496,41 +477,25 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	}
 #else
 
-	/* reset cnt tries */
+	/* try place */
 	cnt_tries = 0;
-
-try_place:
-	if(token_catched(side)) {
+	while (token_catched(side) && cnt_tries < NB_PLACE_TRIES) {
 		
 		cnt_tries ++;
-		if(cnt_tries == NB_PLACE_TRIES) {
-			DEBUG(E_USER_STRAT, "token eject fail, hold inside");
-			//i2c_slavedspic_mode_token_take(side);
-			goto go_safe;
-		}
-		else {
-			DEBUG(E_USER_STRAT, "token eject fail, try go backwards");
-	
-			/* go backward to safe distance from token */
-			strat_set_speed(500, SPEED_ANGLE_FAST);
-			trajectory_d_rel(&mainboard.traj, (-d_sign)*10);
-			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-			goto try_place;
-		}
-	}
-	else {
-		IRQ_LOCK(flags);
-		strat_infos.num_tokens --;
-		IRQ_UNLOCK(flags);
+		DEBUG(E_USER_STRAT, "token eject fail, try go backwards");
 
-		DEBUG(E_USER_STRAT, "num_tokens = %d", strat_infos.num_tokens);
+		/* go backward to safe distance from token */
+		strat_set_speed(500, SPEED_ANGLE_FAST);
+		trajectory_d_rel(&mainboard.traj, (-d_sign)*10);
+		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		if (!TRAJ_SUCCESS(err))
+				ERROUT(err);
 	}
 #endif
 
 
 	/* go backward to safe distance from token */
 	i2c_slavedspic_mode_token_out(side);
-go_safe:
 	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
 	trajectory_d_rel(&mainboard.traj, (-d_sign)*PLACE_D_SAFE);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
@@ -540,6 +505,9 @@ go_safe:
 
 
 end:
+	/* update num of tokens */
+	strat_update_num_tokens();
+
 	/* apply flags */
 	strat_set_slot_flags(x, y, (SLOT_BUSY|SLOT_AVOID) );
 	strat_set_speed(old_spdd, old_spda);
@@ -1016,7 +984,7 @@ uint8_t strat_is_valid_place_slot(int8_t i, int8_t j)
 
 	/* skip slot not visited for place on path */
 	if( (strat_infos.slot[i][j].prio == SLOT_PRIO_PATH)
-		&& ((strat_infos.slot[i][j].flags & SLOT_VISITED) == 0) )
+		&& ((strat_infos.slot[i][j].flags & SLOT_CHECKED) == 0) )
 		return 0;
 
 	/* TODO: test opponent near to place slot */
@@ -1585,33 +1553,33 @@ void strat_look_for_figures_disable(void)
 {
 	look_for_figures_enable = 0;
 
-	/* deduce last position */
+//	/* default positions */
+//	if(num_figures == 0 || num_figures > 2) {
+//		strat_infos.slot[0][3].flags = SLOT_FIGURE;
+//		strat_infos.slot[0][4].flags = SLOT_FIGURE;
+//		strat_infos.slot[7][3].flags = SLOT_FIGURE;
+//		strat_infos.slot[7][4].flags = SLOT_FIGURE;
+//
+//	}
+//	/* deduce last position */
+//	else 
 	if(num_figures == 1) {
-		strat_infos.slot[0][5].flags |= SLOT_FIGURE;	
-		strat_infos.slot[7][5].flags |= SLOT_FIGURE;
+		strat_infos.slot[0][5].flags = SLOT_FIGURE;	
+		strat_infos.slot[7][5].flags = SLOT_FIGURE;
 		num_figures = 2;	
 	}
-
-	/* default positions */
-	if(num_figures == 0) {
-		strat_infos.slot[0][3].flags |= SLOT_FIGURE;	
-		strat_infos.slot[7][3].flags |= SLOT_FIGURE;	
-		strat_infos.slot[0][4].flags |= SLOT_FIGURE;	
-		strat_infos.slot[7][4].flags |= SLOT_FIGURE;	
-	}
-
 }
 
 /* try to find figures from line 1 */
 void strat_look_for_figures(void)
 {
-#define ANGLE_ABS_MAX	92
-#define ANGLE_ABS_MIN	88
+#define ANGLE_ABS_MAX	91
+#define ANGLE_ABS_MIN	89
 
-#define FIGURE_D_MAX		1100
+#define FIGURE_D_MAX		1065	 /* XXX depends on wall color !!!!*/
 #define FIGURE_D_MIN		750
 
-#define FIGURE_Y_MARGIN	120
+#define FIGURE_Y_MARGIN	50
 #define FIGURE_1_Y_MIN	(690 - FIGURE_Y_MARGIN)
 #define FIGURE_1_Y_MAX	(690 + FIGURE_Y_MARGIN)
 #define FIGURE_2_Y_MIN	(970 - FIGURE_Y_MARGIN)
@@ -1651,26 +1619,26 @@ void strat_look_for_figures(void)
 	/* what position */
 	if( robot_y > FIGURE_1_Y_MIN && robot_y < FIGURE_1_Y_MAX
 		 && (strat_infos.slot[0][1].flags & SLOT_FIGURE) == 0) {
-		strat_infos.slot[0][1].flags |= SLOT_FIGURE; 
-		strat_infos.slot[7][1].flags |= SLOT_FIGURE; 
+		strat_infos.slot[0][1].flags = SLOT_FIGURE; 
+		strat_infos.slot[7][1].flags = SLOT_FIGURE; 
 		num_figures ++;
 	}
 	else if( robot_y > FIGURE_2_Y_MIN && robot_y < FIGURE_2_Y_MAX
 	&& (strat_infos.slot[0][2].flags & SLOT_FIGURE) == 0) {
-		strat_infos.slot[0][2].flags |= SLOT_FIGURE; 
-		strat_infos.slot[7][2].flags |= SLOT_FIGURE; 
+		strat_infos.slot[0][2].flags = SLOT_FIGURE; 
+		strat_infos.slot[7][2].flags = SLOT_FIGURE; 
 		num_figures ++;
 	}
 	else if( robot_y > FIGURE_3_Y_MIN && robot_y < FIGURE_3_Y_MAX
 	&& (strat_infos.slot[0][3].flags & SLOT_FIGURE) == 0) {
-		strat_infos.slot[0][3].flags |= SLOT_FIGURE; 
-		strat_infos.slot[7][3].flags |= SLOT_FIGURE; 
+		strat_infos.slot[0][3].flags = SLOT_FIGURE; 
+		strat_infos.slot[7][3].flags = SLOT_FIGURE; 
 		num_figures ++;
 	}
 	else if( robot_y > FIGURE_4_Y_MIN && robot_y < FIGURE_4_Y_MAX
 	&& (strat_infos.slot[0][4].flags & SLOT_FIGURE) == 0) {
-		strat_infos.slot[0][4].flags |= SLOT_FIGURE; 
-		strat_infos.slot[7][4].flags |= SLOT_FIGURE; 
+		strat_infos.slot[0][4].flags = SLOT_FIGURE; 
+		strat_infos.slot[7][4].flags = SLOT_FIGURE; 
 		num_figures ++;
 	}
 //	else
