@@ -299,8 +299,8 @@ void strat_limit_speed(void)
 		
 #ifdef HOMOLOGATION
 	if (opp_d < 600) {
-		lim_d = 300;
-		lim_a = 300;
+		lim_d = 1000;
+		lim_a = 1000;
 	}
 #else
 	if (opp_d < 500) {
@@ -320,16 +320,14 @@ void strat_limit_speed(void)
 #endif		
 	else if (opp_d < 800) {
 		if (mainboard.speed_d > 0 && (opp_a > 290 || opp_a < 70)) {
-			lim_d = SPEED_DIST_SLOW;
-			lim_a = SPEED_ANGLE_SLOW;
+			lim_d = 2000;
+			lim_a = 2000;
 		}
 		else if (mainboard.speed_d < 0 && (opp_a < 250 && opp_a > 110)) {
-			lim_d = SPEED_DIST_SLOW;
-			lim_a = SPEED_ANGLE_SLOW;
+			lim_d = 2000;
+			lim_a = 2000;
 		}
 	}
-	else
-		return;
 
  update:
 	if (lim_d != strat_limit_speed_d ||

@@ -123,6 +123,7 @@ struct conf {
 #define SLOT_SIZE 		350
 #define SLOT_SIZE_HALF	175
 #define SLOT_DIAGONAL	495
+#define SLOT_GREEN_SIZE 280
 
 /* slot of token */
 struct slot_info {
@@ -312,6 +313,9 @@ void strat_look_for_figures(void);
 uint8_t strat_harvest_line1(void);
 uint8_t strat_harvest_line2(void);
 uint8_t strat_harvest_green_area(void);
+
+/* harvest green area ending with two figures inside */
+uint8_t strat_harvest_green_area_smart(void);
 
 /**************************************************
  * in strat_navigation.c 

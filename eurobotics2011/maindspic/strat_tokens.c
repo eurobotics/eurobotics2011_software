@@ -291,7 +291,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 
 	/* slot checked */
 	strat_set_slot_flags(x, y, SLOT_CHECKED);
-
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }
@@ -406,7 +405,7 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 		}
 	}
 	else {
-		if(opponent_is_opposite_side(side))  {
+		if(opponent_is_behind_side(side))  {
 			ERROUT(END_OBSTACLE);
 		}
 	}
@@ -882,8 +881,8 @@ uint8_t strat_pickup_near_slots(void)
 
 
 		/* check opponent is behind */
-		WAIT_COND_OR_TIMEOUT((!opponent_is_opposite_side(side)), TIMEOUT_GO_BACK_MS);
-		if(opponent_is_opposite_side(side)) {
+		WAIT_COND_OR_TIMEOUT((!opponent_is_behind_side(side)), TIMEOUT_GO_BACK_MS);
+		if(opponent_is_behind_side(side)) {
 			DEBUG(E_USER_STRAT, "opponent is behind!");
 			return END_OBSTACLE;
 		}
@@ -1105,8 +1104,8 @@ uint8_t strat_place_near_slots(void)
 							   strat_infos.slot[place_slot.i][place_slot.j].y, side, GO_FORWARD);
 		
 		/* check opponent is behind */
-		WAIT_COND_OR_TIMEOUT((!opponent_is_opposite_side(side)), TIMEOUT_GO_BACK_MS);
-		if(opponent_is_opposite_side(side)) {
+		WAIT_COND_OR_TIMEOUT((!opponent_is_behind_side(side)), TIMEOUT_GO_BACK_MS);
+		if(opponent_is_behind_side(side)) {
 			DEBUG(E_USER_STRAT, "opponent is behind!");
 			return END_OBSTACLE;
 		}
@@ -1411,6 +1410,12 @@ uint8_t strat_info_add_tower(int16_t x, int16_t y, int16_t w)
 	/* slot index */
 	i = (int8_t)((x-strat_infos.grid_line_x[1])/SLOT_SIZE) + 1;
 	j = (int8_t)(y/SLOT_SIZE);
+
+	/* saturators */
+	if(i >= NB_SLOT_X)
+		i = (NB_SLOT_X-1);
+	if(j >= NB_SLOT_Y)
+		j = (NB_SLOT_Y-1);
 
 	/* check if already exist in the list */
 	for(k = 0; k < strat_infos.num_towers; k++) {

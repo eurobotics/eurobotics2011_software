@@ -395,11 +395,11 @@ static void cmd_pt_list_parsed(void * parsed_result, void * data)
 		printf_P(PSTR("%d: x=%d y=%d\r\n"), i, pt_list[i].x, pt_list[i].y);
 		if (!strcmp_P(res->arg1, PSTR("start"))) {
 			trajectory_goto_xy_abs(&mainboard.traj, pt_list[i].x, pt_list[i].y);
-			why = wait_traj_end(0xFF); /* all */
+			why = wait_traj_end(TRAJ_FLAGS_NO_NEAR_NO_TIMER); /* all */
 		}
 		else if (!strcmp_P(res->arg1, PSTR("avoid_start"))) {
 			while (1) {
-				why = goto_and_avoid(pt_list[i].x, pt_list[i].y, 0xFF, 0xFF);
+				why = goto_and_avoid(pt_list[i].x, pt_list[i].y, TRAJ_FLAGS_NO_NEAR_NO_TIMER, TRAJ_FLAGS_NO_NEAR_NO_TIMER);
 				printf("next point\r\n");
 				if (why != END_OBSTACLE)
 					break;
@@ -969,6 +969,20 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 	else if (strcmp_P(res->arg1, PSTR("place_rb")) == 0) {
 		err = strat_place_token(res->arg2, res->arg3, SIDE_REAR, GO_BACKWARD);
 	}
+	else if (strcmp_P(res->arg1, PSTR("green_smart")) == 0) {
+		
+		/* set figures flags */
+		if(get_color() == I2C_COLOR_BLUE) {
+			strat_infos.slot[0][res->arg2].flags |= SLOT_FIGURE;
+			strat_infos.slot[0][res->arg3].flags |= SLOT_FIGURE;
+		}
+		else {
+			strat_infos.slot[7][res->arg2].flags |= SLOT_FIGURE;
+			strat_infos.slot[7][res->arg3].flags |= SLOT_FIGURE;
+		}
+
+		err = strat_harvest_green_area_smart();
+	}
 
 	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
 	trajectory_hardstop(&mainboard.traj);
@@ -976,7 +990,7 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 
 prog_char str_subtraj1_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg0, str_subtraj1_arg0);
-prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r#place_ff#place_fb#place_rf#place_rb";
+prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r#place_ff#place_fb#place_rf#place_rb#green_smart";
 parse_pgm_token_string_t cmd_subtraj1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg1, str_subtraj1_arg1);
 parse_pgm_token_num_t cmd_subtraj1_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg2, INT32);
 parse_pgm_token_num_t cmd_subtraj1_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg3, INT32);

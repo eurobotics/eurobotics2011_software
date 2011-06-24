@@ -464,7 +464,7 @@ uint8_t opponent_is_near_to_target_slot(int8_t i, int8_t j)
 	return 0;
 }
 
-uint8_t opponent_is_opposite_side(uint8_t side)
+uint8_t opponent_is_behind_side(uint8_t side)
 {
 	if(side == SIDE_FRONT)
 		return opponent_is_behind();
@@ -703,8 +703,20 @@ void strat_set_slot_flags(int16_t x, int16_t y, int8_t flags)
 	i = (int8_t)(x/SLOT_SIZE);
 	j = (int8_t)(y/SLOT_SIZE);
 
+	/* saturators */
+	if(i >= NB_SLOT_X)
+		i = (NB_SLOT_X-1);
+	if(j >= NB_SLOT_Y)
+		j = (NB_SLOT_Y-1);
+
 	/* apply flags */
 	strat_infos.slot[i][j].flags |= flags;
+
+	/* dump infos */
+	//strat_infos.dump_enabled = 1;
+	//strat_dump_infos(__FUNCTION__);
+	//DEBUG(E_USER_STRAT, "set flag 0x%X @ (%d, %d)", flags, i,j);
+	
 }
 
 
@@ -713,4 +725,10 @@ void get_slot_index(int16_t x, int16_t y, int8_t *i, int8_t *j)
 {
 	*i = (int8_t)(x/SLOT_SIZE);
 	*j = (int8_t)(y/SLOT_SIZE);
+
+	/* saturators */
+	if(*i >= NB_SLOT_X)
+		*i = (NB_SLOT_X-1);
+	if(*j >= NB_SLOT_Y)
+		*j = (NB_SLOT_Y-1);
 }

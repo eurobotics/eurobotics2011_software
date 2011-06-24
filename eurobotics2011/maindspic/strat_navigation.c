@@ -75,6 +75,7 @@ void strat_update_slot_position(void)
 	int16_t x,y;
 	int8_t x_index = -1, y_index = -1;
 	int8_t i;
+	int8_t flags;
 
 
 	/* TODO: update opponet positon */
@@ -113,6 +114,8 @@ void strat_update_slot_position(void)
 	if( (strat_infos.slot_actual.i != x_index) ||
 		 (strat_infos.slot_actual.j != y_index) ) {
 
+		IRQ_LOCK(flags);
+
 		/* save last position */
 		strat_infos.slot_before = strat_infos.slot_actual;
 	
@@ -123,7 +126,8 @@ void strat_update_slot_position(void)
 		/* update flags */
 		strat_infos.slot[strat_infos.slot_before.i][strat_infos.slot_before.j].flags &= ~(SLOT_ROBOT);
 		strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED|SLOT_VISITED);
-
+		
+		IRQ_UNLOCK(flags);
 
 		DEBUG(E_USER_STRAT, "new slot position (%d,%d), before (%d, %d)",
 					strat_infos.slot_actual.i, strat_infos.slot_actual.j,
