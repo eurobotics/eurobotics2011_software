@@ -90,6 +90,8 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	uint16_t old_spdd, old_spda;
 	int16_t d_token, d_sign;
 	uint8_t try = 0;
+	uint8_t flags;
+	int8_t i, j;
 
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
@@ -97,6 +99,13 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	/* return if we has already a token catched */
 	if(token_catched(side))
 		ERROUT(END_TRAJ);
+
+	/* XXX return if slot was visited before */
+	get_slot_index(x, y, &i, &j);
+	if(strat_infos.slot[i][j].flags & SLOT_CHECKED) {
+		DEBUG(E_USER_STRAT, "slot already CHECKED");
+		ERROUT(END_ERROR);
+	}
 
 	/* XXX fast angle speed    -> problems with centering token */
 	/* XXX fast distance speed -> crash token */ 
@@ -242,7 +251,11 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 			DEBUG(E_USER_STRAT, "token catched!");
 			trajectory_stop(&mainboard.traj);
 			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		
+			IRQ_LOCK(flags);
 			strat_infos.num_tokens++;
+			IRQ_UNLOCK(flags);
+
 			ERROUT(END_TRAJ);
 		}
 		else if(TRAJ_SUCCESS(err)) {
@@ -254,7 +267,11 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	WAIT_COND_OR_TIMEOUT(token_catched(side), PICKUP_CATCHED_TIME);
 	if(token_catched(side)) {
 		DEBUG(E_USER_STRAT, "token catched!");
+
+		IRQ_LOCK(flags);
 		strat_infos.num_tokens++;
+		IRQ_UNLOCK(flags);
+
 		ERROUT(END_TRAJ);
 	}
 	
@@ -269,7 +286,11 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 
 	if(token_catched(side)) {
 		DEBUG(E_USER_STRAT, "token catched!");
+
+		IRQ_LOCK(flags);
 		strat_infos.num_tokens++;
+		IRQ_UNLOCK(flags);
+
 		trajectory_stop(&mainboard.traj);
 		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 		err = END_TRAJ;
@@ -345,9 +366,15 @@ uint8_t strat_pickup_token_auto(int16_t x, int16_t y, uint8_t *side)
 
 uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 {
+
+#define NB_PLACE_TRIES 	3
+
 	uint8_t err;
 	uint16_t old_spdd, old_spda;
 	int16_t d_token, d_sign;
+	uint8_t flags;
+	int8_t i, j;
+	int8_t cnt_tries = 0;
 #ifdef TRY_FORCE_EJECT_TOKEN
 	uint8_t try = 0;
 #endif
@@ -357,6 +384,13 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 	/* return if we have not token to place */
 	if(!token_catched(side))
 		ERROUT(END_TRAJ);
+
+	/* XXX return if slot was visited before */
+	get_slot_index(x, y, &i, &j);
+	if(strat_infos.slot[i][j].flags & SLOT_BUSY) {
+		DEBUG(E_USER_STRAT, "slot BUSY");
+		ERROUT(END_ERROR);
+	}
 
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
@@ -461,24 +495,42 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 		ERROUT(END_TRAJ);
 	}
 #else
-	if(token_catched(side)) {
-		DEBUG(E_USER_STRAT, "token eject fail, hold inside");
-		i2c_slavedspic_mode_token_take(side);
 
-		/* go backward to safe distance from token */
-		strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
-		trajectory_d_rel(&mainboard.traj, (-d_sign)*PLACE_D_SAFE_ABORT);
-		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		ERROUT(err);
+	/* reset cnt tries */
+	cnt_tries = 0;
+
+try_place:
+	if(token_catched(side)) {
+		
+		cnt_tries ++;
+		if(cnt_tries == NB_PLACE_TRIES) {
+			DEBUG(E_USER_STRAT, "token eject fail, hold inside");
+			//i2c_slavedspic_mode_token_take(side);
+			goto go_safe;
+		}
+		else {
+			DEBUG(E_USER_STRAT, "token eject fail, try go backwards");
+	
+			/* go backward to safe distance from token */
+			strat_set_speed(500, SPEED_ANGLE_FAST);
+			trajectory_d_rel(&mainboard.traj, (-d_sign)*10);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			goto try_place;
+		}
 	}
 	else {
+		IRQ_LOCK(flags);
 		strat_infos.num_tokens --;
+		IRQ_UNLOCK(flags);
+
 		DEBUG(E_USER_STRAT, "num_tokens = %d", strat_infos.num_tokens);
 	}
 #endif
 
+
 	/* go backward to safe distance from token */
 	i2c_slavedspic_mode_token_out(side);
+go_safe:
 	strat_set_speed(SPEED_DIST_SLOW, SPEED_ANGLE_FAST);
 	trajectory_d_rel(&mainboard.traj, (-d_sign)*PLACE_D_SAFE);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
@@ -487,7 +539,7 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 		ERROUT(err);
 
 
- end:
+end:
 	/* apply flags */
 	strat_set_slot_flags(x, y, (SLOT_BUSY|SLOT_AVOID) );
 	strat_set_speed(old_spdd, old_spda);
@@ -1534,10 +1586,20 @@ void strat_look_for_figures_disable(void)
 	look_for_figures_enable = 0;
 
 	/* deduce last position */
-	if(num_figures <2) {
+	if(num_figures == 1) {
 		strat_infos.slot[0][5].flags |= SLOT_FIGURE;	
-		strat_infos.slot[7][5].flags |= SLOT_FIGURE;	
+		strat_infos.slot[7][5].flags |= SLOT_FIGURE;
+		num_figures = 2;	
 	}
+
+	/* default positions */
+	if(num_figures == 0) {
+		strat_infos.slot[0][3].flags |= SLOT_FIGURE;	
+		strat_infos.slot[7][3].flags |= SLOT_FIGURE;	
+		strat_infos.slot[0][4].flags |= SLOT_FIGURE;	
+		strat_infos.slot[7][4].flags |= SLOT_FIGURE;	
+	}
+
 }
 
 /* try to find figures from line 1 */

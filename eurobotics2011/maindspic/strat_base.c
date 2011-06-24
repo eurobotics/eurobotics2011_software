@@ -79,7 +79,7 @@ static volatile int16_t strat_speed_d = SPEED_ANGLE_FAST;
 static volatile uint16_t strat_limit_speed_a = 0; /* no limit */
 static volatile uint16_t strat_limit_speed_d = 0;
 
-static volatile uint8_t strat_limit_speed_enabled = 0;
+static volatile uint8_t strat_limit_speed_enabled = 1;
 
 
 /* Strings that match the end traj cause */
@@ -299,33 +299,33 @@ void strat_limit_speed(void)
 		
 #ifdef HOMOLOGATION
 	if (opp_d < 600) {
-		lim_d = 1000;
-		lim_a = 1000;
+		lim_d = SPEED_ANGLE_VERY_SLOW;
+		lim_a = SPEED_ANGLE_VERY_SLOW;
 	}
 #else
 	if (opp_d < 500) {
-		if (mainboard.speed_d > 0 && (opp_a > 290 || opp_a < 70)) {
+		if (mainboard.speed_d > 0 && (opp_a > 310 || opp_a < 40)) { // XXX tested with +/-70
 			lim_d = SPEED_DIST_VERY_SLOW;
-			lim_a = SPEED_ANGLE_VERY_SLOW;
+			lim_a = SPEED_ANGLE_FAST;
 		}
-		else if (mainboard.speed_d < 0 && (opp_a < 250 && opp_a > 110)) {
+		else if (mainboard.speed_d < 0 && (opp_a < 220 && opp_a > 140)) {
 			lim_d = SPEED_DIST_VERY_SLOW;
-			lim_a = SPEED_ANGLE_VERY_SLOW;
+			lim_a = SPEED_ANGLE_FAST;
 		}
 		else {
-			lim_d = SPEED_DIST_SLOW;
-			lim_a = SPEED_ANGLE_VERY_SLOW;
+			lim_d = 2000;
+			lim_a = SPEED_ANGLE_SLOW;
 		}
 	}
 #endif		
-	else if (opp_d < 800) {
-		if (mainboard.speed_d > 0 && (opp_a > 290 || opp_a < 70)) {
-			lim_d = 2000;
-			lim_a = 2000;
+	else if (opp_d < 600) {
+		if (mainboard.speed_d > 0 && (opp_a > 310 || opp_a < 40)) {
+			lim_d = 3000;
+			lim_a = SPEED_ANGLE_FAST;
 		}
-		else if (mainboard.speed_d < 0 && (opp_a < 250 && opp_a > 110)) {
-			lim_d = 2000;
-			lim_a = 2000;
+		else if (mainboard.speed_d < 0 && (opp_a < 220 && opp_a > 140)) {
+			lim_d = 3000;
+			lim_a = SPEED_DIST_FAST;
 		}
 	}
 
@@ -334,6 +334,7 @@ void strat_limit_speed(void)
 	    lim_a != strat_limit_speed_a) {
 		strat_limit_speed_d = lim_d;
 		strat_limit_speed_a = lim_a;
+
 		DEBUG(E_USER_STRAT, "new speed limit da=%d,%d", lim_d, lim_a);
 		strat_update_traj_speed();
 	}

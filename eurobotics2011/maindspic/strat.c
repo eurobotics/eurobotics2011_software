@@ -74,11 +74,11 @@ struct strat_infos strat_infos = {
 	/* grid slots 
 	.slot[X][Y] = { .x,	.y ,  	.color,       		.prio,   					.flags, 			.flags_poly},  */
 	.slot[0][0] = { 200,	200,		SLOT_BLUE,			SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[0][1] = { 200,	690,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[0][2] = { 200,	970,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[0][3] = { 200,	1250,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[0][4] = { 200,	1530,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[0][5] = { 200,	1810,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			0, 				0, },
+	.slot[0][1] = { 200,	690,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[0][2] = { 200,	970,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[0][3] = { 200,	1250,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[0][4] = { 200,	1530,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[0][5] = { 200,	1810,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
 
 	.slot[1][0] = { 625,	175,		SLOT_RED, 			SLOT_PRIO_WALL,			0, 				0, },
 	.slot[1][1] = { 625,	525,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
@@ -123,11 +123,11 @@ struct strat_infos strat_infos = {
 	.slot[6][5] = { 2375, 1865,	SLOT_RED,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
 
 	.slot[7][0] = { 2800, 200,		SLOT_RED,			SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[7][1] = { 2800, 690,		SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[7][2] = { 2800, 970,		SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[7][3] = { 2800, 1250,	SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[7][4] = { 2800, 1530,	SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			0, 				0, },
-	.slot[7][5] = { 2800, 1810,	SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			0, 				0, },
+	.slot[7][1] = { 2800, 690,		SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[7][2] = { 2800, 970,		SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[7][3] = { 2800, 1250,	SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[7][4] = { 2800, 1530,	SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
+	.slot[7][5] = { 2800, 1810,	SLOT_GREEN_RED,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
 
 	/* grid lines */
 	.grid_line_x = { 0, 450, 800, 1150, 1500, 1850, 2200, 2550, 3000 },
@@ -191,15 +191,19 @@ void strat_dump_conf(void)
 	/* flags */
 	printf(PSTR("line1: \r\n"));
 	if(strat_infos.conf.flags & LINE1_CONF_2TOKENS_ON_BONUS)
-		printf(PSTR(" 2TOKENS_ON_BONUS \r\n"));
-	if(strat_infos.conf.flags & LINE1_CONF_2TOKENS_NEAR_WALL)
+		printf(PSTR(" 2TOKENS_ON_BONUS (slow) \r\n"));
+	else if(strat_infos.conf.flags & LINE1_CONF_2TOKENS_NEAR_WALL)
 		printf(PSTR(" 2TOKENS_NEAR_WALL \r\n"));
+	else
+		printf(PSTR("2TOKENS_ON_BONUS (fast) \r\n"));	
+
 	if(strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_FIRST)
 		printf(PSTR(" OPP_TOKEN_FIRST \r\n"));
 	if(strat_infos.conf.flags & LINE1_CONF_OPP_TOKEN_LAST)
 		printf(PSTR(" OPP_TOKEN_LAST \r\n"));
-	else
-		printf(PSTR(" DEFAULT \r\n"));
+	else if((strat_infos.conf.flags & (LINE1_CONF_OPP_TOKEN_LAST || LINE1_CONF_OPP_TOKEN_FIRST)) == 0)
+		printf(PSTR(" NO OPP_TOKEN \r\n"));
+
 
 	/* place thresholds */
 	printf(PSTR("place thresholds: \r\n"));
@@ -219,6 +223,10 @@ int8_t strat_print_flag(uint8_t i, uint8_t j)
 	/* opponent slot position */
 	if(strat_infos.slot[i][j].flags & SLOT_OPPONENT)
 		return 'P';	
+
+	/* slot figure */
+	if(strat_infos.slot[i][j].flags & SLOT_FIGURE)
+		return 'F';	
 
 	/* slot busy */
 	if(strat_infos.slot[i][j].flags & SLOT_BUSY)
@@ -343,6 +351,18 @@ void strat_reset_infos(void)
 	strat_infos.slot[5][5].flags = SLOT_SAFE;
 	strat_infos.slot[6][5].flags = SLOT_SAFE;
 
+	strat_infos.slot[0][1].flags = SLOT_BUSY;
+	strat_infos.slot[0][2].flags = SLOT_BUSY;
+	strat_infos.slot[0][3].flags = SLOT_BUSY;
+	strat_infos.slot[0][4].flags = SLOT_BUSY;
+	strat_infos.slot[0][5].flags = SLOT_BUSY;
+
+	strat_infos.slot[7][1].flags = SLOT_BUSY;
+	strat_infos.slot[7][2].flags = SLOT_BUSY;
+	strat_infos.slot[7][3].flags = SLOT_BUSY;
+	strat_infos.slot[7][4].flags = SLOT_BUSY;
+	strat_infos.slot[7][5].flags = SLOT_BUSY;
+
 	/* tokens catched */
 	strat_infos.num_tokens = 0;
 
@@ -413,28 +433,55 @@ void strat_exit(void)
 
 }
 
+void update_num_tokens_catched(void)
+{
+	uint8_t cnt_tokens = 0;
+	uint8_t differents = 0;
+	uint8_t flags;
+	
+	IRQ_LOCK(flags);
+	
+	if(token_catched(SIDE_FRONT))
+		cnt_tokens ++;
+
+	if(token_catched(SIDE_REAR))
+		cnt_tokens ++;
+
+	if(strat_infos.num_tokens != cnt_tokens) {
+		strat_infos.num_tokens = cnt_tokens;
+		differents = 1;
+	}
+	
+	IRQ_UNLOCK(flags);
+
+	if(differents)
+		DEBUG(E_USER_STRAT, "NUM_TOKENS DIFFERS!!");
+
+}
+
 /* called periodically */
 void strat_event(void *dummy)
 {
 	/* XXX in parallel with main strat, 
-	 *	disable/enable events depends on case.
+	 *	disable/enable events depends on case or protect with IRQ_LOCK.
 	 */
 
-	/* limit speed when opponent or tokens(TODO) are close */
-	//strat_limit_speed();
+	/* limit speed when opponent are close */
+	strat_limit_speed();
 
 	/* update actual slot position */
 	strat_update_slot_position();	
 
-	/* TODO: catch tokens in straight travels */
+	/* TODO update opponent slot position */
 
-	/* TODO: update num of token catched */
-
-	/* TODO: check figures of green zone */
+	/* update num_tokens */
+	//update_num_tokens_catched();
 
 	/* manage mirrors position */
 	mirrors_state_machine();
 	
+	/* TODO: catch tokens in straight travels */
+
 }
 
 /* dump state (every 5 s max) XXX */

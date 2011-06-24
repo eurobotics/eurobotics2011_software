@@ -346,6 +346,9 @@ void beacon_stop(void)
 	beaconboard.speed.on = 0;
 	cs_set_consign(&beaconboard.speed.cs, 0);
 	pwm_mc_set(BEACON_PWM, 0);
+
+	/* no opponent there */
+	beacon.opponent_x = I2C_OPPONENT_NOT_THERE;
 }
 
 /**********************************************************************

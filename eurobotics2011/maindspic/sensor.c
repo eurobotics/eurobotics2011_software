@@ -457,11 +457,6 @@ uint8_t sensor_token_side(uint8_t side)
 		return (sensor_get(S_TOKEN_REAR_R) && sensor_get(S_TOKEN_REAR_L));
 }
 
-/* TODO */
-void sensor_tower_detection(void)
-{
-
-}
 
 /************ global sensor init */
 

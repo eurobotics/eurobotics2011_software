@@ -972,15 +972,12 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 	else if (strcmp_P(res->arg1, PSTR("green_smart")) == 0) {
 		
 		/* set figures flags */
-		if(get_color() == I2C_COLOR_BLUE) {
+		if(res->arg2 != 0 && res->arg3 != 0) {
 			strat_infos.slot[0][res->arg2].flags |= SLOT_FIGURE;
 			strat_infos.slot[0][res->arg3].flags |= SLOT_FIGURE;
-		}
-		else {
 			strat_infos.slot[7][res->arg2].flags |= SLOT_FIGURE;
 			strat_infos.slot[7][res->arg3].flags |= SLOT_FIGURE;
 		}
-
 		err = strat_harvest_green_area_smart();
 	}
 

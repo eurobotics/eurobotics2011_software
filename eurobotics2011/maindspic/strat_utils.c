@@ -371,7 +371,7 @@ uint8_t opponent_is_infront(void)
 	if(opp_there == -1)
 		return 0;
 
-	if ((opp_a > 325 && opp_a < 35) && opp_d < 500)
+	if ((opp_a > 325 || opp_a < 35) && opp_d < 500)
 		return 1;
 
 	return 0;
@@ -674,14 +674,12 @@ void strat_d_rel_side(struct trajectory*traj, double d_mm, uint8_t side)
 /* return 1 if the opponent is near */
 void wait_until_opponent_is_far(void)
 {
-#ifdef HOMOLOGATION
 	int16_t opp_x, opp_y, opp_d, opp_a;
 
-	if (get_opponent_xyda(&opp_x, &opp_y,
-				      &opp_d, &opp_a) == -1)
+	if (get_opponent_xyda(&opp_x, &opp_y, &opp_d, &opp_a) == -1)
 		return;
 
-	if(opp_d < 600 ) {
+	if(opp_d < 450 ) {
 		DEBUG(E_USER_STRAT, "waiting opponent far");
 
 		do {
@@ -689,9 +687,8 @@ void wait_until_opponent_is_far(void)
 					      &opp_d, &opp_a) == -1)
 				return;
 	
-		} while(opp_d < 600);
+		} while(opp_d < 450);
 	}
-#endif
 }
 
 /* apply flags to slot */
