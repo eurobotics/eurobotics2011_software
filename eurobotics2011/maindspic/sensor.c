@@ -117,7 +117,7 @@ struct adc_infos {
 	uint16_t config;
 	int16_t value;
 	int16_t prev_val;
-        int16_t (*filter)(struct adc_infos *, int16_t);
+   int16_t (*filter)(struct adc_infos *, int16_t);
 };
 
 

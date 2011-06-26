@@ -36,7 +36,7 @@
 //#define COMPILE_COMMANDS_CS
 #define COMPILE_COMMANDS_MAINBOARD
 #define COMPILE_COMMANDS_TRAJ
-
+//#define COMPILE_CODE
 
 /* commands_gen.c */
 #ifdef COMPILE_COMMANDS_GEN
@@ -111,6 +111,9 @@ extern parse_pgm_inst_t cmd_lasers;
 
 extern parse_pgm_inst_t cmd_traj_speed;
 extern parse_pgm_inst_t cmd_traj_speed_show;
+
+#ifdef COMPILE_CODE /*---------------------------------------------------------------------------------------------*/
+//#endif /* COMPILE_CODE ---------------------------------------------------------------------------------------------*/
 extern parse_pgm_inst_t cmd_trajectory;
 extern parse_pgm_inst_t cmd_trajectory_show;
 extern parse_pgm_inst_t cmd_rs_gains;
@@ -121,6 +124,9 @@ extern parse_pgm_inst_t cmd_pt_list;
 extern parse_pgm_inst_t cmd_pt_list_append;
 extern parse_pgm_inst_t cmd_pt_list_del;
 extern parse_pgm_inst_t cmd_pt_list_show;
+extern parse_pgm_inst_t cmd_strat_conf3;
+#endif /* COMPILE_CODE ---------------------------------------------------------------------------------------------*/
+
 extern parse_pgm_inst_t cmd_goto1;
 extern parse_pgm_inst_t cmd_goto2;
 extern parse_pgm_inst_t cmd_goto3;
@@ -129,7 +135,7 @@ extern parse_pgm_inst_t cmd_position_set;
 extern parse_pgm_inst_t cmd_strat_infos;
 extern parse_pgm_inst_t cmd_strat_conf;
 extern parse_pgm_inst_t cmd_strat_conf2;
-extern parse_pgm_inst_t cmd_strat_conf3;
+
 extern parse_pgm_inst_t cmd_subtraj1;
 extern parse_pgm_inst_t cmd_subtraj2;
 
@@ -143,8 +149,8 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_reset,
 //	(parse_pgm_inst_t *)&cmd_bootloader,
 	(parse_pgm_inst_t *)&cmd_encoders,
-	(parse_pgm_inst_t *)&cmd_pwm_servo,
-	(parse_pgm_inst_t *)&cmd_pwm_servo_show_range,
+//	(parse_pgm_inst_t *)&cmd_pwm_servo,
+//	(parse_pgm_inst_t *)&cmd_pwm_servo_show_range,
 	(parse_pgm_inst_t *)&cmd_dac_mc,
 	(parse_pgm_inst_t *)&cmd_adc,
 	(parse_pgm_inst_t *)&cmd_sensor,
@@ -201,6 +207,9 @@ parse_pgm_ctx_t main_ctx[] = {
 	/* commands_traj.c */
 	(parse_pgm_inst_t *)&cmd_traj_speed,
 	(parse_pgm_inst_t *)&cmd_traj_speed_show,
+
+#ifdef COMPILE_CODE /*---------------------------------------------------------------------------------------------*/
+//#endif /* COMPILE_CODE ---------------------------------------------------------------------------------------------*/
 	(parse_pgm_inst_t *)&cmd_trajectory,
 	(parse_pgm_inst_t *)&cmd_trajectory_show,
 	(parse_pgm_inst_t *)&cmd_rs_gains,
@@ -211,6 +220,9 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_pt_list_append,
 	(parse_pgm_inst_t *)&cmd_pt_list_del,
 	(parse_pgm_inst_t *)&cmd_pt_list_show,
+	(parse_pgm_inst_t *)&cmd_strat_conf3,
+#endif /* COMPILE_CODE ---------------------------------------------------------------------------------------------*/
+
 	(parse_pgm_inst_t *)&cmd_goto1,
 	(parse_pgm_inst_t *)&cmd_goto2,
 	(parse_pgm_inst_t *)&cmd_position,
@@ -218,7 +230,7 @@ parse_pgm_ctx_t main_ctx[] = {
 	(parse_pgm_inst_t *)&cmd_strat_infos,
 	(parse_pgm_inst_t *)&cmd_strat_conf,
 	(parse_pgm_inst_t *)&cmd_strat_conf2,
-	(parse_pgm_inst_t *)&cmd_strat_conf3,
+
 	(parse_pgm_inst_t *)&cmd_subtraj1,
 	(parse_pgm_inst_t *)&cmd_subtraj2,
 

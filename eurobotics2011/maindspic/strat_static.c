@@ -1391,6 +1391,14 @@ uint8_t strat_pickup_green_token(uint8_t type, uint8_t color)
 		}
 	}	
 
+	/* special case: two figures on positions 1 and 2 */
+	if(type == TYPE_FIGURE) {
+		if(j == 1 && (strat_infos.slot[i][2].flags & SLOT_FIGURE)) {
+			/* pickup first figure on position 2 */
+			j = 2;
+		}	
+	}
+
 	/* return if no tokens found */
 	if(j == 6) {
 		DEBUG(E_USER_STRAT, "%s not found in gree area", type == TYPE_PION? "PION" : "FIGURE");
@@ -1503,6 +1511,7 @@ uint8_t strat_harvest_green_area_smart(void)
 	uint8_t side;
 	uint8_t color = get_color();
 	int8_t i, j;
+	int16_t x_opp, y_opp;
 
 	/* update num of tokens */
 	strat_update_num_tokens();
@@ -1586,11 +1595,25 @@ near_green:
 
 	/* goto in area */
 	i = (get_color() == I2C_COLOR_BLUE? 2 : 5);
-	if(y_is_more_than(1050)) {
-		trajectory_goto_xy_abs(&mainboard.traj, strat_infos.slot[i][0].x, 1400);
+	if(get_opponent_xy(&x_opp, &y_opp) == -1) {
+
+		/* depends on robot position */
+		if(y_is_more_than(1050)) {
+			trajectory_goto_xy_abs(&mainboard.traj, strat_infos.slot[i][0].x, 1400);
+		}
+		else {
+			trajectory_goto_xy_abs(&mainboard.traj, strat_infos.slot[i][0].x, 700);
+		}
 	}
 	else {
-		trajectory_goto_xy_abs(&mainboard.traj, strat_infos.slot[i][0].x, 700);
+		/* depends on opponent position */
+		if(y_opp < 1050) {
+			trajectory_goto_xy_abs(&mainboard.traj, strat_infos.slot[i][0].x, 1400);
+		}
+		else {
+			trajectory_goto_xy_abs(&mainboard.traj, strat_infos.slot[i][0].x, 700);
+		}
+
 	}
 	err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
 	if (!TRAJ_SUCCESS(err))

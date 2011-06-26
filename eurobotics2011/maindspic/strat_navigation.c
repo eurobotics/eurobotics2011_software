@@ -68,38 +68,64 @@
 	} while(0)
 
 /* update slot position */
-#define GRID_MARGIN 10
+#define TYPE_ROBOT		0
+#define TYPE_OPPONENT	1
+#define GRID_MARGIN 		10
 
-void strat_update_slot_position(void)
+void strat_update_slot_position(uint8_t type, int16_t margin, 
+									     int8_t x_line_init, int8_t x_line_end,
+									     int8_t y_line_init, int8_t y_line_end)
 {
 	int16_t x,y;
 	int8_t x_index = -1, y_index = -1;
 	int8_t i;
+	slot_index_t slot_actual;
+	slot_index_t slot_before;
 	int8_t flags;
 
+	/* depends on type */
+	if(type == TYPE_ROBOT) {
 
-	/* TODO: update opponet positon */
+		/* get robot possition */
+		x = position_get_x_s16(&mainboard.pos);
+		y = position_get_y_s16(&mainboard.pos);
 
-	/* get robot possition */
-	x = position_get_x_s16(&mainboard.pos);
-	y = position_get_y_s16(&mainboard.pos);
+		/* and slots infos */
+		slot_actual = strat_infos.slot_actual;
+		slot_before = strat_infos.slot_before;
+
+	} 
+	else { /* TYPE_OPPONENT */
+
+		/* get opponent possition */
+		if(get_opponent_xy(&x, &y) == -1) {
+
+			/* return if opp not there */
+			return;
+		}
+
+		/* and slots infos */
+		slot_actual = strat_infos.opp_slot_actual;
+		slot_before = strat_infos.opp_slot_before;	
+	}
+
 
 	/* get x grid index */
-	for(i=0; i<(NB_GRID_LINES_X-1); i++) {
+	for(i = x_line_init; i < x_line_end; i++) {
 
-		if( (x > (strat_infos.grid_line_x[i] + GRID_MARGIN)) &&
-		    (x < (strat_infos.grid_line_x[i+1] - GRID_MARGIN)) ) {
+		if( (x > (strat_infos.grid_line_x[i] + margin)) &&
+		    (x < (strat_infos.grid_line_x[i+1] - margin)) ) {
 			
 			x_index = i;
 			break; 
 		}
 	}		
 
-	/* get x grid index */
-	for(i=0; i<(NB_GRID_LINES_Y-1); i++) {
+	/* get y grid index */
+	for(i = x_line_init; i < x_line_end; i++) {
 
-		if( (y > (strat_infos.grid_line_y[i] + GRID_MARGIN)) &&
-		    (y < (strat_infos.grid_line_y[i+1] - GRID_MARGIN)) ) {
+		if( (y > (strat_infos.grid_line_y[i] + margin)) &&
+		    (y < (strat_infos.grid_line_y[i+1] - margin)) ) {
 			
 			y_index = i;
 			break; 
@@ -111,29 +137,384 @@ void strat_update_slot_position(void)
 		return;
 
 	/* if it's changed */
-	if( (strat_infos.slot_actual.i != x_index) ||
-		 (strat_infos.slot_actual.j != y_index) ) {
+	if( (slot_actual.i != x_index) ||
+		 (slot_actual.j != y_index) ) {
+
+		/* update slot index */
+		slot_before = slot_actual;
+		slot_actual.i = x_index; 
+		slot_actual.j = y_index; 
+		
+		/* update slots index depends on type */
+		if(type == TYPE_ROBOT) {
+
+			IRQ_LOCK(flags);
+	
+			/* save last position */
+			strat_infos.slot_before = slot_before;
+			strat_infos.slot_actual = slot_actual;
+			
+			/* update flags */
+			strat_infos.slot[strat_infos.slot_before.i][strat_infos.slot_before.j].flags &= ~(SLOT_ROBOT);
+			strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED);
+			
+			IRQ_UNLOCK(flags);
+
+		}
+		else { /* TYPE_OPPONENT */
+
+			IRQ_LOCK(flags);
+	
+			/* save last position */
+			strat_infos.opp_slot_before = slot_before;
+			strat_infos.opp_slot_actual = slot_actual;
+			
+			/* update flags */
+			strat_infos.slot[strat_infos.opp_slot_before.i][strat_infos.opp_slot_before.j].flags &= ~(SLOT_OPPONENT|SLOT_CHECKED|SLOT_BUSY|SLOT_FIGURE|SLOT_AVOID);
+			strat_infos.slot[strat_infos.opp_slot_actual.i][strat_infos.opp_slot_actual.j].flags |= (SLOT_OPPONENT);
+			
+			IRQ_UNLOCK(flags);
+
+		}
+
+		DEBUG(E_USER_STRAT, "new %s slot (%d,%d), before (%d, %d)",
+					type == TYPE_ROBOT? "ROBOT" : "OPPONENT",
+					slot_actual.i, slot_actual.j,
+					slot_before.i, slot_before.j);
+	}
+
+}
+
+/* update opponent zone infos */
+#define UPDATE_ZONES_PERIOD_MS	25	/* XXX syncronized with EVENT_PERIOD_STRAT */
+
+void strat_update_zones(void) 
+{
+	int8_t i;
+	int16_t x_opp, y_opp;
+	uint8_t flags;
+
+	/* get opponent position, return if not there */
+	if(get_opponent_xy(&x_opp, &y_opp) == -1)
+		return;
+
+	/* get actual zone */
+	for(i = 0; i < NB_ZONES_MAX; i++) {
+
+		if(opponent_is_in_area(COLOR_X(strat_infos.zones[i].x_up), strat_infos.zones[i].y_up,
+									  COLOR_X(strat_infos.zones[i].x_down), strat_infos.zones[i].y_down)) {
+			break;
+		}
+	}
+
+	/* return if no valid zone ? */
+	if(i == NB_ZONES_MAX)
+		return;
+
+	/* if zone has changed */
+	if(i != strat_infos.opp_actual_zone) {
 
 		IRQ_LOCK(flags);
 
-		/* save last position */
-		strat_infos.slot_before = strat_infos.slot_actual;
-	
-		/* update actual position*/
-		strat_infos.slot_actual.i = x_index; 
-		strat_infos.slot_actual.j = y_index; 
+		/* update zone index */
+		strat_infos.opp_before_zone = strat_infos.opp_actual_zone;
+		strat_infos.opp_actual_zone = i;
 
-		/* update flags */
-		strat_infos.slot[strat_infos.slot_before.i][strat_infos.slot_before.j].flags &= ~(SLOT_ROBOT);
-		strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED);
-		
+		/* update num visites */
+		strat_infos.zones[i].num_visits ++;
+
+		/* reset actual zone time */
+		strat_infos.opp_time_zone_ms = 0;
+
 		IRQ_UNLOCK(flags);
+	}
+	else { /* opponent continues in the same zone */
 
-		DEBUG(E_USER_STRAT, "new slot position (%d,%d), before (%d, %d)",
-					strat_infos.slot_actual.i, strat_infos.slot_actual.j,
-					strat_infos.slot_before.i, strat_infos.slot_before.j);
+		IRQ_LOCK(flags);
+
+		/* update total zone time */
+		strat_infos.zones[i].total_time_ms += UPDATE_ZONES_PERIOD_MS;
+
+		/* update actual zone time */
+		strat_infos.opp_time_zone_ms += UPDATE_ZONES_PERIOD_MS;
+
+		IRQ_UNLOCK(flags);
 	}
 
+}
+
+/* work on a zone */
+uint8_t strat_work_on_zone(zone_t * z)
+{
+	uint8_t err;
+
+	/* goto zone pt with avoidance, return if we can't reach the pt */
+	err = goto_and_avoid_busy_side(COLOR_X(z->x), z->y,
+								    TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* do before task */
+	if(z->do_before)
+		z->do_before();
+
+	/* pickup or push tokens */
+	strat_pickup_or_push_near_slots();
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* do after task */
+	if(z->do_after)
+		z->do_after();
+
+ end:
+	return err;
+}
+
+/* XXX create strat_place_best_token(i,j) */
+uint8_t strat_place_figure_near_opp_home(void)
+{
+	uint8_t err = END_TRAJ;
+	uint8_t side;
+	int8_t i;
+	
+	/* return if slot busy */
+	i = (get_color() == I2C_COLOR_BLUE? 6 : 1);
+	if(strat_infos.slot[i][0].flags & SLOT_BUSY) {
+		ERROUT(err);
+	}
+
+	/* TODO: place the token with higher score */
+
+	/* we prefer place a figure */
+	if(sensor_get(S_TOKEN_FRONT_FIGURE)) {
+
+		side = SIDE_FRONT;
+		err = strat_place_token(COLOR_X(strat_infos.slot[6][0].x), 
+								strat_infos.slot[6][0].y, side, GO_FORWARD);
+	}
+	else if(sensor_get(S_TOKEN_REAR_FIGURE)) {
+
+		side = SIDE_REAR;
+		err = strat_place_token(COLOR_X(strat_infos.slot[6][0].x), 
+								strat_infos.slot[6][0].y, side, GO_FORWARD);
+	}
+	else {
+		err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][0].x), 
+						strat_infos.slot[6][0].y, &side, GO_FORWARD);
+	}
+
+
+	/* avoid opponent */
+	while(opponent_is_behind_side(side));
+
+	/* back in front of bonus wall */
+	trajectory_goto_xy_abs(&mainboard.traj,
+								 COLOR_X(strat_infos.slot[5][1].x), 
+								 strat_infos.slot[5][1].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+end:
+	return err;
+}
+
+/* XXX create strat_place_best_token(i,j) */
+uint8_t strat_place_on_near_opp_safe_slot(void)
+{
+	uint8_t err = END_TRAJ;
+	uint8_t side;
+	int8_t i;
+	
+	/* return if slot busy */
+	i = (get_color() == I2C_COLOR_BLUE? 6 : 1);
+	if(strat_infos.slot[i][0].flags & SLOT_BUSY) {
+		ERROUT(err);
+	}
+
+	/* TODO: place the token with higher score */
+
+	/* we prefer place a figure */
+	if(sensor_get(S_TOKEN_FRONT_FIGURE)) {
+
+		side = SIDE_FRONT;
+		err = strat_place_token(COLOR_X(strat_infos.slot[6][4].x), 
+								strat_infos.slot[6][4].y, side, GO_FORWARD);
+	}
+	else if(sensor_get(S_TOKEN_REAR_FIGURE)) {
+
+		side = SIDE_REAR;
+		err = strat_place_token(COLOR_X(strat_infos.slot[6][4].x), 
+								strat_infos.slot[6][4].y, side, GO_FORWARD);
+	}
+	else {
+		err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][4].x), 
+						strat_infos.slot[6][4].y, &side, GO_FORWARD);
+	}
+
+
+	/* avoid opponent */
+	while(opponent_is_behind_side(side));
+
+	/* back in front of bonus wall */
+	trajectory_goto_xy_abs(&mainboard.traj,
+								 COLOR_X(strat_infos.slot[5][3].x), 
+								 strat_infos.slot[5][3].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+end:
+	return err;
+}
+
+/* XXX improve */
+uint8_t strat_place_on_opp_safe_slot(void)
+{
+	uint8_t err = END_TRAJ;
+	uint8_t side = 0;
+	int8_t i;
+	
+	/* return if slot busy */
+	i = (get_color() == I2C_COLOR_BLUE? 5 : 2);
+	if(strat_infos.slot[i][5].flags & SLOT_BUSY) {
+		ERROUT(err);
+	}
+
+	/* place a pion */
+	if(!sensor_get(S_TOKEN_FRONT_FIGURE)) {
+		side = SIDE_FRONT;
+		err = strat_place_token(COLOR_X(strat_infos.slot[5][5].x), 
+								strat_infos.slot[5][5].y, side, GO_FORWARD);
+	}
+	else if(!sensor_get(S_TOKEN_REAR_FIGURE)) {
+		side = SIDE_FRONT;
+		err = strat_place_token(COLOR_X(strat_infos.slot[5][5].x), 
+								strat_infos.slot[5][5].y, side, GO_FORWARD);
+	}
+
+	/* avoid opponent */
+	while(opponent_is_behind_side(side));
+
+	/* back to origin slot */
+	trajectory_goto_xy_abs(&mainboard.traj,
+								 COLOR_X(strat_infos.slot[5][3].x), 
+								 strat_infos.slot[5][3].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+end:
+	return err;
+}
+
+uint8_t strat_pickup_bonus_near_wall(void)
+{
+	int16_t delta = 0;
+	uint8_t side = 0;
+	uint8_t err;
+	uint8_t our_token_disapeared = 0;
+	
+	/* initial side */
+	side = (token_side_is_lower_score(SIDE_FRONT)? SIDE_FRONT : SIDE_REAR);
+
+start:
+	/* we need at least one side free */
+	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)) {
+		
+		/* place one */
+		if(opp_x_is_more_than(1500)) {
+			err = strat_place_token(COLOR_X(strat_infos.slot[3][3].x - delta), 
+								strat_infos.slot[3][3].y, side, GO_FORWARD);
+		}
+		else {
+			err = strat_place_token(COLOR_X(strat_infos.slot[5][3].x + delta), 
+								strat_infos.slot[5][3].y, side, GO_FORWARD);
+		}
+
+		//if (!TRAJ_SUCCESS(err))
+		//	ERROUT(err);
+
+		/* force eject */
+		if(token_catched(side)) {
+			i2c_slavedspic_mode_token_out(side);
+		}
+
+		/* back in front of bonus wall */
+		err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x), 
+												 strat_infos.slot[4][4].y,
+										    	 TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+		i2c_slavedspic_mode_token_stop(side);
+		if (!TRAJ_SUCCESS(err))
+			ERROUT(err);
+	}
+
+
+	/* take a look if our token is still here */
+	if(delta == 0) {
+		side = strat_turnto_pickup_token(&mainboard.traj,
+											COLOR_X(strat_infos.slot[3][5].x), 
+											strat_infos.slot[3][5].y);
+		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		if (!TRAJ_SUCCESS(err))
+			ERROUT(err);
+	
+		if(!sensor_token_side(side))
+			our_token_disapeared = 1;
+	}
+
+	/* try pickup token */
+	side = strat_turnto_pickup_token(&mainboard.traj,
+										COLOR_X(strat_infos.slot[4][5].x), 
+										strat_infos.slot[4][5].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* go forwards slowly */
+	i2c_slavedspic_mode_token_take(side);
+	strat_set_speed(300, SPEED_ANGLE_FAST);
+	strat_d_rel_side(&mainboard.traj, 260, side);
+
+	/* wait token catched or end traj */
+	err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR);
+
+	/* restore speed */
+	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+
+	/* two tokens on opponent bonus */
+	if(sensor_token_side(side) && !y_is_more_than(1750)) {
+
+		/* back in front of bonus wall */
+		trajectory_goto_xy_abs(&mainboard.traj,
+									 COLOR_X(strat_infos.slot[4][4].x), 
+									 strat_infos.slot[4][4].y);
+		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		if (!TRAJ_SUCCESS(err))
+			ERROUT(err);
+
+		/* for place token catched in null position */
+		delta = 100;
+
+		goto start;
+	}
+
+	/* avoid opponent */
+	while(opponent_is_in_area(COLOR_X(1500), 1750,
+									  COLOR_X(1850), 1050));
+
+	/* back in front of bonus wall */
+	trajectory_goto_xy_abs(&mainboard.traj,
+								 COLOR_X(strat_infos.slot[4][4].x), 
+								 strat_infos.slot[4][4].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
+
+	/* TODO if our token bonus disapared place one */
+
+end:
+	return err;
 }
 
 

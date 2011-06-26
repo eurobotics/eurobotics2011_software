@@ -200,6 +200,27 @@ typedef struct {
 	int8_t c;		
 } tower_t;
 
+typedef struct {
+	/* work pt */
+	int16_t x;
+	int16_t y;
+
+	/* boundinbox */
+	int16_t x_up;
+	int16_t y_up;
+	int16_t x_down;
+	int16_t y_down;
+
+	/* stadistics */
+	uint8_t num_visits;
+	uint32_t total_time_ms;
+
+	/* taskt to do before and after work */
+	uint8_t (*do_before)(void);
+	uint8_t (*do_after)(void);
+
+} zone_t;
+
 struct strat_infos {
 	uint8_t dump_enabled;
 	struct conf conf;
@@ -216,6 +237,10 @@ struct strat_infos {
 	slot_index_t slot_actual;
 	slot_index_t slot_before;
 
+	/* opponent slot position */
+	slot_index_t opp_slot_actual;
+	slot_index_t opp_slot_before;
+
 	/* tokens catched */
 	uint8_t num_tokens;
 
@@ -223,9 +248,20 @@ struct strat_infos {
 	uint8_t num_towers;
 	tower_t towers[NB_TOWER_MAX];
 
-	/* TODO opponent stadistics */
+	/* "pickup and place" zones */
+#define ZONE_OPP_NEAR_HOME	0
+#define ZONE_OPP_NEAR_SAFE	1
+#define ZONE_NEAR_HOME		2
+#define ZONE_NEAR_SAFE		3
+#define ZONE_WALL_BONUS		4
+#define NB_ZONES_MAX			5
 
-	/* TODO working zones */
+	zone_t zones[NB_ZONES_MAX];
+
+	/* opponent stadistics */
+	uint8_t opp_actual_zone;
+	uint8_t opp_before_zone;
+	uint32_t opp_time_zone_ms;
 
 };
 
@@ -281,7 +317,7 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go);
 uint8_t strat_push_slot_token(int8_t i, int8_t j);
 
 /* pickup near slots on an area 3x3 with center the robot */
-uint8_t strat_pickup_near_slots(void);
+uint8_t strat_pickup_or_push_near_slots(void);
 
 /* place tokens on near 3x3 area slots, return 0 if there aren't more slots */
 uint8_t strat_place_near_slots(void);
@@ -323,9 +359,30 @@ uint8_t strat_harvest_green_area_smart(void);
 /**************************************************
  * in strat_navigation.c 
  *************************************************/
-void strat_update_slot_position(void);
+
+/* strat of Spanish Cup */
 uint8_t strat_bonus_point(void);
 
+/* update robot or opponent slot position */
+#define TYPE_ROBOT		0
+#define TYPE_OPPONENT	1
+#define GRID_MARGIN 		10
+
+void strat_update_slot_position(uint8_t type, int16_t margin, 
+									     int8_t x_line_init, int8_t x_line_end,
+									     int8_t y_line_init, int8_t y_line_end);
+
+/* update opponent zone infos */
+void strat_update_zones(void);
+
+/* work on a zone */
+uint8_t strat_work_on_zone(zone_t * z);
+
+/* little tasks or not ;) */
+uint8_t strat_place_figure_near_opp_home(void);
+uint8_t strat_place_on_near_opp_safe_slot(void);
+uint8_t strat_place_on_opp_safe_slot(void);
+uint8_t strat_pickup_bonus_near_wall(void);
 
 
 /* add here more strat functions in files */

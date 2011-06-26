@@ -612,6 +612,8 @@ uint8_t strat_push_slot_token(int8_t i, int8_t j)
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);
 
+		/* TODO avoid crash */
+
 		/* push possible token */
 		trajectory_d_rel(&mainboard.traj, PUSH_TOKEN_D);
 		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
@@ -869,7 +871,7 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 
 
 /* pickup tokens on near 3x3 area slots, return 0 if there aren't more slots */
-uint8_t strat_pickup_near_slots(void)
+uint8_t strat_pickup_or_push_near_slots(void)
 {
 #define TIMEOUT_GO_BACK_MS	2000
 
@@ -1149,56 +1151,6 @@ uint8_t strat_place_near_slots(void)
 	return END_TRAJ;
 }
 
-/* pickup and place near tokens in 3x3 area where is the robot */
-uint8_t strat_pickup_and_place_near_slots(void)
-{
-
-	/* TODO: check timeout */ 
-
-	/* set default place priority */
-	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
-
-	/* place tokens inside */
-	strat_place_near_slots();
-
-	/* work on 3x3 area */
-	while(1) {
-		/* pickup near tokens */
-		if(!strat_pickup_near_slots())
-			return END_TRAJ; 
-	
-		/* place picked tokens */
-		if(!strat_place_near_slots())
-			return END_TRAJ;
-	} 
-
-	if(strat_infos.conf.flags & STRAT_CONF_PLACE_ONLYEXT) {
-
-	}
-	else {
-
-		/* if we are full of tokens drop one token to path */
-		if(strat_infos.num_tokens == 2) {
-			strat_infos.conf.th_place_prio = SLOT_PRIO_PATH;
-			strat_place_near_slots();
-		}
-	
-		/* if we are full of tokens drop one token to center */
-		if(strat_infos.num_tokens == 2) {
-			strat_infos.conf.th_place_prio = SLOT_PRIO_CENTER;
-			strat_place_near_slots();
-		}
-	
-		/* if we are full of tokens drop one token to ...? */
-		if(strat_infos.num_tokens == 2) {
-			//strat_infos.th_place_prio = SLOT_PRIO_CENTER;
-			//strat_place_near_slots();
-		}
-	
-		/* restore default place priority */
-		strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
-	}
-}
 
 /**********************************************************************
  * Functions for look for opponent towers 
@@ -1553,17 +1505,16 @@ void strat_look_for_figures_disable(void)
 {
 	look_for_figures_enable = 0;
 
-//	/* default positions */
-//	if(num_figures == 0 || num_figures > 2) {
-//		strat_infos.slot[0][3].flags = SLOT_FIGURE;
-//		strat_infos.slot[0][4].flags = SLOT_FIGURE;
-//		strat_infos.slot[7][3].flags = SLOT_FIGURE;
-//		strat_infos.slot[7][4].flags = SLOT_FIGURE;
-//
-//	}
-//	/* deduce last position */
-//	else 
-	if(num_figures == 1) {
+	/* default positions */
+	if(num_figures == 0 || num_figures > 2) {
+		strat_infos.slot[0][3].flags = SLOT_FIGURE;
+		strat_infos.slot[0][4].flags = SLOT_FIGURE;
+		strat_infos.slot[7][3].flags = SLOT_FIGURE;
+		strat_infos.slot[7][4].flags = SLOT_FIGURE;
+
+	}
+	/* deduce last position */
+	else if(num_figures == 1) {
 		strat_infos.slot[0][5].flags = SLOT_FIGURE;	
 		strat_infos.slot[7][5].flags = SLOT_FIGURE;
 		num_figures = 2;	
@@ -1645,3 +1596,6 @@ void strat_look_for_figures(void)
 //		ERROR(E_USER_STRAT, "no figure pos matched", laser_d);
 
 }
+
+
+

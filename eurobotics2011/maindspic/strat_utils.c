@@ -222,6 +222,8 @@ uint8_t y_is_more_than(int16_t y)
 
 }
 
+
+
 /* return 1 or 0 depending on which side of a line (x=cste) is the
  * robot. works in red or green color. */
 uint8_t x_is_more_than(int16_t x)
@@ -241,6 +243,44 @@ uint8_t x_is_more_than(int16_t x)
 		else
 			return 0;
 	}
+}
+
+
+/* return 1 if x > x_opp or opponent not there */
+uint8_t opp_x_is_more_than(int16_t x)
+{
+	int16_t x_opp, y_opp;
+	
+	if(get_opponent_xy(&x_opp, &y_opp) == -1)
+		return 1;
+
+	if (mainboard.our_color == I2C_COLOR_BLUE) {
+		if (x_opp > x)
+			return 1;
+		else
+			return 0;
+	}
+	else {
+		if (x_opp < (AREA_X-x))
+			return 1;
+		else
+			return 0;
+	}
+}
+
+/* return 1 if y > y_opp or opponent not there */
+uint8_t opp_y_is_more_than(int16_t y)
+{
+	int16_t x_opp, y_opp;
+	
+	if(get_opponent_xy(&x_opp, &y_opp) == -1)
+		return 1;
+
+	if (y_opp > y)
+		return 1;
+	else
+		return 0;
+
 }
 
 int16_t sin_table[] = {

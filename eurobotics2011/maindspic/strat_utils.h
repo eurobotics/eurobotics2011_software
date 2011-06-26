@@ -77,6 +77,9 @@ uint8_t robot_is_in_area(int16_t margin);
 uint8_t y_is_more_than(int16_t y);
 uint8_t x_is_more_than(int16_t x);
 
+uint8_t opp_x_is_more_than(int16_t x);
+uint8_t opp_y_is_more_than(int16_t y);
+
 int16_t fast_sin(int16_t deg);
 int16_t fast_cos(int16_t deg);
 
@@ -118,14 +121,14 @@ uint8_t token_side_is_lower_score(uint8_t side);
 
 /* turn to pickup token, return side in front of token */
 /* suppose that there is at least one side empty */
-uint8_t strat_turnto_pickup_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm);
+uint8_t strat_turnto_pickup_token(struct trajectory *traj, double x_abs_mm, double y_abs_mm);
 
 /* turn to place token automaticaly, return side used to place token */
 /* suppose that there is at least one token catched */
-uint8_t strat_turnto_place_token(struct trajectory*traj, double x_abs_mm, double y_abs_mm, uint8_t go);
+uint8_t strat_turnto_place_token(struct trajectory *traj, double x_abs_mm, double y_abs_mm, uint8_t go);
 
 /* go straight forward with no side dependence (d is in mm) */
-void strat_d_rel_side(struct trajectory*traj, double d_mm, uint8_t side);
+void strat_d_rel_side(struct trajectory *traj, double d_mm, uint8_t side);
 
 /* return 1 if the opponent is near */
 /* only compile with HOMOLOGATION define */

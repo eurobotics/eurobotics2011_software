@@ -133,7 +133,21 @@ struct strat_infos strat_infos = {
 	.grid_line_x = { 0, 450, 800, 1150, 1500, 1850, 2200, 2550, 3000 },
 	.grid_line_y = { 0, 350, 700, 1050, 1400, 1750, 2100 },
 
+
+	/* zones[] = x, y, x_up, y_up, x_down, y_down, num_visits, total_time_ms, do_before, do_after */
+	.zones[ZONE_OPP_NEAR_HOME] = { 2025, 525, 	1500, 1050, 2550, 0, 		1, 0,
+											 strat_place_figure_near_opp_home, NULL },
+	.zones[ZONE_OPP_NEAR_SAFE] = { 2025, 1400, 	1500, 1750, 2550, 1050, 	1, 0,
+											 strat_place_on_near_opp_safe_slot, strat_place_on_opp_safe_slot },
+	.zones[ZONE_NEAR_HOME] 		= { 975, 525, 		450, 1050, 1500, 0, 			0, 0,
+											 NULL, NULL },
+	.zones[ZONE_NEAR_SAFE] 		= { 975, 1400, 	450, 1750, 1500, 1050, 		0, 0,
+											 NULL, NULL },
+	.zones[ZONE_WALL_BONUS] 	= { 1675, 1575, 	1150, 2100, 1850, 1750, 	0, 0,
+											 strat_pickup_bonus_near_wall, NULL },
+
 };
+
 
 
 
@@ -255,18 +269,20 @@ void strat_dump_infos(const char *caller)
 
 	printf(PSTR("%s() dump strat infos:\r\n"), caller);
 
-	/* tokens catched */
-	printf(PSTR("num_tokens = %d \r\n"), strat_infos.num_tokens);
-
-	/* slot position */
-	printf(PSTR("slot_actual = (%d,%d) \r\n"),
-			strat_infos.slot_actual.i, strat_infos.slot_actual.j);
-	printf(PSTR("slot_before = (%d,%d) \r\n"),
-			strat_infos.slot_before.i, strat_infos.slot_before.j );
-
-
 	/* slots flags */
 	for(j=5; j>=0; j--) { 
+
+		/* first column: playground info */
+
+		//	printf(PSTR("y  _______________  \r\n"));
+		//	printf(PSTR("5 | |___|_|_|___| | \r\n"));
+		//	printf(PSTR("4 | |_|_|_|_|_|_| | \r\n"));
+		//	printf(PSTR("3 | |P|_|_|X|O|X| | \r\n"));
+		//	printf(PSTR("2 | |_|_|_|O|R|O| | \r\n"));
+		//	printf(PSTR("1 |_|_|_|_|X|O|X|_| \r\n"));
+		//	printf(PSTR("0 |_|_|_|_|_|_|_|_| \r\n"));
+		//	printf(PSTR("   0 1 2 3 4 5 6 7 x\r\n"));
+
 		if(j==5) {
 			printf(PSTR("y  _______________  \r\n"));
 			printf(PSTR("%d |%c|%c_%c|%c|%c|%c_%c|%c|"),
@@ -292,25 +308,45 @@ void strat_dump_infos(const char *caller)
 					strat_print_flag(6, j),
 					strat_print_flag(7, j) );
 		}
+
+		/* second column */
+		switch(j) {
+			case 5:
+				/* tokens catched */
+				printf(PSTR("  num_tokens = %d"), strat_infos.num_tokens);
+				break;
+			case 4:
+				printf(PSTR("  num_towers = %d"), strat_infos.num_towers);
+				break;
+			case 3:
+				/* robot slot position */
+				printf(PSTR("  robot_slot = (%d,%d) -> (%d,%d)"),
+						strat_infos.slot_before.i, strat_infos.slot_before.j,
+						strat_infos.slot_actual.i, strat_infos.slot_actual.j);
+				break;
+			case 2:
+				/* opponent slot position */
+				printf(PSTR("  opp_slot = (%d,%d) -> (%d,%d)"),
+						strat_infos.opp_slot_before.i, strat_infos.opp_slot_before.j,
+						strat_infos.opp_slot_actual.i, strat_infos.opp_slot_actual.j);
+				break;
+			case 1:
+				printf(PSTR("  opp_zone = (%d) -> (%d, %ld ms)"),
+						strat_infos.opp_before_zone, strat_infos.opp_actual_zone, strat_infos.opp_time_zone_ms);
+				break;
+			case 0:
+				break;
+			default:
+				break;
+		}
+
 		printf(PSTR(" \r\n"));
 	}
 
 	printf(PSTR("   0 1 2 3 4 5 6 7 x \r\n"));
-	
-
-//	printf(PSTR("y  _______________  \r\n"));
-//	printf(PSTR("5 | |___|_|_|___| | \r\n"));
-//	printf(PSTR("4 | |_|_|_|_|_|_| | \r\n"));
-//	printf(PSTR("3 | |P|_|_|X|O|X| | \r\n"));
-//	printf(PSTR("2 | |_|_|_|O|R|O| | \r\n"));
-//	printf(PSTR("1 |_|_|_|_|X|O|X|_| \r\n"));
-//	printf(PSTR("0 |_|_|_|_|_|_|_|_| \r\n"));
-//	printf(PSTR("   0 1 2 3 4 5 6 7 x\r\n"));
 
 
-	/* towers found */
-	printf(PSTR(" num_towers = %d \r\n"), strat_infos.num_towers);
-
+	/* towers found info */
 	if(strat_infos.num_towers) {
 		printf(PSTR(" tower n: i, j, x, y, w c \r\n"));		
 		for(j = 0; j < strat_infos.num_towers; j++) {
@@ -322,10 +358,19 @@ void strat_dump_infos(const char *caller)
 		}		
 	}
 
-	/* figures found */
+	/* figures found info */
 	for(j = 1; j < 6; j++) {
 		if(strat_infos.slot[0][j].flags & SLOT_FIGURE)
-			printf(PSTR(" found figure at position %d\n\r"), j);	
+			printf(PSTR(" figure @ %d\n\r"), j);	
+	}
+
+	/* zones visited by opponent */
+	for(j = 0; j < NB_ZONES_MAX; j++) {
+		if(strat_infos.zones[j].num_visits) {
+
+			printf(PSTR(" zone %d: %d times, %ld ms\n\r"), j,
+							 strat_infos.zones[j].num_visits,  strat_infos.zones[j].total_time_ms);
+		}
 	}
 }
 
@@ -367,11 +412,30 @@ void strat_reset_infos(void)
 	strat_infos.num_tokens = 0;
 
 	/* slot position */
+	if(get_color() == I2C_COLOR_BLUE) {
+		strat_infos.slot_actual.i = 0;
+		strat_infos.slot_actual.j = 0;
+
+		strat_infos.opp_slot_actual.i = 7;
+		strat_infos.opp_slot_actual.j = 0;
+	}
+	else {
+		strat_infos.slot_actual.i = 7;
+		strat_infos.slot_actual.j = 0;
+
+		strat_infos.opp_slot_actual.i = 0;
+		strat_infos.opp_slot_actual.j = 0;
+	}
 	strat_infos.slot_before = strat_infos.slot_actual;
+	strat_infos.opp_slot_before = strat_infos.opp_slot_actual;
 
 	/* towers found */
 	strat_infos.num_towers = 0;
 	memset(&strat_infos.towers, 0, sizeof(strat_infos.towers));	
+
+	/* opponet zone */
+	strat_infos.opp_actual_zone = ZONE_OPP_NEAR_HOME;
+	strat_infos.opp_before_zone = ZONE_OPP_NEAR_HOME;
 }
 
 /* call it just before launching the strat */
@@ -460,16 +524,23 @@ void strat_event(void *dummy)
 	/* limit speed when opponent are close */
 	strat_limit_speed();
 
-	/* update actual slot position */
-	strat_update_slot_position();	
+	/* update robot slot position */
+	strat_update_slot_position(TYPE_ROBOT, GRID_MARGIN, 
+									     0, NB_GRID_LINES_X-1,
+									     0, NB_GRID_LINES_Y-1);	
 
-	/* TODO update opponent slot position */
+	/* update opponent slot position */
+//	strat_update_slot_position(TYPE_OPPONENT, GRID_MARGIN, 
+//									     0, NB_GRID_LINES_X-1,
+//									     0, NB_GRID_LINES_Y-1);	
+
+	/* update zones */
+	//strat_update_zones(); 
 
 	/* manage mirrors position */
 	mirrors_state_machine();
 	
 	/* TODO: catch tokens in straight travels */
-
 }
 
 /* dump state (every 5 s max) XXX */
