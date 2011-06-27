@@ -72,8 +72,8 @@
 #define SPEED_DIST_FAST 		2000
 #define SPEED_ANGLE_FAST 		2000
 #else
-#define SPEED_DIST_FAST 		4000
-#define SPEED_ANGLE_FAST 		4000
+#define SPEED_DIST_FAST 		2000
+#define SPEED_ANGLE_FAST 		2000
 #endif
 #define SPEED_DIST_SLOW 		1000
 #define SPEED_ANGLE_SLOW 		1000
@@ -157,6 +157,7 @@ struct slot_info {
 #define SLOT_PRIO_NEAR_GREEN	SLOT_PRIO_3
 #define SLOT_PRIO_NEAR_SAFE	SLOT_PRIO_4
 #define SLOT_PRIO_WALL			SLOT_PRIO_5
+#define SLOT_PRIO_CORNER		(SLOT_PRIO_WALL + 5)
 #define SLOT_PRIO_SAFE			SLOT_PRIO_6
 #define SLOT_PRIO_BONUS_WALL	SLOT_PRIO_7
 #define SLOT_PRIO_BONUS			SLOT_PRIO_MAX
@@ -201,9 +202,9 @@ typedef struct {
 } tower_t;
 
 typedef struct {
-	/* work pt */
-	int16_t x;
-	int16_t y;
+//	/* work pt */
+//	int16_t x;
+//	int16_t y;
 
 	/* boundinbox */
 	int16_t x_up;
@@ -215,10 +216,11 @@ typedef struct {
 	uint8_t num_visits;
 	uint32_t total_time_ms;
 
+#ifdef ZONES_HAS_FNCS
 	/* taskt to do before and after work */
 	uint8_t (*do_before)(void);
 	uint8_t (*do_after)(void);
-
+#endif
 } zone_t;
 
 struct strat_infos {
@@ -240,9 +242,6 @@ struct strat_infos {
 	/* opponent slot position */
 	slot_index_t opp_slot_actual;
 	slot_index_t opp_slot_before;
-
-	/* tokens catched */
-	uint8_t num_tokens;
 
 	/* towers found */
 	uint8_t num_towers;
@@ -295,7 +294,7 @@ void strat_event(void *dummy);
  ********************************************/
 
 /* update number of token inside */
-void strat_update_num_tokens(void);
+uint8_t strat_get_num_tokens(void);
 
 /* pick up a token */
 /* use it in short distance ranges */
@@ -317,13 +316,16 @@ uint8_t strat_place_token_auto(int16_t x, int16_t y, uint8_t *side, uint8_t go);
 uint8_t strat_push_slot_token(int8_t i, int8_t j);
 
 /* pickup near slots on an area 3x3 with center the robot */
-uint8_t strat_pickup_or_push_near_slots(void);
+#define MODE_PICKUP	1
+#define MODE_PUSH		2
+#define MODE_ALL		3
+uint8_t strat_pickup_or_push_near_slots(uint8_t mode);
 
 /* place tokens on near 3x3 area slots, return 0 if there aren't more slots */
-uint8_t strat_place_near_slots(void);
+uint8_t strat_place_near_slots(uint8_t only_one, uint8_t token_score);
 
 /* pickup and place near tokens in 3x3 area where is the robot */
-uint8_t strat_pickup_and_place_near_slots(void);
+//uint8_t strat_pickup_and_place_near_slots(void);
 
 /* enable/disable look for towers */
 void strat_look_for_towers_enable(void);
@@ -375,13 +377,15 @@ void strat_update_slot_position(uint8_t type, int16_t margin,
 /* update opponent zone infos */
 void strat_update_zones(void);
 
-/* work on a zone */
-uint8_t strat_work_on_zone(zone_t * z);
+uint8_t strat_play_with_opp(void);
 
-/* little tasks or not ;) */
-uint8_t strat_place_figure_near_opp_home(void);
-uint8_t strat_place_on_near_opp_safe_slot(void);
-uint8_t strat_place_on_opp_safe_slot(void);
+///* work on a zone */
+//uint8_t strat_work_on_zone(zone_t * z);
+//
+///* little tasks or not ;) */
+//uint8_t strat_place_figure_near_opp_home(void);
+//uint8_t strat_place_on_near_opp_safe_slot(void);
+//uint8_t strat_place_on_opp_safe_slot(void);
 uint8_t strat_pickup_bonus_near_wall(void);
 
 

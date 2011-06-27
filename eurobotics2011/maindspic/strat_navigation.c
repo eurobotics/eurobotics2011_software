@@ -61,6 +61,7 @@
 #include "sensor.h"
 #include "actuator.h"
 #include "beacon.h"
+#include "cmdline.h"
 
 #define ERROUT(e) do {\
 		err = e;			 \
@@ -122,7 +123,7 @@ void strat_update_slot_position(uint8_t type, int16_t margin,
 	}		
 
 	/* get y grid index */
-	for(i = x_line_init; i < x_line_end; i++) {
+	for(i = y_line_init; i < y_line_end; i++) {
 
 		if( (y > (strat_infos.grid_line_y[i] + margin)) &&
 		    (y < (strat_infos.grid_line_y[i+1] - margin)) ) {
@@ -211,6 +212,12 @@ void strat_update_zones(void)
 	if(i == NB_ZONES_MAX)
 		return;
 
+	/* special case: bonus wall zone */
+	if(opponent_is_in_area(COLOR_X(strat_infos.zones[ZONE_WALL_BONUS].x_up), strat_infos.zones[ZONE_WALL_BONUS].y_up,
+								  COLOR_X(strat_infos.zones[ZONE_WALL_BONUS].x_down), strat_infos.zones[ZONE_WALL_BONUS].y_down)) {
+		i = ZONE_WALL_BONUS;
+	}
+
 	/* if zone has changed */
 	if(i != strat_infos.opp_actual_zone) {
 
@@ -243,170 +250,695 @@ void strat_update_zones(void)
 
 }
 
-/* work on a zone */
-uint8_t strat_work_on_zone(zone_t * z)
+uint8_t strat_play_with_opp(void)
 {
+	static uint8_t state = 0;
+	static uint8_t opp_side_actual;
+	static uint8_t opp_side_before;
+	uint8_t side = 0;
+	uint16_t old_spdd = 0, old_spda = 0;
+	int8_t th_place_prior_old = 0;
+	int8_t th_token_score_old = 0;
 	uint8_t err;
 
-	/* goto zone pt with avoidance, return if we can't reach the pt */
-	err = goto_and_avoid_busy_side(COLOR_X(z->x), z->y,
-								    TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+#define GOTO_NEAR_OPP			0
+#define WAITING_OPP				1
+#define WORK_NEAR_OPP_HOME		2
+#define WORK_NEAR_OPP_SAFE		3
+#define WORK_NEAR_HOME			4
+#define WORK_NEAR_SAFE			5
+#define WORK_ON_BONUS_WALL		6
+#define PICKUP_TOWERS			7
 
-	/* do before task */
-	if(z->do_before)
-		z->do_before();
+#define TIMEOUT_OPP_IS_WORKING	2000
+#define TIMEOUT_OPP_WAS_WORKING	2000 
+#define TIMEOUT_GOTO_NEAR_OPP		1000
 
-	/* pickup or push tokens */
-	strat_pickup_or_push_near_slots();
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-	/* do after task */
-	if(z->do_after)
-		z->do_after();
-
- end:
-	return err;
-}
-
-/* XXX create strat_place_best_token(i,j) */
-uint8_t strat_place_figure_near_opp_home(void)
-{
-	uint8_t err = END_TRAJ;
-	uint8_t side;
-	int8_t i;
+#define ZONE_OUR_SIDE	0
+#define ZONE_OPP_SIDE	1
 	
-	/* return if slot busy */
-	i = (get_color() == I2C_COLOR_BLUE? 6 : 1);
-	if(strat_infos.slot[i][0].flags & SLOT_BUSY) {
-		ERROUT(err);
-	}
+//while(!cmdline_keypressed());
 
-	/* TODO: place the token with higher score */
+	switch(state) {
 
-	/* we prefer place a figure */
-	if(sensor_get(S_TOKEN_FRONT_FIGURE)) {
+		case GOTO_NEAR_OPP:
 
-		side = SIDE_FRONT;
-		err = strat_place_token(COLOR_X(strat_infos.slot[6][0].x), 
-								strat_infos.slot[6][0].y, side, GO_FORWARD);
-	}
-	else if(sensor_get(S_TOKEN_REAR_FIGURE)) {
+			/* if opp is on opp near home zone */
+			if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_GOTO_NEAR_OPP) {
 
-		side = SIDE_REAR;
-		err = strat_place_token(COLOR_X(strat_infos.slot[6][0].x), 
-								strat_infos.slot[6][0].y, side, GO_FORWARD);
-	}
-	else {
-		err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][0].x), 
-						strat_infos.slot[6][0].y, &side, GO_FORWARD);
-	}
+				DEBUG(E_USER_STRAT, "GOTO_NEAR_OPP");
 
-
-	/* avoid opponent */
-	while(opponent_is_behind_side(side));
-
-	/* back in front of bonus wall */
-	trajectory_goto_xy_abs(&mainboard.traj,
-								 COLOR_X(strat_infos.slot[5][1].x), 
-								 strat_infos.slot[5][1].y);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-end:
-	return err;
-}
-
-/* XXX create strat_place_best_token(i,j) */
-uint8_t strat_place_on_near_opp_safe_slot(void)
-{
-	uint8_t err = END_TRAJ;
-	uint8_t side;
-	int8_t i;
+				/* goto beside side */
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][3].x),
+														  		    strat_infos.slot[4][3].y, 
+														  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 	
-	/* return if slot busy */
-	i = (get_color() == I2C_COLOR_BLUE? 6 : 1);
-	if(strat_infos.slot[i][0].flags & SLOT_BUSY) {
-		ERROUT(err);
-	}
+				if (!TRAJ_SUCCESS(err)) {
+					break;
+				}
+				state = WAITING_OPP;
+			}
+			/* if opp is on opp near safe zone */
+			else if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_SAFE
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_GOTO_NEAR_OPP) {
 
-	/* TODO: place the token with higher score */
+				DEBUG(E_USER_STRAT, "GOTO_NEAR_OPP");
 
-	/* we prefer place a figure */
-	if(sensor_get(S_TOKEN_FRONT_FIGURE)) {
+				/* goto beside side */
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][1].x),
+														  		    strat_infos.slot[4][1].y, 
+														  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (!TRAJ_SUCCESS(err)) {
+					break;
+				}
+				state = WAITING_OPP;
+			}
+			/* if opp is on our near home zone */
+			else if(strat_infos.opp_actual_zone == ZONE_NEAR_HOME
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_GOTO_NEAR_OPP) {
 
-		side = SIDE_FRONT;
-		err = strat_place_token(COLOR_X(strat_infos.slot[6][4].x), 
-								strat_infos.slot[6][4].y, side, GO_FORWARD);
-	}
-	else if(sensor_get(S_TOKEN_REAR_FIGURE)) {
+				DEBUG(E_USER_STRAT, "GOTO_NEAR_OPP");
 
-		side = SIDE_REAR;
-		err = strat_place_token(COLOR_X(strat_infos.slot[6][4].x), 
-								strat_infos.slot[6][4].y, side, GO_FORWARD);
-	}
-	else {
-		err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][4].x), 
-						strat_infos.slot[6][4].y, &side, GO_FORWARD);
-	}
+				/* goto beside side */
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[3][3].x),
+														  		    strat_infos.slot[3][3].y, 
+														  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (!TRAJ_SUCCESS(err)) {
+					break;
+				}
+				state = WAITING_OPP;
+			}
+			/* if opp is on our near safe zone */
+			else if(strat_infos.opp_actual_zone == ZONE_NEAR_SAFE
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_GOTO_NEAR_OPP) {
+
+				DEBUG(E_USER_STRAT, "GOTO_NEAR_OPP");
+
+				/* goto beside side */
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[3][1].x),
+														  		    strat_infos.slot[3][1].y, 
+														  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (!TRAJ_SUCCESS(err)) {
+					break;
+				}
+				state = WAITING_OPP;
+			}
+			/* if opp is on wall bonus zone */
+			else if(strat_infos.opp_actual_zone == ZONE_WALL_BONUS
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_GOTO_NEAR_OPP) {
+
+				DEBUG(E_USER_STRAT, "GOTO_NEAR_OPP");
+				state = WAITING_OPP;
+			}
+			/* goto waiting opponent */
+			if(state == WAITING_OPP)
+				DEBUG(E_USER_STRAT, "WAITING_OPP");
+			break;
+
+		case WAITING_OPP:
+
+//			/* if found towers */
+//			if() {
+//				/* goto pickup towers */
+//			}
+
+			/* if opp visited bonus wall and was on homes side */
+			if((strat_infos.opp_actual_zone == ZONE_NEAR_HOME
+				|| strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME)
+				&& (strat_infos.zones[ZONE_WALL_BONUS].num_visits 
+				&& strat_infos.zones[ZONE_WALL_BONUS].total_time_ms > TIMEOUT_OPP_WAS_WORKING)) {
+
+				/* goto work on bonus wall */
+				state = WORK_ON_BONUS_WALL;
+				break;
+			}
+
+			/* update opp side */
+			if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_SAFE
+				|| strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME)
+				opp_side_actual = ZONE_OPP_SIDE;
+			else
+				opp_side_actual = ZONE_OUR_SIDE;
+
+			/* if opp has change the side or if is on bonus wall zone during N seconds */
+			if( (opp_side_actual != opp_side_before) 
+				|| (strat_infos.opp_actual_zone == ZONE_WALL_BONUS
+				&& strat_infos.opp_time_zone_ms > TIMEOUT_OPP_IS_WORKING)) {
+
+				/* update opp side before */
+				opp_side_before = opp_side_actual;
+
+				/* if opp was working during N seconds on zone before */
+				if(strat_infos.zones[strat_infos.opp_before_zone].num_visits 
+					&& strat_infos.zones[strat_infos.opp_before_zone].total_time_ms > TIMEOUT_OPP_WAS_WORKING) {
+
+					/* got work zone */
+					if(strat_infos.opp_before_zone == ZONE_OPP_NEAR_SAFE)
+						state = WORK_NEAR_OPP_SAFE;
+					else if(strat_infos.opp_before_zone == ZONE_OPP_NEAR_HOME)
+						state = WORK_NEAR_OPP_HOME;
+					else if(strat_infos.opp_before_zone == ZONE_NEAR_SAFE)
+						state = WORK_NEAR_SAFE;
+					else if(strat_infos.opp_before_zone == ZONE_NEAR_HOME)
+						state = WORK_NEAR_HOME;
+					else if(strat_infos.opp_before_zone == ZONE_WALL_BONUS)
+						state = WORK_ON_BONUS_WALL;
+					break;
+				}
+				else {
+					/* goto near opp */
+					state = GOTO_NEAR_OPP;
+					break;
+				}
+			}
+
+			/* if opp is in his side */
+			if(opp_side_actual == ZONE_OPP_SIDE) {
+
+				/* if is near opp safe zone during N seconds */
+				if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_SAFE
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_OPP_IS_WORKING) {
+
+					/* goto work on the zone beside if opp visited it before */
+					if(strat_infos.zones[ZONE_OPP_NEAR_HOME].num_visits 
+						&& strat_infos.zones[ZONE_OPP_NEAR_HOME].total_time_ms > TIMEOUT_OPP_WAS_WORKING) {
+						DEBUG(E_USER_STRAT, "WORK_OPP_NEAR_HOME");					
+						state = WORK_NEAR_OPP_HOME;
+						break;
+					}
+				}
+				/* if is near opp home zone during N seconds */
+				else if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_OPP_IS_WORKING) {
+
+					/* goto work on the zone beside if opp visited it before */
+					if(strat_infos.zones[ZONE_OPP_NEAR_SAFE].num_visits 
+						&& strat_infos.zones[ZONE_OPP_NEAR_SAFE].total_time_ms > TIMEOUT_OPP_WAS_WORKING) {
+						DEBUG(E_USER_STRAT, "WORK_OPP_NEAR_SAFE");					
+						state = WORK_NEAR_OPP_SAFE;
+						break;
+					}
+				}
+				/* if nothing to do */
+				else {
+					/* find towers */
+					Nop();
+				}
+			}
+			else {
+
+				/* if is near our safe zone during N seconds */
+				if(strat_infos.opp_actual_zone == ZONE_NEAR_SAFE
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_OPP_IS_WORKING) {
+
+					/* goto work on the zone beside */
+					if(strat_infos.zones[ZONE_NEAR_HOME].num_visits 
+						&& strat_infos.zones[ZONE_NEAR_HOME].total_time_ms > TIMEOUT_OPP_WAS_WORKING) {
+						DEBUG(E_USER_STRAT, "WORK_NEAR_HOME");
+						state = WORK_NEAR_HOME;
+						break;
+					}
+
+				}
+				/* if is near our home zone during N seconds */
+				else 	if(strat_infos.opp_actual_zone == ZONE_NEAR_HOME
+					&& strat_infos.opp_time_zone_ms > TIMEOUT_OPP_IS_WORKING) {
 
 
-	/* avoid opponent */
-	while(opponent_is_behind_side(side));
+					/* goto work on the zone beside */
+					if(strat_infos.zones[ZONE_NEAR_SAFE].num_visits 
+						&& strat_infos.zones[ZONE_NEAR_SAFE].total_time_ms > TIMEOUT_OPP_WAS_WORKING) {
+						DEBUG(E_USER_STRAT, "WORK_NEAR_SAFE");
+						state = WORK_NEAR_SAFE;
+						break;
+					}
 
-	/* back in front of bonus wall */
-	trajectory_goto_xy_abs(&mainboard.traj,
-								 COLOR_X(strat_infos.slot[5][3].x), 
-								 strat_infos.slot[5][3].y);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+				}
+				/* if nothing to do */
+				else {
+					/* find towers */
+					Nop();
+				}
+			}
+			break;
 
-end:
-	return err;
-}
+		case WORK_NEAR_OPP_HOME:	
+			/* goto */
+			err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[5][1].x),
+													  		    strat_infos.slot[5][1].y, 
+													  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}
 
-/* XXX improve */
-uint8_t strat_place_on_opp_safe_slot(void)
-{
-	uint8_t err = END_TRAJ;
-	uint8_t side = 0;
-	int8_t i;
+			/* work */
+			err = strat_place_near_slots(1, FIGURE_SCORE);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}			
+
+			err = strat_pickup_or_push_near_slots(MODE_ALL);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}			
+
+			/* reset zone statistics */
+			strat_infos.zones[ZONE_OPP_NEAR_HOME].num_visits = 0; 
+			strat_infos.zones[ZONE_OPP_NEAR_HOME].total_time_ms = 0;
+			
+			/* goto near opp */
+			state = GOTO_NEAR_OPP;
+			break;
+
+		case WORK_NEAR_OPP_SAFE:
+			/* goto */
+			err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[5][3].x),
+													  		    strat_infos.slot[5][3].y, 
+													  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}
+
+			/* work */
+			err = strat_place_near_slots(1, FIGURE_SCORE);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}			
+
+			err = strat_pickup_or_push_near_slots(MODE_ALL);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}			
+
+			/* reset zone statistics */
+			strat_infos.zones[ZONE_OPP_NEAR_SAFE].num_visits = 0; 
+			strat_infos.zones[ZONE_OPP_NEAR_SAFE].total_time_ms = 0;
+
+			/* goto near opp */
+			state = GOTO_NEAR_OPP;
+			break;
+
+		case WORK_NEAR_HOME:
+			/* goto */
+			err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[2][1].x),
+													  		    strat_infos.slot[2][1].y, 
+													  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}
+
+			/* work */
+			err = strat_place_near_slots(0,0);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}			
+
+			err = strat_pickup_or_push_near_slots(MODE_ALL);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}			
+
+			/* reset zone statistics */
+			strat_infos.zones[ZONE_NEAR_HOME].num_visits = 0; 
+			strat_infos.zones[ZONE_NEAR_HOME].total_time_ms = 0;
+
+			/* goto near opp */
+			state = GOTO_NEAR_OPP;
+			break;
+
+		case WORK_NEAR_SAFE:
+			/* goto */
+			err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[2][3].x),
+													  		    strat_infos.slot[2][3].y, 
+													  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}
+
+			/* work */
+			err = strat_place_near_slots(0,0);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}			
+
+			err = strat_pickup_or_push_near_slots(MODE_ALL);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}	
+
+			/* reset zone statistics */
+			strat_infos.zones[ZONE_NEAR_SAFE].num_visits = 0; 
+			strat_infos.zones[ZONE_NEAR_SAFE].total_time_ms = 0;
+
+			/* goto near opp */
+			state = GOTO_NEAR_OPP;
+			break;
+
+		case WORK_ON_BONUS_WALL:
+			
+			/* save score and slot priority thresholds */
+			th_place_prior_old = strat_infos.conf.th_place_prio;
+			th_token_score_old = strat_infos.conf.th_token_score;
+
+			/* save speed */
+			strat_get_speed(&old_spdd, &old_spda);
+
+			/* if sides has figure o towers, place one */
+			if(token_side_score(SIDE_FRONT) >= FIGURE_SCORE
+				&& token_side_score(SIDE_REAR) >= FIGURE_SCORE) {
+
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[5][3].x),
+														  		    strat_infos.slot[5][3].y, 
+														  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (!TRAJ_SUCCESS(err)) {
+					state = GOTO_NEAR_OPP;
+					break;
+				}
+				
+				/* apply new thresholds */
+				strat_infos.conf.th_token_score = NULL_SCORE;
+
+				/* place one token */
+				err = strat_place_near_slots(1, 0);
+
+				/* restore thresholds */
+				strat_infos.conf.th_place_prio = th_place_prior_old;
+				strat_infos.conf.th_token_score = th_token_score_old;
+
+				if (!TRAJ_SUCCESS(err)) {
+					state = GOTO_NEAR_OPP;
+					break;
+				}			
+			}
+
+			/* goto in front bonus wall */
+			err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
+													  		    strat_infos.slot[4][4].y, 
+													  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}
+
+
+			/* if we have place one token */
+			if (token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)){
+
+				/* apply new thresholds */
+				strat_infos.conf.th_place_prio = SLOT_PRIO_CENTER;
+				strat_infos.conf.th_token_score = NULL_SCORE;
+
+				/* place pion */
+				err = strat_place_near_slots(1, PION_SCORE);
+
+				/* restore thresholds */
+				strat_infos.conf.th_place_prio = th_place_prior_old;
+				strat_infos.conf.th_token_score = th_token_score_old;
+
+				if (!TRAJ_SUCCESS(err)) {
+					state = GOTO_NEAR_OPP;
+					break;
+				}	
+
+				/* goto in front bonus wall */
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
+														  		    strat_infos.slot[4][4].y, 
+														  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (!TRAJ_SUCCESS(err)) {
+					state = GOTO_NEAR_OPP;
+					break;
+				}
+			}
+
+			/* set speed */		
+			strat_set_speed(500, 500);
+
+			/* pickup possible token protecting, XXX displacement important */
+			err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x-50),
+													  		  strat_infos.slot[4][5].y-100, &side);
+
+			/* go backwards to avoid crash on turning */
+			strat_d_rel_side(&mainboard.traj, -50, side);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_NEAR_OPP;
+				break;
+			}
+
+			/* there is a token protecting */
+			if(token_catched(side)) {
+
+				/* back to origin */
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
+												  		    strat_infos.slot[4][4].y, 
+												  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (!TRAJ_SUCCESS(err)) {
+					state = GOTO_NEAR_OPP;
+					break;
+				}
+
+				/* apply new thresholds */
+				strat_infos.conf.th_place_prio = SLOT_PRIO_CENTER;
+				strat_infos.conf.th_token_score = NULL_SCORE;
+
+				/* place pion */
+				err = strat_place_near_slots(1, PION_SCORE);
+
+				/* restore thresholds */
+				strat_infos.conf.th_place_prio = th_place_prior_old;
+				strat_infos.conf.th_token_score = th_token_score_old;
+
+				if (!TRAJ_SUCCESS(err)) {
+					state = GOTO_NEAR_OPP;
+					break;
+				}	
+
+				/* goto in front bonus wall */
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
+												  		    strat_infos.slot[4][4].y, 
+												  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (!TRAJ_SUCCESS(err)) {
+					state = GOTO_NEAR_OPP;
+					break;
+				}
+			}
+
+			/* pickup token on center position */
+			err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x),
+													  		  strat_infos.slot[4][5].y, &side);
 	
-	/* return if slot busy */
-	i = (get_color() == I2C_COLOR_BLUE? 5 : 2);
-	if(strat_infos.slot[i][5].flags & SLOT_BUSY) {
-		ERROUT(err);
+			/* if end bloking, there are two tokens near wall */
+			if(err & END_BLOCKING) {
+
+				/* center one with belts and go slowly */
+				i2c_slavedspic_mode_token_show(side);	/* TODO: modes left and right */
+				strat_set_speed(150, SPEED_ANGLE_FAST);
+				strat_d_rel_side(&mainboard.traj, 50, side);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+				/* pickup token on center position */
+				err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x),
+														  		  strat_infos.slot[4][5].y+30, &side);
+			}
+
+			/* reset zone statistics */
+			strat_infos.zones[ZONE_WALL_BONUS].num_visits = 0; 
+			strat_infos.zones[ZONE_WALL_BONUS].total_time_ms = 0;
+
+			/* goto near opp */
+			state = GOTO_NEAR_OPP;
+			break;
+
+		case PICKUP_TOWERS:
+			/* work */
+			/* goto near opp */
+			break;
+
+		default:
+			state = GOTO_NEAR_OPP;
+			break;
 	}
 
-	/* place a pion */
-	if(!sensor_get(S_TOKEN_FRONT_FIGURE)) {
-		side = SIDE_FRONT;
-		err = strat_place_token(COLOR_X(strat_infos.slot[5][5].x), 
-								strat_infos.slot[5][5].y, side, GO_FORWARD);
-	}
-	else if(!sensor_get(S_TOKEN_REAR_FIGURE)) {
-		side = SIDE_FRONT;
-		err = strat_place_token(COLOR_X(strat_infos.slot[5][5].x), 
-								strat_infos.slot[5][5].y, side, GO_FORWARD);
-	}
-
-	/* avoid opponent */
-	while(opponent_is_behind_side(side));
-
-	/* back to origin slot */
-	trajectory_goto_xy_abs(&mainboard.traj,
-								 COLOR_X(strat_infos.slot[5][3].x), 
-								 strat_infos.slot[5][3].y);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-end:
-	return err;
+	return 1;
 }
+
+///* work on a zone */
+//uint8_t strat_work_on_zone(zone_t * z)
+//{
+//	uint8_t err;
+//
+//	/* goto zone pt with avoidance, return if we can't reach the pt */
+//	err = goto_and_avoid_busy_side(COLOR_X(z->x), z->y,
+//								    TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	/* do before task */
+//	if(z->do_before)
+//		z->do_before();
+//
+//	/* pickup or push tokens */
+//	strat_pickup_or_push_near_slots();
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	/* do after task */
+//	if(z->do_after)
+//		z->do_after();
+//
+// end:
+//	return err;
+//}
+//
+///* XXX create strat_place_best_token(i,j) */
+//uint8_t strat_place_figure_near_opp_home(void)
+//{
+//	uint8_t err = END_TRAJ;
+//	uint8_t side;
+//	int8_t i;
+//	
+//	/* return if slot busy */
+//	i = (get_color() == I2C_COLOR_BLUE? 6 : 1);
+//	if(strat_infos.slot[i][0].flags & SLOT_BUSY) {
+//		ERROUT(err);
+//	}
+//
+//	/* TODO: place the token with higher score */
+//
+//	/* we prefer place a figure */
+//	if(sensor_get(S_TOKEN_FRONT_FIGURE)) {
+//
+//		side = SIDE_FRONT;
+//		err = strat_place_token(COLOR_X(strat_infos.slot[6][0].x), 
+//								strat_infos.slot[6][0].y, side, GO_FORWARD);
+//	}
+//	else if(sensor_get(S_TOKEN_REAR_FIGURE)) {
+//
+//		side = SIDE_REAR;
+//		err = strat_place_token(COLOR_X(strat_infos.slot[6][0].x), 
+//								strat_infos.slot[6][0].y, side, GO_FORWARD);
+//	}
+//	else {
+//		err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][0].x), 
+//						strat_infos.slot[6][0].y, &side, GO_FORWARD);
+//	}
+//
+//
+//	/* avoid opponent */
+//	while(opponent_is_behind_side(side));
+//
+//	/* back in front of bonus wall */
+//	trajectory_goto_xy_abs(&mainboard.traj,
+//								 COLOR_X(strat_infos.slot[5][1].x), 
+//								 strat_infos.slot[5][1].y);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//end:
+//	return err;
+//}
+//
+///* XXX create strat_place_best_token(i,j) */
+//uint8_t strat_place_on_near_opp_safe_slot(void)
+//{
+//	uint8_t err = END_TRAJ;
+//	uint8_t side;
+//	int8_t i;
+//	
+//	/* return if slot busy */
+//	i = (get_color() == I2C_COLOR_BLUE? 6 : 1);
+//	if(strat_infos.slot[i][0].flags & SLOT_BUSY) {
+//		ERROUT(err);
+//	}
+//
+//	/* TODO: place the token with higher score */
+//
+//	/* we prefer place a figure */
+//	if(sensor_get(S_TOKEN_FRONT_FIGURE)) {
+//
+//		side = SIDE_FRONT;
+//		err = strat_place_token(COLOR_X(strat_infos.slot[6][4].x), 
+//								strat_infos.slot[6][4].y, side, GO_FORWARD);
+//	}
+//	else if(sensor_get(S_TOKEN_REAR_FIGURE)) {
+//
+//		side = SIDE_REAR;
+//		err = strat_place_token(COLOR_X(strat_infos.slot[6][4].x), 
+//								strat_infos.slot[6][4].y, side, GO_FORWARD);
+//	}
+//	else {
+//		err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][4].x), 
+//						strat_infos.slot[6][4].y, &side, GO_FORWARD);
+//	}
+//
+//
+//	/* avoid opponent */
+//	while(opponent_is_behind_side(side));
+//
+//	/* back in front of bonus wall */
+//	trajectory_goto_xy_abs(&mainboard.traj,
+//								 COLOR_X(strat_infos.slot[5][3].x), 
+//								 strat_infos.slot[5][3].y);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//end:
+//	return err;
+//}
+//
+///* XXX improve */
+//uint8_t strat_place_on_opp_safe_slot(void)
+//{
+//	uint8_t err = END_TRAJ;
+//	uint8_t side = 0;
+//	int8_t i;
+//	
+//	/* return if slot busy */
+//	i = (get_color() == I2C_COLOR_BLUE? 5 : 2);
+//	if(strat_infos.slot[i][5].flags & SLOT_BUSY) {
+//		ERROUT(err);
+//	}
+//
+//	/* place a pion */
+//	if(!sensor_get(S_TOKEN_FRONT_FIGURE)) {
+//		side = SIDE_FRONT;
+//		err = strat_place_token(COLOR_X(strat_infos.slot[5][5].x), 
+//								strat_infos.slot[5][5].y, side, GO_FORWARD);
+//	}
+//	else if(!sensor_get(S_TOKEN_REAR_FIGURE)) {
+//		side = SIDE_FRONT;
+//		err = strat_place_token(COLOR_X(strat_infos.slot[5][5].x), 
+//								strat_infos.slot[5][5].y, side, GO_FORWARD);
+//	}
+//
+//	/* avoid opponent */
+//	while(opponent_is_behind_side(side));
+//
+//	/* back to origin slot */
+//	trajectory_goto_xy_abs(&mainboard.traj,
+//								 COLOR_X(strat_infos.slot[5][3].x), 
+//								 strat_infos.slot[5][3].y);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//end:
+//	return err;
+//}
 
 uint8_t strat_pickup_bonus_near_wall(void)
 {
@@ -419,51 +951,18 @@ uint8_t strat_pickup_bonus_near_wall(void)
 	side = (token_side_is_lower_score(SIDE_FRONT)? SIDE_FRONT : SIDE_REAR);
 
 start:
-	/* we need at least one side free */
-	if(token_catched(SIDE_FRONT) && token_catched(SIDE_REAR)) {
-		
-		/* place one */
-		if(opp_x_is_more_than(1500)) {
-			err = strat_place_token(COLOR_X(strat_infos.slot[3][3].x - delta), 
-								strat_infos.slot[3][3].y, side, GO_FORWARD);
-		}
-		else {
-			err = strat_place_token(COLOR_X(strat_infos.slot[5][3].x + delta), 
-								strat_infos.slot[5][3].y, side, GO_FORWARD);
-		}
-
-		//if (!TRAJ_SUCCESS(err))
-		//	ERROUT(err);
-
-		/* force eject */
-		if(token_catched(side)) {
-			i2c_slavedspic_mode_token_out(side);
-		}
-
-		/* back in front of bonus wall */
-		err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x), 
-												 strat_infos.slot[4][4].y,
-										    	 TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
-		i2c_slavedspic_mode_token_stop(side);
-		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
-	}
-
-
 	/* take a look if our token is still here */
-	if(delta == 0) {
-		side = strat_turnto_pickup_token(&mainboard.traj,
-											COLOR_X(strat_infos.slot[3][5].x), 
-											strat_infos.slot[3][5].y);
-		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
-	
-		if(!sensor_token_side(side))
-			our_token_disapeared = 1;
-	}
+	side = strat_turnto_pickup_token(&mainboard.traj,
+										COLOR_X(strat_infos.slot[3][5].x), 
+										strat_infos.slot[3][5].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
 
-	/* try pickup token */
+	if(!sensor_token_side(side))
+		our_token_disapeared = 1;
+
+	/* try pickup opp token */
 	side = strat_turnto_pickup_token(&mainboard.traj,
 										COLOR_X(strat_infos.slot[4][5].x), 
 										strat_infos.slot[4][5].y);

@@ -70,6 +70,17 @@
 	} while(0)
 
 
+/* get num of tokens catched */
+uint8_t strat_get_num_tokens(void)
+{
+	uint8_t num_tokens;
+	
+	num_tokens = token_catched(SIDE_FRONT) + token_catched(SIDE_REAR);
+	DEBUG(E_USER_STRAT, "num_tokens = %d", num_tokens);
+	
+	return num_tokens;
+}
+
 /* pick up a token */
 /* use it in short distance ranges */
 
@@ -137,7 +148,9 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 
 		/* center front side */
 
-		if(!sensor_get(S_TOKEN_FRONT_R) && !sensor_get(S_TOKEN_FRONT_L)) {
+		/* XXX left sensor range is far, we only check right sensor */
+		if(!sensor_get(S_TOKEN_FRONT_R) && !sensor_get(S_TOKEN_FRONT_L)) {	
+		//if(!sensor_get(S_TOKEN_FRONT_R)) {
 			DEBUG(E_USER_STRAT, "token not found");
 			ERROUT(END_TRAJ);
 		}
@@ -288,8 +301,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	}
 
  end:
-	/* update num of tokens */
-	strat_update_num_tokens();
 
 	/* slot checked */
 	strat_set_slot_flags(x, y, SLOT_CHECKED);
@@ -331,6 +342,7 @@ uint8_t strat_pickup_token_auto(int16_t x, int16_t y, uint8_t *side)
 		}
 		DEBUG(E_USER_STRAT, "no free side");
 	}
+
 	/* never shoult be reached */
 	return END_TRAJ;
 }
@@ -505,9 +517,6 @@ uint8_t strat_place_token(int16_t x, int16_t y, uint8_t side, uint8_t go)
 
 
 end:
-	/* update num of tokens */
-	strat_update_num_tokens();
-
 	/* apply flags */
 	strat_set_slot_flags(x, y, (SLOT_BUSY|SLOT_AVOID) );
 	strat_set_speed(old_spdd, old_spda);
@@ -581,8 +590,14 @@ uint8_t strat_push_slot_token(int8_t i, int8_t j)
 {
 #define PUSH_TOKEN_D	350
 
+	uint16_t old_spdd, old_spda;
+//	int16_t a = 0;
+//	int16_t push_token_dist = PUSH_TOKEN_D;
+//	uint8_t num_tries = 0;
 	int8_t err = 1;
 
+	/* save speed */
+	strat_get_speed(&old_spdd, &old_spda);
 
 	/* return if opponent is in pushing slot */
 	if(opponent_is_in_slot(i,j)) {
@@ -590,44 +605,117 @@ uint8_t strat_push_slot_token(int8_t i, int8_t j)
 		ERROUT(END_OBSTACLE);
 	}
 
-	/* dangerous slots in front */
-	/* near wall */
-	if(j == 0 && i == strat_infos.slot_actual.i) {
-		/* XXX nothing, is dangerous */
-		/* we supose than we pickup before */
-		Nop();
-	}
-	/* near safe zones */
-	else if(j == 4 && i == strat_infos.slot_actual.i ) {
-		/* XXX nothing, is dangerous */
-		/* we supose than we pickup before */
-		Nop();
-	}
-	/* any other, in front and diagonal */
-	else {
+	/* return if near wall */
+	if(j == 0 )
+		ERROUT(END_TRAJ);
 
-		/* turn to coordinate */
-		trajectory_turnto_xy(&mainboard.traj, strat_infos.slot[i][j].x, strat_infos.slot[i][j].y);
-		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
+	/* turn to coordinate */
+	trajectory_turnto_xy(&mainboard.traj, strat_infos.slot[i][j].x, strat_infos.slot[i][j].y);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+	if (!TRAJ_SUCCESS(err))
+		ERROUT(err);
 
-		/* TODO avoid crash */
+	/* set speed */
+	strat_set_speed(2000, SPEED_ANGLE_FAST);
+
+
+//	/* slot is near wall */
+//	if(j == 0) {
+//		
+//		/* in front */
+//		if(i == strat_infos.slot_actual.i) {
+//			/* low speed */
+//			strat_set_speed(1000, SPEED_ANGLE_FAST);
+//
+//			/* decrement distance */
+//			push_token_dist -= 120;
+//		}
+//		/* in diagonal */
+//		else {
+//			/* low speed */
+//			strat_set_speed(500, SPEED_ANGLE_FAST);
+//		}
+//
+//		/* turn belts or token catched */
+//		a = position_get_a_deg_s16(&mainboard.pos);
+//		if(a > 0)
+//			i2c_slavedspic_mode_token_show(SIDE_REAR);
+//		else
+//			i2c_slavedspic_mode_token_show(SIDE_FRONT);			
+//	}
+
+
+//try_push:
+
+//	/* slot diagonal near wall */
+//	if(j == 0 && i != strat_infos.slot_actual.i) {
+//
+//		/* go a d little */
+//		trajectory_d_rel(&mainboard.traj, 150);
+//		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//
+//		/* turn */
+//		strat_set_speed(1000, 1000);
+//		if(a > 0)
+//			trajectory_only_a_abs(&mainboard.traj, 90);
+//		else
+//			trajectory_only_a_abs(&mainboard.traj, -90);
+//
+//		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	
+//		/* push */
+//		strat_set_speed(300, 1000);
+//		trajectory_d_rel(&mainboard.traj, 70);
+//		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//
+//		/* turn */
+//		strat_set_speed(1000, 1000);
+//		trajectory_turnto_xy(&mainboard.traj, strat_infos.slot[i][j].x, strat_infos.slot[i][j].y);
+//		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//
+//		/* push */
+//		strat_set_speed(1000, 1000);
+//		trajectory_d_rel(&mainboard.traj, 100);
+//		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//		
+//		if (!TRAJ_SUCCESS(err))
+//			ERROUT(err);
+
+//	}
+//	/* others slots */
+//	else {
+//
+		DEBUG(E_USER_STRAT, "pushing token");
 
 		/* push possible token */
 		trajectory_d_rel(&mainboard.traj, PUSH_TOKEN_D);
 		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+		
+//		if(err & END_BLOCKING) {
+//			if(num_tries < 3) {
+//				push_token_dist = 100;
+//				num_tries ++;
+//	
+//				trajectory_d_rel(&mainboard.traj, -50);
+//				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	
+//				goto try_push;
+//			}
+//			else
+//				ERROUT(err);
+//				
+//		}
+//		else if (!TRAJ_SUCCESS(err))
+//			ERROUT(err);
+//	}
 
-		/* invalidate slot */
-		strat_infos.slot[i][j].flags |= SLOT_CHECKED;
+ end:
+	/* invalidate slot */
+	strat_infos.slot[i][j].flags |= SLOT_CHECKED;
 
-		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
-
-		DEBUG(E_USER_STRAT, "pushing token");
-	}
-
- end:	
+	i2c_slavedspic_mode_token_stop(SIDE_FRONT);
+	i2c_slavedspic_mode_token_stop(SIDE_REAR);
+	strat_set_speed(old_spdd, old_spda);
 	return err;
 }
 
@@ -871,7 +959,7 @@ uint8_t strat_get_pickup_slot(slot_index_t *slot_pickup)
 
 
 /* pickup tokens on near 3x3 area slots, return 0 if there aren't more slots */
-uint8_t strat_pickup_or_push_near_slots(void)
+uint8_t strat_pickup_or_push_near_slots(uint8_t mode)
 {
 #define TIMEOUT_GO_BACK_MS	2000
 
@@ -889,7 +977,8 @@ uint8_t strat_pickup_or_push_near_slots(void)
 	while(ret) {
 		
 		/* check if we have a free side */
-		if(strat_infos.num_tokens < 2)
+		if((mode & MODE_PICKUP) 
+			&& (!token_catched(SIDE_FRONT) || !token_catched(SIDE_REAR)))
 		{
 			/* try pickup token */
 			strat_pickup_token_auto(strat_infos.slot[pickup_slot.i][pickup_slot.j].x,
@@ -897,8 +986,12 @@ uint8_t strat_pickup_or_push_near_slots(void)
 		}
 		else {
 
-			/* push possible opponent token */
-			strat_push_slot_token(pickup_slot.i, pickup_slot.j);
+			if(mode & MODE_PUSH) {
+				/* push possible opponent token */
+				strat_push_slot_token(pickup_slot.i, pickup_slot.j);
+			}
+			else
+				break;
 		}
 
 
@@ -1105,7 +1198,7 @@ uint8_t strat_get_place_slot(slot_index_t *slot_place, uint8_t *side)
 
 
 /* place tokens on near 3x3 area slots, return 0 if there aren't more slots */
-uint8_t strat_place_near_slots(void)
+uint8_t strat_place_near_slots(uint8_t only_one, uint8_t token_score)
 {
 	slot_index_t place_slot, origin_slot;
 	uint8_t side;
@@ -1121,6 +1214,14 @@ uint8_t strat_place_near_slots(void)
 	while(ret) {
 		
 		/* TODO: check 45deg sensors */
+
+		/* force specific token */
+		if(token_score) {
+			if(token_side_score(SIDE_FRONT) == token_score)
+				side = SIDE_FRONT;
+			else if(token_side_score(SIDE_REAR) == token_score)
+				side = SIDE_REAR;
+		}
 
 		strat_place_token(strat_infos.slot[place_slot.i][place_slot.j].x,
 							   strat_infos.slot[place_slot.i][place_slot.j].y, side, GO_FORWARD);
@@ -1140,8 +1241,12 @@ uint8_t strat_place_near_slots(void)
 									  strat_infos.slot[origin_slot.i][origin_slot.j].y);
 		}
 
+		/* place only one token */
+		if(only_one)
+			break;
+
 		/* check if we are empty of tokens */
-		if(strat_infos.num_tokens == 0)
+		if(!token_catched(SIDE_FRONT) && !token_catched(SIDE_REAR))
 			break;
 
 		/* get the next valid pickup slot */

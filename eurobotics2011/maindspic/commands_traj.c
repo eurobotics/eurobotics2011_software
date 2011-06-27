@@ -1054,6 +1054,9 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 {
 	struct cmd_subtraj2_result *res = parsed_result;
 	uint8_t err = 0;
+	int8_t cmd = 0;
+	struct vt100 vt100;
+	int16_t c;
 
 
 	if (strcmp_P(res->arg1, PSTR("line1")) == 0) {
@@ -1068,30 +1071,49 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 	}
 	else if (strcmp_P(res->arg1, PSTR("beginning")) == 0) {
 		err = strat_beginning();
-
 	}
-	else if (strcmp_P(res->arg1, PSTR("bonus")) == 0) {
+	else if (strcmp_P(res->arg1, PSTR("bonus_wall")) == 0) {
 		//err = strat_bonus_point();
-		err = strat_work_on_zone(&strat_infos.zones[ZONE_WALL_BONUS]);
+		//err = strat_work_on_zone(&strat_infos.zones[ZONE_WALL_BONUS]);
+		strat_pickup_bonus_near_wall();
 	}
 	else if (strcmp_P(res->arg1, PSTR("pickup_near")) == 0) {
-		err = strat_pickup_or_push_near_slots();
+		err = strat_pickup_or_push_near_slots(MODE_ALL);
 	}
 	else if (strcmp_P(res->arg1, PSTR("place_near")) == 0) {
-		err = strat_place_near_slots();
+		err = strat_place_near_slots(0,0);
 	}
-	else if (strcmp_P(res->arg1, PSTR("home")) == 0) {
-		err = strat_work_on_zone(&strat_infos.zones[ZONE_NEAR_HOME]);
+	else if (strcmp_P(res->arg1, PSTR("play")) == 0) {
+
+		while(cmd != KEY_CTRL_C) 
+		{
+			/* play */
+			err = strat_play_with_opp();
+
+			/* read cmdline */
+			c = cmdline_getchar();
+			if (c == -1) {
+				continue;
+			}
+
+			/* check exit cmd */
+			cmd = vt100_parser(&vt100, c);	
+		}
 	}
-	else if (strcmp_P(res->arg1, PSTR("safe")) == 0) {
-		err = strat_work_on_zone(&strat_infos.zones[ZONE_NEAR_SAFE]);
-	}
-	else if (strcmp_P(res->arg1, PSTR("opp_home")) == 0) {
-		err = strat_work_on_zone(&strat_infos.zones[ZONE_OPP_NEAR_HOME]);
-	}
-	else if (strcmp_P(res->arg1, PSTR("opp_safe")) == 0) {
-		err = strat_work_on_zone(&strat_infos.zones[ZONE_OPP_NEAR_SAFE]);
-	}
+
+
+//	else if (strcmp_P(res->arg1, PSTR("home")) == 0) {
+//		err = strat_work_on_zone(&strat_infos.zones[ZONE_NEAR_HOME]);
+//	}
+//	else if (strcmp_P(res->arg1, PSTR("safe")) == 0) {
+//		err = strat_work_on_zone(&strat_infos.zones[ZONE_NEAR_SAFE]);
+//	}
+//	else if (strcmp_P(res->arg1, PSTR("opp_home")) == 0) {
+//		err = strat_work_on_zone(&strat_infos.zones[ZONE_OPP_NEAR_HOME]);
+//	}
+//	else if (strcmp_P(res->arg1, PSTR("opp_safe")) == 0) {
+//		err = strat_work_on_zone(&strat_infos.zones[ZONE_OPP_NEAR_SAFE]);
+//	}
 
 	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
 	trajectory_hardstop(&mainboard.traj);
@@ -1099,7 +1121,8 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 
 prog_char str_subtraj2_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg0, str_subtraj2_arg0);
-prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near#place_near#home#safe#opp_home#opp_safe#";
+//prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near#place_near#home#safe#opp_home#opp_safe#";
+prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#pickup_near#place_near#bonus_wall#play";
 parse_pgm_token_string_t cmd_subtraj2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg1, str_subtraj2_arg1);
 //parse_pgm_token_num_t cmd_subtraj2_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg2, INT32);
 //parse_pgm_token_num_t cmd_subtraj2_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg3, INT32);

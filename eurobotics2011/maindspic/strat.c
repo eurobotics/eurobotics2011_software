@@ -80,17 +80,17 @@ struct strat_infos strat_infos = {
 	.slot[0][4] = { 200,	1530,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
 	.slot[0][5] = { 200,	1810,		SLOT_GREEN_BLUE,	SLOT_PRIO_GREEN,			SLOT_BUSY, 		0, },
 
-	.slot[1][0] = { 625,	175,		SLOT_RED, 			SLOT_PRIO_WALL,			0, 				0, },
+	.slot[1][0] = { 625,	175,		SLOT_RED, 			SLOT_PRIO_CORNER,			0, 				0, },
 	.slot[1][1] = { 625,	525,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[1][2] = { 625,	875,		SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[1][3] = { 625,	1225,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
-	.slot[1][4] = { 625,	1575,		SLOT_RED,			SLOT_PRIO_NEAR_SAFE,		0, 				0, },
+	.slot[1][4] = { 625,	1575,		SLOT_RED,			SLOT_PRIO_CORNER,			0, 				0, },
 	.slot[1][5] = { 625,	1865+10,	SLOT_BLUE,			SLOT_PRIO_SAFE,			SLOT_SAFE,		0, },
 
 	.slot[2][0] = { 975,	175,		SLOT_BLUE, 			SLOT_PRIO_WALL,			0, 				0, },
-	.slot[2][1] = { 975,	525,		SLOT_RED,			SLOT_PRIO_PATH,			0, 				0, },
+	.slot[2][1] = { 975,	525,		SLOT_RED,			SLOT_PRIO_BONUS,			0, 				0, },
 	.slot[2][2] = { 975,	875,		SLOT_BLUE,			SLOT_PRIO_PATH,			0, 				0, },
-	.slot[2][3] = { 975,	1225,		SLOT_RED,			SLOT_PRIO_PATH,			0, 				0, },
+	.slot[2][3] = { 975,	1225,		SLOT_RED,			SLOT_PRIO_BONUS,			0, 				0, },
 	.slot[2][4] = { 975,	1575,		SLOT_BLUE,			SLOT_PRIO_NEAR_SAFE,		0, 				0,	},
 	.slot[2][5] = { 975, 1865+10,	SLOT_RED,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
 
@@ -109,17 +109,17 @@ struct strat_infos strat_infos = {
 	.slot[4][5] = { 1675, 1925,	SLOT_RED,			SLOT_PRIO_BONUS_WALL,	0, 				0, },
 
 	.slot[5][0] = { 2025, 175,		SLOT_RED, 			SLOT_PRIO_WALL,			0, 				0, },
-	.slot[5][1] = { 2025, 525,		SLOT_BLUE,			SLOT_PRIO_PATH,			0, 				0, },
+	.slot[5][1] = { 2025, 525,		SLOT_BLUE,			SLOT_PRIO_BONUS,			0, 				0, },
 	.slot[5][2] = { 2025, 875,		SLOT_RED,			SLOT_PRIO_PATH,			0, 				0, },
-	.slot[5][3] = { 2025, 1225,	SLOT_BLUE,			SLOT_PRIO_PATH,			0, 				0, },
+	.slot[5][3] = { 2025, 1225,	SLOT_BLUE,			SLOT_PRIO_BONUS,			0, 				0, },
 	.slot[5][4] = { 2025, 1575,	SLOT_RED,			SLOT_PRIO_NEAR_SAFE,		0, 				0, },
 	.slot[5][5] = { 2025, 1865+10,SLOT_BLUE,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
 
-	.slot[6][0] = { 2375, 175,		SLOT_BLUE, 			SLOT_PRIO_WALL,			0, 				0, },
+	.slot[6][0] = { 2375, 175,		SLOT_BLUE, 			SLOT_PRIO_CORNER,			0, 				0, },
 	.slot[6][1] = { 2375, 525,		SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[6][2] = { 2375, 875,		SLOT_BLUE,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
 	.slot[6][3] = { 2375, 1225,	SLOT_RED,			SLOT_PRIO_NEAR_GREEN,	0, 				0, },
-	.slot[6][4] = { 2375, 1575,	SLOT_BLUE,			SLOT_PRIO_NEAR_SAFE,		0, 				0, },
+	.slot[6][4] = { 2375, 1575,	SLOT_BLUE,			SLOT_PRIO_CORNER,			0, 				0, },
 	.slot[6][5] = { 2375, 1865+10,SLOT_RED,			SLOT_PRIO_SAFE,			SLOT_SAFE, 		0, },
 
 	.slot[7][0] = { 2800, 200,		SLOT_RED,			SLOT_PRIO_GREEN,			0, 				0, },
@@ -133,7 +133,7 @@ struct strat_infos strat_infos = {
 	.grid_line_x = { 0, 450, 800, 1150, 1500, 1850, 2200, 2550, 3000 },
 	.grid_line_y = { 0, 350, 700, 1050, 1400, 1750, 2100 },
 
-
+#ifdef ZONES_HAS_FNCS
 	/* zones[] = x, y, x_up, y_up, x_down, y_down, num_visits, total_time_ms, do_before, do_after */
 	.zones[ZONE_OPP_NEAR_HOME] = { 2025, 525, 	1500, 1050, 2550, 0, 		1, 0,
 											 strat_place_figure_near_opp_home, NULL },
@@ -145,10 +145,16 @@ struct strat_infos strat_infos = {
 											 NULL, NULL },
 	.zones[ZONE_WALL_BONUS] 	= { 1675, 1575, 	1150, 2100, 1850, 1750, 	0, 0,
 											 strat_pickup_bonus_near_wall, NULL },
+#else
+	/* zones[] = x, y, x_up, y_up, x_down, y_down, num_visits, total_time_ms, do_before, do_after */
+	.zones[ZONE_OPP_NEAR_HOME] = { 1500, 1050, 2550, 0, 			0, 0 },
+	.zones[ZONE_OPP_NEAR_SAFE] = { 1500, 2100, 2550, 1050, 		0, 0 },
+	.zones[ZONE_NEAR_HOME] 		= { 450,  1050, 1500, 0, 			0, 0 },
+	.zones[ZONE_NEAR_SAFE] 		= { 450,  2100, 1500, 1050, 		0, 0 },
+	.zones[ZONE_WALL_BONUS] 	= { 1150, 2100, 1850, 1750-175, 	0, 0 },
 
+#endif
 };
-
-
 
 
 /*************************************************************/
@@ -313,7 +319,7 @@ void strat_dump_infos(const char *caller)
 		switch(j) {
 			case 5:
 				/* tokens catched */
-				printf(PSTR("  num_tokens = %d"), strat_infos.num_tokens);
+				printf(PSTR("  num_tokens = %d"), (token_catched(SIDE_FRONT) + token_catched(SIDE_REAR)) );
 				break;
 			case 4:
 				printf(PSTR("  num_towers = %d"), strat_infos.num_towers);
@@ -408,9 +414,6 @@ void strat_reset_infos(void)
 	strat_infos.slot[7][4].flags = SLOT_BUSY;
 	strat_infos.slot[7][5].flags = SLOT_BUSY;
 
-	/* tokens catched */
-	strat_infos.num_tokens = 0;
-
 	/* slot position */
 	if(get_color() == I2C_COLOR_BLUE) {
 		strat_infos.slot_actual.i = 0;
@@ -496,24 +499,6 @@ void strat_exit(void)
 
 }
 
-void strat_update_num_tokens(void)
-{
-	uint8_t cnt_tokens = 0;
-	uint8_t flags;
-	
-	if(token_catched(SIDE_FRONT))
-		cnt_tokens ++;
-
-	if(token_catched(SIDE_REAR))
-		cnt_tokens ++;
-
-	IRQ_LOCK(flags);
-	strat_infos.num_tokens = cnt_tokens;
-	IRQ_UNLOCK(flags);
-
-	DEBUG(E_USER_STRAT, "num_tokens = %d", strat_infos.num_tokens);
-}
-
 /* called periodically */
 void strat_event(void *dummy)
 {
@@ -530,17 +515,15 @@ void strat_event(void *dummy)
 									     0, NB_GRID_LINES_Y-1);	
 
 	/* update opponent slot position */
-//	strat_update_slot_position(TYPE_OPPONENT, GRID_MARGIN, 
-//									     0, NB_GRID_LINES_X-1,
-//									     0, NB_GRID_LINES_Y-1);	
+	strat_update_slot_position(TYPE_OPPONENT, 30, 
+									     0, NB_GRID_LINES_X-1,
+									     0, NB_GRID_LINES_Y-1);	
 
 	/* update zones */
-	//strat_update_zones(); 
+	strat_update_zones(); 
 
 	/* manage mirrors position */
 	mirrors_state_machine();
-	
-	/* TODO: catch tokens in straight travels */
 }
 
 /* dump state (every 5 s max) XXX */

@@ -1513,9 +1513,6 @@ uint8_t strat_harvest_green_area_smart(void)
 	int8_t i, j;
 	int16_t x_opp, y_opp;
 
-	/* update num of tokens */
-	strat_update_num_tokens();
-
 	/* save speed */
 	strat_get_speed(&old_spdd, &old_spda);
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
