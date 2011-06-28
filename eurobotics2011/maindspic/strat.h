@@ -27,6 +27,14 @@
 #define AREA_X 3000
 #define AREA_Y 2100
 
+/* infos about strat */
+#define NB_SLOT_X				8
+#define NB_SLOT_Y				6
+#define NB_SLOT_GREEN		5
+#define NB_GRID_LINES_X 	9
+#define NB_GRID_LINES_Y 	7
+
+
 /* convert coords according to our color */
 #define COLOR_Y(y)     (y)
 #define COLOR_X(x)     ((mainboard.our_color==I2C_COLOR_BLUE)? (x) : (AREA_X-(x)))
@@ -36,6 +44,8 @@
 
 #define COLOR_SIGN(x)  ((mainboard.our_color==I2C_COLOR_BLUE)? (x) : (-x))
 #define COLOR_INVERT(x)((mainboard.our_color==I2C_COLOR_BLUE)? (x) : (!x))
+
+#define COLOR_I(x)	  ((mainboard.our_color==I2C_COLOR_BLUE)? (x) :  ((NB_SLOT_X-1)-x))
 
 #define START_X 200
 #define START_Y COLOR_Y(200)
@@ -103,7 +113,8 @@ struct conf {
 #define LINE1_TOKENS_NEAR_WALL			2
 #define LINE1_OPP_TOKEN_BEFORE_PLACE	4
 #define LINE1_OPP_TOKEN_AFTER_PLACE		8
-#define STRAT_CONF_PLACE_ONLYEXT		  16
+#define GREEN_OPP_ZONE_FIRST			  16
+//#define STRAT_CONF_PLACE_ONLYEXT		  16
 
 
 	/* thresholds */
@@ -182,13 +193,6 @@ typedef struct {
 	int8_t i;
 	int8_t j;
 }slot_index_t;
-
-/* infos about strat */
-#define NB_SLOT_X				8
-#define NB_SLOT_Y				6
-#define NB_SLOT_GREEN		5
-#define NB_GRID_LINES_X 	9
-#define NB_GRID_LINES_Y 	7
 
 
 #define NB_TOWER_MAX	6
@@ -356,7 +360,7 @@ uint8_t strat_harvest_line2(void);
 uint8_t strat_harvest_green_area(void);
 
 /* harvest green area ending with two figures inside */
-uint8_t strat_harvest_green_area_smart(void);
+uint8_t strat_harvest_green_area_smart(uint8_t color);
 
 /**************************************************
  * in strat_navigation.c 

@@ -570,7 +570,10 @@ uint8_t strat_beginning(void)
 		ERROUT(err);
 
 	/* pick & place tokens on green area */
-	err = strat_harvest_green_area_smart();
+	if(strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST)
+		err = strat_harvest_green_area_smart(get_opponent_color());
+	else
+		err = strat_harvest_green_area_smart(get_color());		
 	if (!TRAJ_SUCCESS(err))
 		ERROUT(err);
 #endif
