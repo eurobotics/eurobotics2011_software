@@ -80,7 +80,7 @@
 
 #endif
 
-#define SKIP_DST_POLY
+//#define SKIP_DST_POLY
 
 #define SLOT_NUMBER			((NB_SLOT_X-2)*(NB_SLOT_Y-1))	/* all less green areas and safe zones */
 #define SLOT_EDGE_NUMBER   4

@@ -143,7 +143,7 @@
 #define EVENT_PERIOD_LED 			1000000L
 #define EVENT_PERIOD_STRAT			  25000L
 #define EVENT_PERIOD_BEACON_PULL	  10000L
-#define EVENT_PERIOD_I2C_POLL		   8000L
+#define EVENT_PERIOD_I2C_POLL		   8000L	// 8ms
 #define EVENT_PERIOD_SENSORS		   5000L /* XXX same as CS with higher priority */
 #define EVENT_PERIOD_CS 			   5000L
 

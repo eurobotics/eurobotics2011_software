@@ -167,9 +167,9 @@ void strat_set_bounding_box(uint8_t type)
 
 	if(type == AREA_BBOX_6X5) {
 		/* area 6x5 */
-		strat_infos.area_bbox.x1 = 625;
+		strat_infos.area_bbox.x1 = 625-25;
 		strat_infos.area_bbox.y1 = 220;
-		strat_infos.area_bbox.x2 = 2375;
+		strat_infos.area_bbox.x2 = 2375+25;
 		strat_infos.area_bbox.y2 = 1575;
 	}
 	else {
@@ -579,14 +579,14 @@ uint8_t strat_beginning(void)
 #ifndef HOMOLOGATION
 	/* pick & place tokens on line 2 */
 	err = strat_harvest_line2();
-	if (!TRAJ_SUCCESS(err)) {
+	if (!TRAJ_SUCCESS(err) && !opp_x_is_more_than(975)) {
 		err = strat_harvest_green_area_smart(get_opponent_color());
 		ERROUT(err);		
 	}
 
 	/* pick & place tokens on green area */
-	if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
-		err = strat_harvest_green_area_smart(get_opponent_color());
+	//if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
+	//	err = strat_harvest_green_area_smart(get_opponent_color());
 	else
 		err = strat_harvest_green_area_smart(get_color());		
 	if (!TRAJ_SUCCESS(err))

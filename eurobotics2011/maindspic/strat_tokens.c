@@ -263,7 +263,7 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 		}
 	}
 
-	i2c_slavedspic_mode_token_take(side);
+	//i2c_slavedspic_mode_token_take(side);
 
 	/* check if token is catched */
 	WAIT_COND_OR_TIMEOUT(token_catched(side), PICKUP_CATCHED_TIME);
@@ -280,7 +280,7 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	err = WAIT_COND_OR_TRAJ_END(token_catched(side), TRAJ_FLAGS_SMALL_DIST);
 
 	/* blocking or end traj, wait token catched at end of traj */
-	i2c_slavedspic_mode_token_take(side);
+	//i2c_slavedspic_mode_token_take(side);
 	WAIT_COND_OR_TIMEOUT(token_catched(side), PICKUP_CATCHED_TIME);
 
 	if(token_catched(side)) {
@@ -304,7 +304,6 @@ uint8_t strat_pickup_token(int16_t x, int16_t y, uint8_t side)
 	}
 
  end:
-
 	/* slot checked */
 	strat_set_slot_flags(x, y, SLOT_CHECKED);
 	strat_clear_slot_flags(x, y, (SLOT_BUSY|SLOT_FIGURE));
@@ -760,7 +759,7 @@ uint8_t strat_is_valid_pickup_slot(int8_t i, int8_t j)
 
 	/* skip our color slots busy */
 	if(strat_infos.slot[i][j].color == mainboard.our_color 
-		&& strat_infos.slot[i][j].flags & SLOT_BUSY) {
+		&& (strat_infos.slot[i][j].flags & SLOT_BUSY)) {
 		//DEBUG(E_USER_STRAT, "skip our color slot (%d, %d)", i, j);
 		return 0;
 	}
@@ -1718,6 +1717,4 @@ void strat_look_for_figures(void)
 //		ERROR(E_USER_STRAT, "no figure pos matched", laser_d);
 
 }
-
-
 

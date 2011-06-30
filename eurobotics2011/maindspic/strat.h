@@ -82,8 +82,8 @@
 #define SPEED_DIST_FAST 		2000
 #define SPEED_ANGLE_FAST 		2000
 #else
-#define SPEED_DIST_FAST 		4000
-#define SPEED_ANGLE_FAST 		4000
+#define SPEED_DIST_FAST 		3000
+#define SPEED_ANGLE_FAST 		3000
 #endif
 #define SPEED_DIST_SLOW 		1000
 #define SPEED_ANGLE_SLOW 		1000

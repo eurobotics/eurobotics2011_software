@@ -283,6 +283,33 @@ uint8_t beacon_parse_opponent_answer(int16_t c)
 
 				/* save data */
 				if(checksum == local_checksum) {
+
+					if(opp_x > 3000-100) {
+						i=0;
+						beaconboard.opponent_x = I2C_OPPONENT_NOT_THERE;
+						state = 0;
+						return 1; 
+					}
+					if(opp_x < 100) {
+						i=0;
+						beaconboard.opponent_x = I2C_OPPONENT_NOT_THERE;
+						state = 0;
+						return 1; 
+					}
+					if(opp_y > 2100-100) {
+						i=0;
+						beaconboard.opponent_x = I2C_OPPONENT_NOT_THERE;
+						state = 0;
+						return 1; 
+					}
+					if(opp_y < 100) {
+						i=0;
+						beaconboard.opponent_x = I2C_OPPONENT_NOT_THERE;
+						state = 0;
+						return 1; 
+					}
+						
+
 					IRQ_LOCK(flags);
 					beaconboard.opponent_x = (int16_t)opp_x;
 					beaconboard.opponent_y = (int16_t)opp_y;		

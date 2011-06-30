@@ -438,22 +438,26 @@ static int8_t i2c_send_command(uint8_t addr, uint8_t *buf, uint8_t size)
 {
 	uint8_t flags;
   	microseconds us = time_get_us2();
+	uint8_t i;
 
-	/* time out prevent */
-	while ((time_get_us2() - us) < (I2C_TIMEOUT)*1000L) 
-	{
-		IRQ_LOCK(flags);
-
-		/* copy data and fill params of cmd */
-		if (command_size == 0) {
-			memcpy(command_buf, buf, size);
-			command_dest = addr;
-			command_size = size;
-			
+	/* HACK: send 3 times the cmd */
+	for(i = 0; i < 3; i++) {
+		/* time out prevent */
+		while ((time_get_us2() - us) < (I2C_TIMEOUT)*1000L) 
+		{
+			IRQ_LOCK(flags);
+	
+			/* copy data and fill params of cmd */
+			if (command_size == 0) {
+				memcpy(command_buf, buf, size);
+				command_dest = addr;
+				command_size = size;
+				
+				IRQ_UNLOCK(flags);
+				return 0;;
+			}
 			IRQ_UNLOCK(flags);
-			return 0;;
 		}
-		IRQ_UNLOCK(flags);
 	}
 
 	/* XXX: this should not happen... except if we are called from an

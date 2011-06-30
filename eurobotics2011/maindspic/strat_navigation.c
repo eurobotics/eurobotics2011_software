@@ -83,6 +83,7 @@ void strat_update_slot_position(uint8_t type, int16_t margin,
 	slot_index_t slot_actual;
 	slot_index_t slot_before;
 	int8_t flags;
+	static microseconds opp_time_us = 0;
 
 	/* depends on type */
 	if(type == TYPE_ROBOT) {
@@ -164,6 +165,11 @@ void strat_update_slot_position(uint8_t type, int16_t margin,
 		}
 		else { /* TYPE_OPPONENT */
 
+			if(time_get_us2() - opp_time_us < 320000UL)
+				return;
+
+			opp_time_us = time_get_us2();
+
 			IRQ_LOCK(flags);
 	
 			/* save last position */
@@ -171,7 +177,8 @@ void strat_update_slot_position(uint8_t type, int16_t margin,
 			strat_infos.opp_slot_actual = slot_actual;
 			
 			/* update flags */
-			strat_infos.slot[strat_infos.opp_slot_before.i][strat_infos.opp_slot_before.j].flags &= ~(SLOT_OPPONENT|SLOT_CHECKED|SLOT_BUSY|SLOT_FIGURE|SLOT_AVOID);
+			strat_infos.slot[strat_infos.opp_slot_before.i][strat_infos.opp_slot_before.j].flags &= ~(SLOT_OPPONENT);
+			strat_infos.slot[strat_infos.opp_slot_actual.i][strat_infos.opp_slot_actual.j].flags &= ~(SLOT_CHECKED|SLOT_BUSY|SLOT_FIGURE|SLOT_AVOID);
 			strat_infos.slot[strat_infos.opp_slot_actual.i][strat_infos.opp_slot_actual.j].flags |= (SLOT_OPPONENT);
 			
 			IRQ_UNLOCK(flags);
@@ -284,7 +291,7 @@ uint8_t strat_play_with_opp(void)
 #define TIMEOUT_GOTO_NEAR_OPP		2000
 
 #define TIMEOUT_RETURN				(90-10)
-#define TIMEOUT_STOP_PLACE			(90-20)
+#define TIMEOUT_STOP_PLACE			(90-25)
 
 
 #define ZONE_OUR_SIDE	0
@@ -322,6 +329,14 @@ uint8_t strat_play_with_opp(void)
 				if (!TRAJ_SUCCESS(err)) {
 					break;
 				}
+
+//				/* work */
+//				err = strat_pickup_or_push_near_slots(MODE_ALL);
+//				if (!TRAJ_SUCCESS(err)) {
+//					state = GOTO_NEAR_OPP;
+//					break;
+//				}
+
 				state = WAITING_OPP;
 			}
 			/* if opp is on opp near safe zone */
@@ -337,6 +352,14 @@ uint8_t strat_play_with_opp(void)
 				if (!TRAJ_SUCCESS(err)) {
 					break;
 				}
+
+//				/* work */
+//				err = strat_pickup_or_push_near_slots(MODE_ALL);
+//				if (!TRAJ_SUCCESS(err)) {
+//					state = GOTO_NEAR_OPP;
+//					break;
+//				}
+
 				state = WAITING_OPP;
 			}
 			/* if opp is on our near home zone */
@@ -352,6 +375,14 @@ uint8_t strat_play_with_opp(void)
 				if (!TRAJ_SUCCESS(err)) {
 					break;
 				}
+
+//				/* work */
+//				err = strat_pickup_or_push_near_slots(MODE_ALL);
+//				if (!TRAJ_SUCCESS(err)) {
+//					state = GOTO_NEAR_OPP;
+//					break;
+//				}
+
 				state = WAITING_OPP;
 			}
 			/* if opp is on our near safe zone */
@@ -367,6 +398,14 @@ uint8_t strat_play_with_opp(void)
 				if (!TRAJ_SUCCESS(err)) {
 					break;
 				}
+
+//				/* work */
+//				err = strat_pickup_or_push_near_slots(MODE_ALL);
+//				if (!TRAJ_SUCCESS(err)) {
+//					state = GOTO_NEAR_OPP;
+//					break;
+//				}
+
 				state = WAITING_OPP;
 			}
 			/* if opp is on wall bonus zone */
@@ -901,7 +940,7 @@ uint8_t strat_big_final(void)
 	switch(state) {
 		case CATCH_TWO_TOKENS:
 		case GOTO_BEST_PLACE_POSITION:
-			if(!opp_x_is_more_than(1500)) {
+			if(!opp_x_is_more_than(1500+350)) {
 				err = goto_and_avoid(COLOR_X(strat_infos.slot[5][2].x),
 												  	  strat_infos.slot[5][2].y, 
 									  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
@@ -910,7 +949,8 @@ uint8_t strat_big_final(void)
 					break;
 				}
 			}
-			else {
+			else if(opp_x_is_more_than(1500)) {
+
 				if(opp_y_is_more_than(875)) {
 					err = goto_and_avoid(COLOR_X(strat_infos.slot[5][1].x),
 													  	  strat_infos.slot[5][1].y, 
@@ -921,6 +961,7 @@ uint8_t strat_big_final(void)
 					}
 				}
 				else {
+			
 					err = goto_and_avoid(COLOR_X(strat_infos.slot[5][3].x),
 													  	  strat_infos.slot[5][3].y, 
 										  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
@@ -928,6 +969,15 @@ uint8_t strat_big_final(void)
 						state = PLACE_FROM_BONUS_NEAR_SAFE;
 						break;
 					}
+				}
+			}
+			else {
+				err = goto_and_avoid(COLOR_X(strat_infos.slot[5][2].x),
+												  	  strat_infos.slot[5][2].y, 
+									  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (TRAJ_SUCCESS(err)) {
+					state = PLACE_FROM_CENTER_SLOT;
+					break;
 				}
 			}
 			break;
