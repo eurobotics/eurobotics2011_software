@@ -344,6 +344,10 @@ static void cmd_state2_parsed(void *parsed_result,
 		command.mode = I2C_SLAVEDSPIC_MODE_TOKEN_EJECT;
 	else if (!strcmp(res->arg2, "show"))
 		command.mode = I2C_SLAVEDSPIC_MODE_TOKEN_SHOW;
+	else if (!strcmp(res->arg2, "push_r"))
+		command.mode = I2C_SLAVEDSPIC_MODE_TOKEN_PUSH_R;
+	else if (!strcmp(res->arg2, "push_l"))
+		command.mode = I2C_SLAVEDSPIC_MODE_TOKEN_PUSH_L;
 
 	command.ts.speed_div4 = res->arg3;
 	
@@ -354,7 +358,7 @@ prog_char str_state2_arg0[] = "state";
 parse_pgm_token_string_t cmd_state2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg0, str_state2_arg0);
 prog_char str_state2_arg1[] = "rear#front";
 parse_pgm_token_string_t cmd_state2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg1, str_state2_arg1);
-prog_char str_state2_arg2[] = "take#eject#show";
+prog_char str_state2_arg2[] = "take#eject#show#push_l#push_r";
 parse_pgm_token_string_t cmd_state2_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_state2_result, arg2, str_state2_arg2);
 parse_pgm_token_num_t cmd_state2_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_state2_result, arg3, UINT8);
 

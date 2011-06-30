@@ -87,9 +87,9 @@
 
 /* token sensors */
 #define S_TOKEN_FRONT_R			S_GP3_4
-#define S_TOKEN_FRONT_L			S_GP1_0
+#define S_TOKEN_FRONT_L			S_GP3_3
 #define S_TOKEN_FRONT_45R		S_GP1_1
-#define S_TOKEN_FRONT_45L		S_GP3_3
+#define S_TOKEN_FRONT_45L		S_GP1_0
 #define S_TOKEN_FRONT_TOWER2H	S_GP0_6
 #define S_TOKEN_FRONT_TOWER1H	S_GP3_1
 #define S_TOKEN_FRONT_FIGURE	S_GP0_0

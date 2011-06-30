@@ -57,6 +57,8 @@
 #define TOKEN_EJECT		I2C_SLAVEDSPIC_MODE_TOKEN_EJECT
 #define TOKEN_STOP		I2C_SLAVEDSPIC_MODE_TOKEN_STOP
 #define TOKEN_SHOW		I2C_SLAVEDSPIC_MODE_TOKEN_SHOW
+#define TOKEN_PUSH_L		I2C_SLAVEDSPIC_MODE_TOKEN_PUSH_L
+#define TOKEN_PUSH_R		I2C_SLAVEDSPIC_MODE_TOKEN_PUSH_R
 #define TOKEN_OUT			I2C_SLAVEDSPIC_MODE_TOKEN_OUT
 #define MIRROR_POS		I2C_SLAVEDSPIC_MODE_MIRROR_POS
 
@@ -95,8 +97,14 @@ int8_t state_set_mode(struct i2c_cmd_slavedspic_set_mode *cmd)
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst = 0;
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;	
 	}
-	else if (mainboard_command.mode == TOKEN_SHOW) {
-		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_SHOW;
+	else if (mainboard_command.mode == TOKEN_PUSH_L) {
+		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_PUSH_L;
+		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
+			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
+		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
+	}
+	else if (mainboard_command.mode == TOKEN_PUSH_R) {
+		slavedspic.ts[mainboard_command.ts.side].state_rqst = TS_STATE_PUSH_R;
 		slavedspic.ts[mainboard_command.ts.side].speed_rqst =
 			 (uint16_t)(((uint16_t)mainboard_command.ts.speed_div4<<2)|0x0003);
 		slavedspic.ts[mainboard_command.ts.side].state_changed = 1;
@@ -326,8 +334,14 @@ void token_system_manage(token_system_t *ts)
 			ts->state = TS_STATE_IDLE;
 			break;
 			
+		case TS_STATE_PUSH_L:
 		case TS_STATE_SHOW:
 			belts_mode_set(ts->belts_side, BELTS_MODE_RIGHT, ts->speed);
+			ts->state = TS_STATE_IDLE;
+			break;
+
+		case TS_STATE_PUSH_R:
+			belts_mode_set(ts->belts_side, BELTS_MODE_LEFT, ts->speed);
 			ts->state = TS_STATE_IDLE;
 			break;
 

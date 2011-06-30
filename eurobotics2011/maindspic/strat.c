@@ -162,23 +162,23 @@ struct strat_infos strat_infos = {
 /*                  INIT                                     */
 
 /*************************************************************/
-
-void strat_set_bounding_box(void)
+void strat_set_bounding_box(uint8_t type)
 {
 
-#ifdef AREA_BBOX_6X5
-	/* area 6x5 */
-	strat_infos.area_bbox.x1 = 625;
-	strat_infos.area_bbox.y1 = 220;
-	strat_infos.area_bbox.x2 = 2375;
-	strat_infos.area_bbox.y2 = 1575;
-#else
-	/* area 4x4	*/
-	strat_infos.area_bbox.x1 = 945;
-	strat_infos.area_bbox.y1 = 495;
-	strat_infos.area_bbox.x2 = 2055;
-	strat_infos.area_bbox.y2 = 1575;
-#endif
+	if(type == AREA_BBOX_6X5) {
+		/* area 6x5 */
+		strat_infos.area_bbox.x1 = 625;
+		strat_infos.area_bbox.y1 = 220;
+		strat_infos.area_bbox.x2 = 2375;
+		strat_infos.area_bbox.y2 = 1575;
+	}
+	else {
+		/* area 4x4	*/
+		strat_infos.area_bbox.x1 = 945;
+		strat_infos.area_bbox.y1 = 495;
+		strat_infos.area_bbox.x2 = 2055;
+		strat_infos.area_bbox.y2 = 1575;
+	}
 
 	polygon_set_boundingbox(strat_infos.area_bbox.x1,
 				strat_infos.area_bbox.y1,
@@ -387,7 +387,7 @@ void strat_reset_infos(void)
 	uint8_t i, j;
 
 	/* bounding box */
-	strat_set_bounding_box();
+	strat_set_bounding_box(AREA_BBOX_4X4);
 	
 	/* reset flags of slots */
 	for(i=0; i<NB_SLOT_X; i++) {
@@ -515,9 +515,19 @@ void strat_event(void *dummy)
 									     0, NB_GRID_LINES_Y-1);	
 
 	/* update opponent slot position */
-	strat_update_slot_position(TYPE_OPPONENT, 30, 
-									     0, NB_GRID_LINES_X-1,
+	strat_update_slot_position(TYPE_OPPONENT, GRID_MARGIN, 
+									     2, 6,						/* central rectangle (includes bonus near wall and half safe zones */
+									     1, 6);	
+	strat_update_slot_position(TYPE_OPPONENT, 100, 
+									     0, 8,						/* near wall */
+									     0, 1);	
+	strat_update_slot_position(TYPE_OPPONENT, 100, 
+									     0, 2,						/* near green blue */
 									     0, NB_GRID_LINES_Y-1);	
+	strat_update_slot_position(TYPE_OPPONENT, 100, 
+									     6, 8,						/* near green red */
+									     0, NB_GRID_LINES_Y-1);	
+
 
 	/* update zones */
 	strat_update_zones(); 
@@ -538,6 +548,7 @@ void strat_event(void *dummy)
 
 #define ERROUT(e) do {\
 		err = e;			 \
+		goto end;		 \
 	} while(0)	
 
 
@@ -555,22 +566,26 @@ uint8_t strat_beginning(void)
 	wait_until_opponent_is_far();
 	trajectory_d_rel(&mainboard.traj, 250);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+	//if (!TRAJ_SUCCESS(err))
+	//	ERROUT(err);
 
 	/* pick & place tokens on line 1 */
 	err = strat_harvest_line1();
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+	if (!TRAJ_SUCCESS(err)) {
+		err = strat_harvest_green_area_smart(get_opponent_color());
+		ERROUT(err);		
+	}
 
 #ifndef HOMOLOGATION
 	/* pick & place tokens on line 2 */
 	err = strat_harvest_line2();
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
+	if (!TRAJ_SUCCESS(err)) {
+		err = strat_harvest_green_area_smart(get_opponent_color());
+		ERROUT(err);		
+	}
 
 	/* pick & place tokens on green area */
-	if(strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST)
+	if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
 		err = strat_harvest_green_area_smart(get_opponent_color());
 	else
 		err = strat_harvest_green_area_smart(get_color());		
@@ -578,7 +593,7 @@ uint8_t strat_beginning(void)
 		ERROUT(err);
 #endif
 
-// end:
+end:
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }
@@ -591,10 +606,10 @@ uint8_t strat_main(void)
 	/* pick & place our static tokens */
 	err = strat_beginning();
 
-#ifndef HOMOLOGATION
-	/* place two token on the other side */
-	err = strat_bonus_point();
-#endif
+//#ifndef HOMOLOGATION
+//	/* place two token on the other side */
+//	err = strat_bonus_point();
+//#endif
 
 #ifdef TEST_EXIT
 	i2c_slavedspic_mode_token_take(SIDE_FRONT);
@@ -602,8 +617,29 @@ uint8_t strat_main(void)
 	lasers_set_on();
 #endif
 
-	/* autoplay */
+	/* autoplay depends on opponent */
 	while (1) {
+		err = strat_play_with_opp();
+
+		if(err == END_TRAJ) {
+			break;
+		}
+		/* check end of match */
+		else if (err == END_TIMER) {
+			DEBUG(E_USER_STRAT, "End of time");
+			strat_exit();
+			break;
+		}
+
+	}
+
+	/* thresholds */
+	strat_infos.conf.th_place_prio = SLOT_PRIO_GREEN;
+	strat_infos.conf.th_token_score = NULL_SCORE;
+
+	/* try to place on bonus */
+	while(1) {
+		err = strat_big_final();
 
 		err = wait_traj_end(TRAJ_FLAGS_STD);
 
@@ -613,8 +649,8 @@ uint8_t strat_main(void)
 			strat_exit();
 			break;
 		}
-
 	}
+
 	return END_TRAJ;
 }
 

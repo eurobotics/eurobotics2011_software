@@ -32,7 +32,9 @@ typedef struct {
 #define TS_STATE_WAITING_FREE		4
 #define TS_STATE_STOP				5
 #define TS_STATE_SHOW				6
-#define TS_STATE_OUT					7
+#define TS_STATE_PUSH_L				7
+#define TS_STATE_PUSH_R				8
+#define TS_STATE_OUT					9
 
 	uint8_t state;
 	uint8_t state_rqst;

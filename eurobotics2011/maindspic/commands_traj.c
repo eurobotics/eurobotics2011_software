@@ -814,12 +814,15 @@ static void cmd_strat_conf_parsed(void *parsed_result, void *data)
 
 		/* flags */
 		strat_infos.conf.flags  = 0;
+#ifndef HOMOLOGATION
 		//strat_infos.conf.flags |= LINE1_TOKENS_ON_BONUS_OLD;
 		//strat_infos.conf.flags |= LINE1_TOKENS_NEAR_WALL;
 		strat_infos.conf.flags |= LINE1_OPP_TOKEN_BEFORE_PLACE;
 		strat_infos.conf.flags |= LINE1_OPP_TOKEN_AFTER_PLACE;
-
+		//strat_infos.conf.flags |= GREEN_OPP_ZONE_FIRST;
+#endif
 	}
+
 
 	/* init mirrors */
 	mirrors_set_mode(MODE_HIDE_MIRRORS);
@@ -877,6 +880,9 @@ static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
 		bit = LINE1_OPP_TOKEN_BEFORE_PLACE;
 	else if (!strcmp_P(res->arg1, PSTR("after")))
 		bit = LINE1_OPP_TOKEN_AFTER_PLACE;
+	else if (!strcmp_P(res->arg1, PSTR("green_opp")))
+		bit = GREEN_OPP_ZONE_FIRST;
+
 
 
 	if (on)
@@ -890,7 +896,7 @@ static void cmd_strat_conf2_parsed(void *parsed_result, void *data)
 
 prog_char str_strat_conf2_arg0[] = "strat_conf";
 parse_pgm_token_string_t cmd_strat_conf2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg0, str_strat_conf2_arg0);
-prog_char str_strat_conf2_arg1[] = "bonus_old#near_wall#before#after";
+prog_char str_strat_conf2_arg1[] = "bonus_old#near_wall#before#after#green_opp";
 parse_pgm_token_string_t cmd_strat_conf2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg1, str_strat_conf2_arg1);
 prog_char str_strat_conf2_arg2[] = "on#off";
 parse_pgm_token_string_t cmd_strat_conf2_arg2 = TOKEN_STRING_INITIALIZER(struct cmd_strat_conf2_result, arg2, str_strat_conf2_arg2);
@@ -1083,11 +1089,11 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 	else if (strcmp_P(res->arg1, PSTR("beginning")) == 0) {
 		err = strat_beginning();
 	}
-	else if (strcmp_P(res->arg1, PSTR("bonus_wall")) == 0) {
-		//err = strat_bonus_point();
-		//err = strat_work_on_zone(&strat_infos.zones[ZONE_WALL_BONUS]);
-		strat_pickup_bonus_near_wall();
-	}
+//	else if (strcmp_P(res->arg1, PSTR("bonus_wall")) == 0) {
+//		//err = strat_bonus_point();
+//		//err = strat_work_on_zone(&strat_infos.zones[ZONE_WALL_BONUS]);
+//		strat_pickup_bonus_near_wall();
+//	}
 	else if (strcmp_P(res->arg1, PSTR("pickup_near")) == 0) {
 		err = strat_pickup_or_push_near_slots(MODE_ALL);
 	}
@@ -1111,7 +1117,13 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 			cmd = vt100_parser(&vt100, c);	
 		}
 	}
+	else if (strcmp_P(res->arg1, PSTR("final")) == 0) {
+		err = strat_big_final();
 
+		do {
+			err = strat_big_final();	
+		} while(TRAJ_SUCCESS(err));
+	}
 
 //	else if (strcmp_P(res->arg1, PSTR("home")) == 0) {
 //		err = strat_work_on_zone(&strat_infos.zones[ZONE_NEAR_HOME]);
@@ -1133,7 +1145,7 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 prog_char str_subtraj2_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg0, str_subtraj2_arg0);
 //prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near#place_near#home#safe#opp_home#opp_safe#";
-prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#pickup_near#place_near#bonus_wall#play";
+prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#pickup_near#place_near#bonus_wall#play#final";
 parse_pgm_token_string_t cmd_subtraj2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg1, str_subtraj2_arg1);
 //parse_pgm_token_num_t cmd_subtraj2_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg2, INT32);
 //parse_pgm_token_num_t cmd_subtraj2_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg3, INT32);

@@ -82,8 +82,8 @@
 #define SPEED_DIST_FAST 		2000
 #define SPEED_ANGLE_FAST 		2000
 #else
-#define SPEED_DIST_FAST 		2000
-#define SPEED_ANGLE_FAST 		2000
+#define SPEED_DIST_FAST 		4000
+#define SPEED_ANGLE_FAST 		4000
 #endif
 #define SPEED_DIST_SLOW 		1000
 #define SPEED_ANGLE_SLOW 		1000
@@ -129,6 +129,7 @@ struct conf {
 #define FIGURE_SCORE		20
 #define TOWER1H_SCORE	40
 #define TOWER2H_SCORE	60
+#define NOPLACE_SCORE	70
 
 
 /* slot dimensions */
@@ -280,6 +281,10 @@ extern struct strat_infos strat_infos;
 /********************************************
  * in strat.c 
  *******************************************/
+#define AREA_BBOX_6X5	0
+#define AREA_BBOX_4X4	1
+void strat_set_bounding_box(uint8_t type);
+
 void strat_dump_infos(const char *caller);
 void strat_dump_conf(void);
 void strat_reset_infos(void);
@@ -382,6 +387,7 @@ void strat_update_slot_position(uint8_t type, int16_t margin,
 void strat_update_zones(void);
 
 uint8_t strat_play_with_opp(void);
+uint8_t strat_big_final(void);
 
 ///* work on a zone */
 //uint8_t strat_work_on_zone(zone_t * z);
@@ -390,7 +396,7 @@ uint8_t strat_play_with_opp(void);
 //uint8_t strat_place_figure_near_opp_home(void);
 //uint8_t strat_place_on_near_opp_safe_slot(void);
 //uint8_t strat_place_on_opp_safe_slot(void);
-uint8_t strat_pickup_bonus_near_wall(void);
+//uint8_t strat_pickup_bonus_near_wall(void);
 
 
 /* add here more strat functions in files */

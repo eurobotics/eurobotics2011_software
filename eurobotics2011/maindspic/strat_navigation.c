@@ -252,15 +252,6 @@ void strat_update_zones(void)
 
 uint8_t strat_play_with_opp(void)
 {
-	static uint8_t state = 0;
-	static uint8_t opp_side_actual;
-	static uint8_t opp_side_before;
-	uint8_t side = 0;
-	uint16_t old_spdd = 0, old_spda = 0;
-	int8_t th_place_prior_old = 0;
-	int8_t th_token_score_old = 0;
-	uint8_t err;
-
 #define GOTO_NEAR_OPP			0
 #define WAITING_OPP				1
 #define WORK_NEAR_OPP_HOME		2
@@ -270,15 +261,49 @@ uint8_t strat_play_with_opp(void)
 #define WORK_ON_BONUS_WALL		6
 #define PICKUP_TOWERS			7
 
+//#define DEBUG_PLAY
+#ifdef DEBUG_PLAY
+	/* debug */
+	static uint8_t state = WORK_ON_BONUS_WALL;
+#else
+	static uint8_t state = 0;
+#endif
+	static uint8_t opp_side_actual;
+	static uint8_t opp_side_before;
+	uint8_t side = 0;
+	uint16_t old_spdd = 0, old_spda = 0;
+	int8_t th_place_prior_old = 0;
+	int8_t th_token_score_old = 0;
+	uint8_t err;
+	uint8_t our_bonus_token_not_there = 0;
+
+
+
 #define TIMEOUT_OPP_IS_WORKING	2000
 #define TIMEOUT_OPP_WAS_WORKING	2000 
-#define TIMEOUT_GOTO_NEAR_OPP		1000
+#define TIMEOUT_GOTO_NEAR_OPP		2000
+
+#define TIMEOUT_RETURN				(90-10)
+#define TIMEOUT_STOP_PLACE			(90-20)
+
 
 #define ZONE_OUR_SIDE	0
 #define ZONE_OPP_SIDE	1
 	
 //while(!cmdline_keypressed());
 
+	/* at timeout return */
+#ifndef DEBUG_PLAY
+	if(time_get_s() > TIMEOUT_RETURN)
+		return END_TRAJ;
+
+	/* at timeout stop of place tokens */
+	if(time_get_s() > TIMEOUT_STOP_PLACE) {
+		strat_infos.conf.th_token_score = NOPLACE_SCORE;
+	}
+#endif
+
+	/* play */
 	switch(state) {
 
 		case GOTO_NEAR_OPP:
@@ -364,8 +389,13 @@ uint8_t strat_play_with_opp(void)
 //			}
 
 			/* if opp visited bonus wall and was on homes side */
-			if((strat_infos.opp_actual_zone == ZONE_NEAR_HOME
-				|| strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME)
+#ifndef HOMOLOGATION
+//			if((strat_infos.opp_actual_zone == ZONE_NEAR_HOME
+//				|| strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME)
+//				&& (strat_infos.zones[ZONE_WALL_BONUS].num_visits 
+//				&& strat_infos.zones[ZONE_WALL_BONUS].total_time_ms > TIMEOUT_OPP_WAS_WORKING)) {
+
+			if((strat_infos.opp_actual_zone != ZONE_WALL_BONUS)
 				&& (strat_infos.zones[ZONE_WALL_BONUS].num_visits 
 				&& strat_infos.zones[ZONE_WALL_BONUS].total_time_ms > TIMEOUT_OPP_WAS_WORKING)) {
 
@@ -373,6 +403,7 @@ uint8_t strat_play_with_opp(void)
 				state = WORK_ON_BONUS_WALL;
 				break;
 			}
+#endif
 
 			/* update opp side */
 			if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_SAFE
@@ -494,7 +525,8 @@ uint8_t strat_play_with_opp(void)
 			}
 
 			/* work */
-			err = strat_place_near_slots(1, FIGURE_SCORE);
+			//err = strat_place_near_slots(1, FIGURE_SCORE);
+			err = strat_place_near_slots(0, NULL_SCORE);
 			if (!TRAJ_SUCCESS(err)) {
 				state = GOTO_NEAR_OPP;
 				break;
@@ -525,7 +557,8 @@ uint8_t strat_play_with_opp(void)
 			}
 
 			/* work */
-			err = strat_place_near_slots(1, FIGURE_SCORE);
+			//err = strat_place_near_slots(1, FIGURE_SCORE);
+			err = strat_place_near_slots(0, NULL_SCORE);
 			if (!TRAJ_SUCCESS(err)) {
 				state = GOTO_NEAR_OPP;
 				break;
@@ -645,8 +678,8 @@ uint8_t strat_play_with_opp(void)
 			}
 
 			/* goto in front bonus wall */
-			err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
-													  		    strat_infos.slot[4][4].y, 
+			err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x+75),
+													  		    strat_infos.slot[4][4].y-100, 
 													  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 			if (!TRAJ_SUCCESS(err)) {
 				state = GOTO_NEAR_OPP;
@@ -674,8 +707,8 @@ uint8_t strat_play_with_opp(void)
 				}	
 
 				/* goto in front bonus wall */
-				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
-														  		    strat_infos.slot[4][4].y, 
+				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x+75),
+														  		    strat_infos.slot[4][4].y-100, 
 														  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 				if (!TRAJ_SUCCESS(err)) {
 					state = GOTO_NEAR_OPP;
@@ -683,15 +716,38 @@ uint8_t strat_play_with_opp(void)
 				}
 			}
 
-			/* set speed */		
-			strat_set_speed(500, 500);
+
+			/* possible token 4 */
+			side = strat_turnto_pickup_token(&mainboard.traj,
+						 COLOR_X(strat_infos.slot[4][5].x+80),
+									strat_infos.slot[4][5].y );
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			strat_d_rel_side(&mainboard.traj, 95, side);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			
+			//i2c_slavedspic_mode_token_out(side);
+			strat_set_speed(2000, 2000);
+			trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(45));
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			
+
+			/* if our token bonus disapared place one */
+			side = strat_turnto_pickup_token(&mainboard.traj,
+						 COLOR_X(strat_infos.slot[3][5].x),
+									strat_infos.slot[3][5].y );
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			if(!sensor_token_side(side))
+				our_bonus_token_not_there = 1;
+
 
 			/* pickup possible token protecting, XXX displacement important */
-			err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x-50),
-													  		  strat_infos.slot[4][5].y-100, &side);
+			err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x-100),
+													  		  strat_infos.slot[4][5].y-160, &side); //100 160
 
 			/* go backwards to avoid crash on turning */
-			strat_d_rel_side(&mainboard.traj, -50, side);
+			strat_d_rel_side(&mainboard.traj, -70, side);
 			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 			if (!TRAJ_SUCCESS(err)) {
 				state = GOTO_NEAR_OPP;
@@ -699,11 +755,11 @@ uint8_t strat_play_with_opp(void)
 			}
 
 			/* there is a token protecting */
-			if(token_catched(side)) {
+			if(token_catched(side) &&  strat_get_num_tokens() == 2) {
 
 				/* back to origin */
 				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
-												  		    strat_infos.slot[4][4].y, 
+												  		    strat_infos.slot[4][4].y-30, 
 												  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 				if (!TRAJ_SUCCESS(err)) {
 					state = GOTO_NEAR_OPP;
@@ -725,34 +781,88 @@ uint8_t strat_play_with_opp(void)
 					state = GOTO_NEAR_OPP;
 					break;
 				}	
+			}		
 
-				/* goto in front bonus wall */
-				err = goto_and_avoid_empty_side(COLOR_X(strat_infos.slot[4][4].x),
-												  		    strat_infos.slot[4][4].y, 
-												  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
-				if (!TRAJ_SUCCESS(err)) {
-					state = GOTO_NEAR_OPP;
-					break;
-				}
+			/* goto in front bonus wall */
+			trajectory_goto_xy_abs(&mainboard.traj,
+													COLOR_X(strat_infos.slot[4][4].x),
+												           strat_infos.slot[4][4].y-30);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			side = strat_turnto_pickup_token(&mainboard.traj,
+									 COLOR_X(strat_infos.slot[4][5].x),
+												strat_infos.slot[4][5].y );
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+
+			if(side == SIDE_FRONT) {
+				if(!sensor_get(S_TOKEN_FRONT_R) && !sensor_get(S_TOKEN_FRONT_L))
+					goto end_bonus_wall;
+			}
+			else {
+				if(!sensor_get(S_TOKEN_REAR_R) && !sensor_get(S_TOKEN_REAR_L))
+					goto end_bonus_wall;
 			}
 
-			/* pickup token on center position */
-			err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x),
-													  		  strat_infos.slot[4][5].y, &side);
-	
-			/* if end bloking, there are two tokens near wall */
+			strat_d_rel_side(&mainboard.traj, 130, side);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			strat_set_speed(200, 200);
+
+			if(get_color() == I2C_COLOR_BLUE)
+				i2c_slavedspic_mode_token_push_l(side);	
+			else
+				i2c_slavedspic_mode_token_push_r(side);
+
+			strat_d_rel_side(&mainboard.traj, 80, side);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			i2c_slavedspic_mode_token_take(side);
+			trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(-8));
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 			if(err & END_BLOCKING) {
-
-				/* center one with belts and go slowly */
-				i2c_slavedspic_mode_token_show(side);	/* TODO: modes left and right */
-				strat_set_speed(150, SPEED_ANGLE_FAST);
-				strat_d_rel_side(&mainboard.traj, 50, side);
+				trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(8));
 				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-
-				/* pickup token on center position */
-				err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[4][5].x),
-														  		  strat_infos.slot[4][5].y+30, &side);
 			}
+
+			i2c_slavedspic_mode_token_take(side);
+			strat_d_rel_side(&mainboard.traj, 130, side);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//			if(err & END_BLOCKING) {
+//				time_wait_ms(100);
+//				if(!token_catched(side)) {
+//					trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(10));
+//					err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//				}
+//			}
+
+			strat_set_speed(old_spdd, old_spda);
+			strat_d_rel_side(&mainboard.traj, -200, side);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			/* goto in front bonus wall */
+			trajectory_goto_xy_abs(&mainboard.traj,
+													COLOR_X(strat_infos.slot[4][4].x),
+												           strat_infos.slot[4][4].y-30);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			/* place on our bonus */
+			if(our_bonus_token_not_there) {
+ 				err = strat_place_token_auto(COLOR_X(strat_infos.slot[3][5].x-60),
+									 		                 strat_infos.slot[3][5].y+60, &side, GO_FORWARD);
+
+				trajectory_goto_xy_abs(&mainboard.traj,
+														COLOR_X(strat_infos.slot[4][4].x),
+													           strat_infos.slot[4][4].y-30);
+				err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			}
+
+end_bonus_wall:
+			/* restore speed */
+			strat_set_speed(old_spdd, old_spda);
+
+			i2c_slavedspic_mode_token_stop(SIDE_FRONT);
+			i2c_slavedspic_mode_token_stop(SIDE_REAR);
 
 			/* reset zone statistics */
 			strat_infos.zones[ZONE_WALL_BONUS].num_visits = 0; 
@@ -772,7 +882,131 @@ uint8_t strat_play_with_opp(void)
 			break;
 	}
 
-	return 1;
+	return 0;
+}
+
+uint8_t strat_big_final(void)
+{
+	static uint8_t state = 0;
+	uint8_t side;
+	uint8_t err;
+
+#define CATCH_TWO_TOKENS				0
+#define GOTO_BEST_PLACE_POSITION		1
+#define PLACE_FROM_CENTER_SLOT		2
+#define PLACE_FROM_BONUS_NEAR_SAFE	3
+#define PLACE_FROM_BONUS_NEAR_HOME	4
+#define VISIT_OPP_BONUS					5
+
+	switch(state) {
+		case CATCH_TWO_TOKENS:
+		case GOTO_BEST_PLACE_POSITION:
+			if(!opp_x_is_more_than(1500)) {
+				err = goto_and_avoid(COLOR_X(strat_infos.slot[5][2].x),
+												  	  strat_infos.slot[5][2].y, 
+									  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+				if (TRAJ_SUCCESS(err)) {
+					state = PLACE_FROM_CENTER_SLOT;
+					break;
+				}
+			}
+			else {
+				if(opp_y_is_more_than(875)) {
+					err = goto_and_avoid(COLOR_X(strat_infos.slot[5][1].x),
+													  	  strat_infos.slot[5][1].y, 
+										  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+					if (TRAJ_SUCCESS(err)) {
+						state = PLACE_FROM_BONUS_NEAR_HOME;
+						break;
+					}
+				}
+				else {
+					err = goto_and_avoid(COLOR_X(strat_infos.slot[5][3].x),
+													  	  strat_infos.slot[5][3].y, 
+										  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+					if (TRAJ_SUCCESS(err)) {
+						state = PLACE_FROM_BONUS_NEAR_SAFE;
+						break;
+					}
+				}
+			}
+			break;
+
+		case PLACE_FROM_CENTER_SLOT:
+
+			/* place */
+			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][3].x),
+									              strat_infos.slot[5][3].y, &side, GO_FORWARD);
+			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][1].x),
+									              strat_infos.slot[5][1].y, &side, GO_FORWARD);
+			/* protect tokens */
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(1675), 875);
+			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
+			trajectory_only_a_abs(&mainboard.traj, 90);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+			state = VISIT_OPP_BONUS;
+			break;
+
+		case PLACE_FROM_BONUS_NEAR_SAFE:
+			/* goto near */
+			err = goto_and_avoid(COLOR_X(strat_infos.slot[4][3].x),
+											  	  strat_infos.slot[4][3].y, 
+								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = PLACE_FROM_BONUS_NEAR_HOME;
+				break;
+			}
+
+			/* place */
+			err = strat_place_token_auto(COLOR_X(strat_infos.slot[4][4].x),
+									              strat_infos.slot[4][4].y, &side, GO_FORWARD);
+			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][3].x),
+									              strat_infos.slot[5][3].y, &side, GO_FORWARD);
+
+			/* protect tokens */
+			strat_set_speed(2000, SPEED_ANGLE_FAST);
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(1850), 1050);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+
+			state = VISIT_OPP_BONUS;
+			break;
+	
+		case PLACE_FROM_BONUS_NEAR_HOME:
+			/* goto near */
+			err = goto_and_avoid(COLOR_X(strat_infos.slot[4][1].x),
+											  	  strat_infos.slot[4][1].y, 
+								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = PLACE_FROM_BONUS_NEAR_SAFE;
+				break;
+			}
+
+			/* place */
+			err = strat_place_token_auto(COLOR_X(strat_infos.slot[4][2].x),
+									              strat_infos.slot[4][2].y, &side, GO_FORWARD);
+			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][1].x),
+									              strat_infos.slot[5][1].y, &side, GO_FORWARD);
+
+			/* protect tokens */
+			strat_set_speed(2000, SPEED_ANGLE_FAST);
+			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(1850), 700);
+			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+			strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+
+			state = VISIT_OPP_BONUS;
+			break;
+			
+		case VISIT_OPP_BONUS:
+			return END_TRAJ;
+		default:
+			state = 0;
+			break;
+	
+	}
+	
+	return 0;
 }
 
 ///* work on a zone */
@@ -940,83 +1174,85 @@ uint8_t strat_play_with_opp(void)
 //	return err;
 //}
 
-uint8_t strat_pickup_bonus_near_wall(void)
-{
-	int16_t delta = 0;
-	uint8_t side = 0;
-	uint8_t err;
-	uint8_t our_token_disapeared = 0;
-	
-	/* initial side */
-	side = (token_side_is_lower_score(SIDE_FRONT)? SIDE_FRONT : SIDE_REAR);
+//uint8_t strat_pickup_bonus_near_wall(void)
+//{
+//	int16_t delta = 0;
+//	uint8_t side = 0;
+//	uint8_t err;
+//	uint8_t our_token_disapeared = 0;
+//	
+//	/* initial side */
+//	side = (token_side_is_lower_score(SIDE_FRONT)? SIDE_FRONT : SIDE_REAR);
+//
+//start:
+//	/* take a look if our token is still here */
+//	side = strat_turnto_pickup_token(&mainboard.traj,
+//										COLOR_X(strat_infos.slot[3][5].x), 
+//										strat_infos.slot[3][5].y);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	if(!sensor_token_side(side))
+//		our_token_disapeared = 1;
+//
+//	/* try pickup opp token */
+//	side = strat_turnto_pickup_token(&mainboard.traj,
+//										COLOR_X(strat_infos.slot[4][5].x), 
+//										strat_infos.slot[4][5].y);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	/* go forwards slowly */
+//	i2c_slavedspic_mode_token_take(side);
+//	strat_set_speed(300, SPEED_ANGLE_FAST);
+//	strat_d_rel_side(&mainboard.traj, 260, side);
+//
+//	/* wait token catched or end traj */
+//	err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR);
+//
+//	/* restore speed */
+//	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
+//
+//	/* two tokens on opponent bonus */
+//	if(sensor_token_side(side) && !y_is_more_than(1750)) {
+//
+//		/* back in front of bonus wall */
+//		trajectory_goto_xy_abs(&mainboard.traj,
+//									 COLOR_X(strat_infos.slot[4][4].x), 
+//									 strat_infos.slot[4][4].y);
+//		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//		if (!TRAJ_SUCCESS(err))
+//			ERROUT(err);
+//
+//		/* for place token catched in null position */
+//		delta = 100;
+//
+//		goto start;
+//	}
+//
+//	/* avoid opponent */
+//	while(opponent_is_in_area(COLOR_X(1500), 1750,
+//									  COLOR_X(1850), 1050));
+//
+//	/* back in front of bonus wall */
+//	trajectory_goto_xy_abs(&mainboard.traj,
+//								 COLOR_X(strat_infos.slot[4][4].x), 
+//								 strat_infos.slot[4][4].y);
+//	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
+//
+//	/* TODO if our token bonus disapared place one */
+//
+//end:
+//	return err;
+//}
 
-start:
-	/* take a look if our token is still here */
-	side = strat_turnto_pickup_token(&mainboard.traj,
-										COLOR_X(strat_infos.slot[3][5].x), 
-										strat_infos.slot[3][5].y);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-	if(!sensor_token_side(side))
-		our_token_disapeared = 1;
-
-	/* try pickup opp token */
-	side = strat_turnto_pickup_token(&mainboard.traj,
-										COLOR_X(strat_infos.slot[4][5].x), 
-										strat_infos.slot[4][5].y);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-	/* go forwards slowly */
-	i2c_slavedspic_mode_token_take(side);
-	strat_set_speed(300, SPEED_ANGLE_FAST);
-	strat_d_rel_side(&mainboard.traj, 260, side);
-
-	/* wait token catched or end traj */
-	err = WAIT_COND_OR_TRAJ_END(sensor_token_side(side), TRAJ_FLAGS_NO_NEAR);
-
-	/* restore speed */
-	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
-
-	/* two tokens on opponent bonus */
-	if(sensor_token_side(side) && !y_is_more_than(1750)) {
-
-		/* back in front of bonus wall */
-		trajectory_goto_xy_abs(&mainboard.traj,
-									 COLOR_X(strat_infos.slot[4][4].x), 
-									 strat_infos.slot[4][4].y);
-		err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-		if (!TRAJ_SUCCESS(err))
-			ERROUT(err);
-
-		/* for place token catched in null position */
-		delta = 100;
-
-		goto start;
-	}
-
-	/* avoid opponent */
-	while(opponent_is_in_area(COLOR_X(1500), 1750,
-									  COLOR_X(1850), 1050));
-
-	/* back in front of bonus wall */
-	trajectory_goto_xy_abs(&mainboard.traj,
-								 COLOR_X(strat_infos.slot[4][4].x), 
-								 strat_infos.slot[4][4].y);
-	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-
-	/* TODO if our token bonus disapared place one */
-
-end:
-	return err;
-}
 
 
+#ifdef ALCALA_STRAT
 /* place two tokens in bonus points,
 	return END_TRAJ if sucess o END_TIMER (only one token in bonus */
 
@@ -1482,3 +1718,5 @@ end:
 	
 	return err;
 }
+#endif
+
