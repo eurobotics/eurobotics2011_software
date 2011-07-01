@@ -563,7 +563,6 @@ uint8_t strat_beginning(void)
 	strat_set_speed(SPEED_DIST_FAST, SPEED_ANGLE_FAST);
 
 	/* go out of start position */
-	wait_until_opponent_is_far();
 	trajectory_d_rel(&mainboard.traj, 250);
 	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 	//if (!TRAJ_SUCCESS(err))
@@ -576,7 +575,6 @@ uint8_t strat_beginning(void)
 		ERROUT(err);		
 	}
 
-#ifndef HOMOLOGATION
 	/* pick & place tokens on line 2 */
 	err = strat_harvest_line2();
 	if (!TRAJ_SUCCESS(err) && !opp_x_is_more_than(975)) {
@@ -585,13 +583,12 @@ uint8_t strat_beginning(void)
 	}
 
 	/* pick & place tokens on green area */
-	//if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
-	//	err = strat_harvest_green_area_smart(get_opponent_color());
+	if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
+		err = strat_harvest_green_area_smart(get_opponent_color());
 	else
 		err = strat_harvest_green_area_smart(get_color());		
-	if (!TRAJ_SUCCESS(err))
-		ERROUT(err);
-#endif
+//	if (!TRAJ_SUCCESS(err))
+//		ERROUT(err);
 
 end:
 	strat_set_speed(old_spdd, old_spda);
@@ -617,6 +614,18 @@ uint8_t strat_main(void)
 	lasers_set_on();
 #endif
 
+//	err = goto_and_avoid(COLOR_X(strat_infos.slot[2][3].x),
+//									  	  strat_infos.slot[2][3].y, 
+//						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//
+//	/* thresholds */
+//	strat_infos.conf.th_place_prio = SLOT_PRIO_GREEN;
+//	strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
+//
+//	err = strat_place_near_slots(0,0);
+//
+//	err = strat_harvest_green_area_smart(get_opponent_color());		
+
 	/* autoplay depends on opponent */
 	while (1) {
 		err = strat_play_with_opp();
@@ -630,17 +639,11 @@ uint8_t strat_main(void)
 			strat_exit();
 			break;
 		}
-
 	}
-
-	/* thresholds */
-	strat_infos.conf.th_place_prio = SLOT_PRIO_GREEN;
-	strat_infos.conf.th_token_score = NULL_SCORE;
 
 	/* try to place on bonus */
 	while(1) {
 		err = strat_big_final();
-
 		err = wait_traj_end(TRAJ_FLAGS_STD);
 
 		/* check end of match */

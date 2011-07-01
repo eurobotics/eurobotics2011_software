@@ -1022,6 +1022,14 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 		}
 		err = strat_harvest_green_area_smart(get_opponent_color());
 	}
+	else if (strcmp_P(res->arg1, PSTR("place_near")) == 0) {
+		err = strat_place_near_slots(res->arg2,res->arg3);
+	}
+	else if (strcmp_P(res->arg1, PSTR("prior_score")) == 0) {
+		strat_infos.conf.th_place_prio = res->arg2;
+		strat_infos.conf.th_token_score = res->arg3;
+	}
+	
 
 	printf_P(PSTR("substrat returned %s\r\n"), get_err(err));
 	trajectory_hardstop(&mainboard.traj);
@@ -1029,7 +1037,7 @@ static void cmd_subtraj1_parsed(void *parsed_result, void *data)
 
 prog_char str_subtraj1_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj1_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg0, str_subtraj1_arg0);
-prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r#place_ff#place_fb#place_rf#place_rb#green#green_opp";
+prog_char str_subtraj1_arg1[] = "pickup_f#pickup_r#place_ff#place_fb#place_rf#place_rb#green#green_opp#place_near#prior_score";
 parse_pgm_token_string_t cmd_subtraj1_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj1_result, arg1, str_subtraj1_arg1);
 parse_pgm_token_num_t cmd_subtraj1_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg2, INT32);
 parse_pgm_token_num_t cmd_subtraj1_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj1_result, arg3, INT32);
@@ -1097,9 +1105,6 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 	else if (strcmp_P(res->arg1, PSTR("pickup_near")) == 0) {
 		err = strat_pickup_or_push_near_slots(MODE_ALL);
 	}
-	else if (strcmp_P(res->arg1, PSTR("place_near")) == 0) {
-		err = strat_place_near_slots(0,0);
-	}
 	else if (strcmp_P(res->arg1, PSTR("play")) == 0) {
 
 		while(cmd != KEY_CTRL_C) 
@@ -1145,7 +1150,7 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 prog_char str_subtraj2_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg0, str_subtraj2_arg0);
 //prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near#place_near#home#safe#opp_home#opp_safe#";
-prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#pickup_near#place_near#bonus_wall#play#final";
+prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#pickup_near#bonus_wall#play#final";
 parse_pgm_token_string_t cmd_subtraj2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg1, str_subtraj2_arg1);
 //parse_pgm_token_num_t cmd_subtraj2_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg2, INT32);
 //parse_pgm_token_num_t cmd_subtraj2_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg3, INT32);

@@ -1156,7 +1156,7 @@ uint8_t strat_get_place_slot(slot_index_t *slot_place, uint8_t *side)
 
 			/* evaluate front side */
 			if(token_catched(SIDE_FRONT)
-				&& ( (token_side_score(SIDE_FRONT) <= strat_infos.conf.th_token_score) || token_side_is_lower_score(SIDE_FRONT)) ) {
+				&& (token_side_score(SIDE_FRONT) <= strat_infos.conf.th_token_score)) {
 
 				/* calcule q */
 				q = strat_infos.slot[i][j].prio + (M_PI - a_rel_rad)/M_PI;
@@ -1177,8 +1177,8 @@ uint8_t strat_get_place_slot(slot_index_t *slot_place, uint8_t *side)
 			}
 
 			/* evaluate front side */
-			if(token_catched(SIDE_REAR)
-				&& ( (token_side_score(SIDE_REAR) <= strat_infos.conf.th_token_score) || token_side_is_lower_score(SIDE_REAR)) ) {
+			if(token_catched(SIDE_REAR) 
+				&& (token_side_score(SIDE_REAR) <= strat_infos.conf.th_token_score)) {
 
 				/* calcule q, notice: a_rel_rad_rear = M_PI - a_rel_rad */
 				q = strat_infos.slot[i][j].prio + a_rel_rad/M_PI;
@@ -1611,23 +1611,32 @@ void strat_look_for_towers(void)
  * think to use during line 1. 
  *************************************************************************/
 
-static uint8_t look_for_figures_enable = 0;
-static uint8_t num_figures = 0;
+static volatile uint8_t look_for_figures_enable = 0;
+static volatile uint8_t num_figures = 0;
 
 /* enable look for figures */
 void strat_look_for_figures_enable(void)
 {
+	uint8_t flags;
+
+	IRQ_LOCK(flags);
 	look_for_figures_enable = 1;
 	num_figures = 0;
+	IRQ_UNLOCK(flags);
 }
 
 /* disable look for figures */
 void strat_look_for_figures_disable(void)
 {
+	uint8_t flags;
+
+	IRQ_LOCK(flags);
 	look_for_figures_enable = 0;
+	IRQ_UNLOCK(flags);
 
 	/* default positions */
-	if(num_figures == 0 || num_figures > 2) {
+	DEBUG(E_USER_STRAT, "num_figures = %d", num_figures);
+	if((num_figures == 0) || (num_figures > 2)) {
 		strat_infos.slot[0][3].flags = SLOT_FIGURE;
 		strat_infos.slot[0][4].flags = SLOT_FIGURE;
 		strat_infos.slot[7][3].flags = SLOT_FIGURE;
@@ -1636,9 +1645,11 @@ void strat_look_for_figures_disable(void)
 	}
 	/* deduce last position */
 	else if(num_figures == 1) {
+		IRQ_LOCK(flags);
 		strat_infos.slot[0][5].flags = SLOT_FIGURE;	
 		strat_infos.slot[7][5].flags = SLOT_FIGURE;
 		num_figures = 2;	
+		IRQ_UNLOCK(flags);
 	}
 }
 
@@ -1672,10 +1683,18 @@ void strat_look_for_figures(void)
 		return;
 	
 	/* laser distance depends on angle */
-	if(robot_a_deg > 0)
-		laser_d = sensor_get_laser_distance(ADC_LASER_R);
-	else
-		laser_d = sensor_get_laser_distance(ADC_LASER_L);
+	if(get_color() == I2C_COLOR_RED) {
+		if(robot_a_deg > 0)
+			laser_d = sensor_get_laser_distance(ADC_LASER_R);
+		else
+			laser_d = sensor_get_laser_distance(ADC_LASER_L);
+	}
+	else {
+		if(robot_a_deg > 0)
+			laser_d = sensor_get_laser_distance(ADC_LASER_L);
+		else
+			laser_d = sensor_get_laser_distance(ADC_LASER_R);
+	}
 
 	/* return if angle is diferent of +/- 90 deg */
 	if( ABS(robot_a_deg) > ANGLE_ABS_MAX || ABS(robot_a_deg) < ANGLE_ABS_MIN)
@@ -1692,25 +1711,29 @@ void strat_look_for_figures(void)
 	if( robot_y > FIGURE_1_Y_MIN && robot_y < FIGURE_1_Y_MAX
 		 && (strat_infos.slot[0][1].flags & SLOT_FIGURE) == 0) {
 		strat_infos.slot[0][1].flags = SLOT_FIGURE; 
-		strat_infos.slot[7][1].flags = SLOT_FIGURE; 
+		strat_infos.slot[7][1].flags = SLOT_FIGURE;
+		//DEBUG(E_USER_STRAT, "figura at pos 1"); 
 		num_figures ++;
 	}
 	else if( robot_y > FIGURE_2_Y_MIN && robot_y < FIGURE_2_Y_MAX
 	&& (strat_infos.slot[0][2].flags & SLOT_FIGURE) == 0) {
 		strat_infos.slot[0][2].flags = SLOT_FIGURE; 
 		strat_infos.slot[7][2].flags = SLOT_FIGURE; 
+		//DEBUG(E_USER_STRAT, "figura at pos 2"); 
 		num_figures ++;
 	}
 	else if( robot_y > FIGURE_3_Y_MIN && robot_y < FIGURE_3_Y_MAX
 	&& (strat_infos.slot[0][3].flags & SLOT_FIGURE) == 0) {
 		strat_infos.slot[0][3].flags = SLOT_FIGURE; 
 		strat_infos.slot[7][3].flags = SLOT_FIGURE; 
+		//DEBUG(E_USER_STRAT, "figura at pos 3"); 
 		num_figures ++;
 	}
 	else if( robot_y > FIGURE_4_Y_MIN && robot_y < FIGURE_4_Y_MAX
 	&& (strat_infos.slot[0][4].flags & SLOT_FIGURE) == 0) {
 		strat_infos.slot[0][4].flags = SLOT_FIGURE; 
 		strat_infos.slot[7][4].flags = SLOT_FIGURE; 
+		//DEBUG(E_USER_STRAT, "figura at pos 4"); 
 		num_figures ++;
 	}
 //	else

@@ -391,7 +391,7 @@ place_pt_1:
 				ERROUT(err);
 			}
 
-			time_wait_ms(5000);			/* XXX wait to sensor re-enable, we not avoid the opponent */
+			time_wait_ms(1000);			/* XXX wait to sensor re-enable, we not avoid the opponent */
 			goto place_pt_1;
 		}
 		else if (!TRAJ_SUCCESS(err))
@@ -483,7 +483,7 @@ place_pt_2:
 				ERROUT(err);
 			}
 
-			time_wait_ms(5000);			/* XXX wait to sensor re-enable, we not avoid the opponent */
+			time_wait_ms(1000);			/* XXX wait to sensor re-enable, we not avoid the opponent */
 			goto place_pt_2;
 		}
 		else if (!TRAJ_SUCCESS(err))
@@ -622,7 +622,7 @@ back_origin:
 			ERROUT(err);
 		}
 
-		time_wait_ms(5000);
+		time_wait_ms(1000);
 		goto back_origin;
 	}
 	else if (!TRAJ_SUCCESS(err))
@@ -1669,9 +1669,20 @@ retry_place_first:
 			}
 		}
 
-		/* XXX we suppose that both are pions */
-		err = strat_place_token_auto(strat_infos.slot[i][j].x,
-								           strat_infos.slot[i][j].y, &side, GO_FORWARD);
+		/* depends if we have pions */
+		if(token_side_score(SIDE_FRONT) == PION_SCORE
+			&& token_side_score(SIDE_REAR) == PION_SCORE) {
+			err = strat_place_token_auto(strat_infos.slot[i][j].x,
+									           strat_infos.slot[i][j].y, &side, GO_FORWARD);
+		}
+		else if(token_side_score(SIDE_FRONT) == PION_SCORE) {
+			err = strat_place_token(strat_infos.slot[i][j].x,
+									           strat_infos.slot[i][j].y, SIDE_FRONT, GO_FORWARD);
+		}
+		else if(token_side_score(SIDE_REAR) == PION_SCORE) {
+			err = strat_place_token(strat_infos.slot[i][j].x,
+									           strat_infos.slot[i][j].y, SIDE_REAR, GO_FORWARD);
+		}
 		//if (!TRAJ_SUCCESS(err))
 		//	ERROUT(err);		
 	}
@@ -1813,7 +1824,7 @@ retry_pickup_fig2:
 end:	
 	/* bounding box */
 	strat_set_bounding_box(AREA_BBOX_4X4);
-	mirrors_set_mode(MODE_HIDE_MIRRORS);
+	//mirrors_set_mode(MODE_HIDE_MIRRORS);
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }

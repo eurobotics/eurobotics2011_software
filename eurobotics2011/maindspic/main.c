@@ -287,11 +287,11 @@ int main(void)
 	/* reset strat infos */
 	strat_reset_infos();
 
-	/* wait to init of slavedspic */
-	wait_ms(600);
-
 	/* enable interrupts */
 	sei();
+
+	/* wait to init of slavedspic */
+	wait_ms(2000);
 
 	/* init mirrors */
 	//mirrors_set_mode(MODE_HIDE_MIRRORS);

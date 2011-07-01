@@ -158,6 +158,7 @@ void strat_update_slot_position(uint8_t type, int16_t margin,
 			
 			/* update flags */
 			strat_infos.slot[strat_infos.slot_before.i][strat_infos.slot_before.j].flags &= ~(SLOT_ROBOT);
+			strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags &= ~(SLOT_BUSY|SLOT_AVOID);
 			strat_infos.slot[strat_infos.slot_actual.i][strat_infos.slot_actual.j].flags |= (SLOT_ROBOT|SLOT_CHECKED);
 			
 			IRQ_UNLOCK(flags);
@@ -288,10 +289,10 @@ uint8_t strat_play_with_opp(void)
 
 #define TIMEOUT_OPP_IS_WORKING	2000
 #define TIMEOUT_OPP_WAS_WORKING	2000 
-#define TIMEOUT_GOTO_NEAR_OPP		2000
+#define TIMEOUT_GOTO_NEAR_OPP		3000
 
 #define TIMEOUT_RETURN				(90-10)
-#define TIMEOUT_STOP_PLACE			(90-25)
+#define TIMEOUT_STOP_PLACE			(90-30)
 
 
 #define ZONE_OUR_SIDE	0
@@ -565,7 +566,7 @@ uint8_t strat_play_with_opp(void)
 
 			/* work */
 			//err = strat_place_near_slots(1, FIGURE_SCORE);
-			err = strat_place_near_slots(0, NULL_SCORE);
+			err = strat_place_near_slots(0,0);
 			if (!TRAJ_SUCCESS(err)) {
 				state = GOTO_NEAR_OPP;
 				break;
@@ -597,7 +598,7 @@ uint8_t strat_play_with_opp(void)
 
 			/* work */
 			//err = strat_place_near_slots(1, FIGURE_SCORE);
-			err = strat_place_near_slots(0, NULL_SCORE);
+			err = strat_place_near_slots(0,0);
 			if (!TRAJ_SUCCESS(err)) {
 				state = GOTO_NEAR_OPP;
 				break;
@@ -659,7 +660,7 @@ uint8_t strat_play_with_opp(void)
 			}
 
 			/* work */
-			err = strat_place_near_slots(0,0);
+			err = strat_place_near_slots(0, PLACE_ALL_SCORE);
 			if (!TRAJ_SUCCESS(err)) {
 				state = GOTO_NEAR_OPP;
 				break;
@@ -701,7 +702,7 @@ uint8_t strat_play_with_opp(void)
 				}
 				
 				/* apply new thresholds */
-				strat_infos.conf.th_token_score = NULL_SCORE;
+				strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
 
 				/* place one token */
 				err = strat_place_near_slots(1, 0);
@@ -731,7 +732,7 @@ uint8_t strat_play_with_opp(void)
 
 				/* apply new thresholds */
 				strat_infos.conf.th_place_prio = SLOT_PRIO_CENTER;
-				strat_infos.conf.th_token_score = NULL_SCORE;
+				strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
 
 				/* place pion */
 				err = strat_place_near_slots(1, PION_SCORE);
@@ -807,7 +808,7 @@ uint8_t strat_play_with_opp(void)
 
 				/* apply new thresholds */
 				strat_infos.conf.th_place_prio = SLOT_PRIO_CENTER;
-				strat_infos.conf.th_token_score = NULL_SCORE;
+				strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
 
 				/* place pion */
 				err = strat_place_near_slots(1, PION_SCORE);
@@ -927,18 +928,61 @@ end_bonus_wall:
 uint8_t strat_big_final(void)
 {
 	static uint8_t state = 0;
-	uint8_t side;
+//	uint8_t side;
 	uint8_t err;
 
-#define CATCH_TWO_TOKENS				0
+#define INIT								0
 #define GOTO_BEST_PLACE_POSITION		1
 #define PLACE_FROM_CENTER_SLOT		2
 #define PLACE_FROM_BONUS_NEAR_SAFE	3
 #define PLACE_FROM_BONUS_NEAR_HOME	4
 #define VISIT_OPP_BONUS					5
+#define GOTO_BETWEEN_BONUS				6
+#define GOTO_BONUS_NEAR_SAFE			7
+#define GOTO_BONUS_NEAR_HOME			8
+
 
 	switch(state) {
-		case CATCH_TWO_TOKENS:
+		case INIT:
+			/* thresholds */
+			strat_infos.conf.th_place_prio = SLOT_PRIO_GREEN;
+			strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
+			state = GOTO_BETWEEN_BONUS;
+			break;
+
+		case GOTO_BETWEEN_BONUS:
+			err = goto_and_avoid(COLOR_X(strat_infos.slot[5][2].x),
+											  	  strat_infos.slot[5][2].y, 
+								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_BONUS_NEAR_SAFE;
+				break;
+			}
+			state = PLACE_FROM_CENTER_SLOT;
+			break;
+
+		case GOTO_BONUS_NEAR_SAFE:
+			err = goto_and_avoid(COLOR_X(strat_infos.slot[5][3].x),
+											  	  strat_infos.slot[5][3].y, 
+								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_BONUS_NEAR_HOME;
+				break;
+			}
+			state = PLACE_FROM_BONUS_NEAR_SAFE;
+			break;
+
+		case GOTO_BONUS_NEAR_HOME:
+			err = goto_and_avoid(COLOR_X(strat_infos.slot[5][1].x),
+											  	  strat_infos.slot[5][1].y, 
+								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				state = GOTO_BETWEEN_BONUS;
+				break;
+			}
+			state = PLACE_FROM_BONUS_NEAR_HOME;
+			break;
+
 		case GOTO_BEST_PLACE_POSITION:
 			if(!opp_x_is_more_than(1500+350)) {
 				err = goto_and_avoid(COLOR_X(strat_infos.slot[5][2].x),
@@ -984,16 +1028,30 @@ uint8_t strat_big_final(void)
 
 		case PLACE_FROM_CENTER_SLOT:
 
+#ifdef FORCE_PLACE
 			/* place */
+			strat_infos.slot[5][3].flags &= ~(SLOT_BUSY);
+			strat_infos.slot[5][1].flags &= ~(SLOT_BUSY);
 			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][3].x),
 									              strat_infos.slot[5][3].y, &side, GO_FORWARD);
 			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][1].x),
 									              strat_infos.slot[5][1].y, &side, GO_FORWARD);
+#else
+			err = strat_place_near_slots(0,0);	
+
+//			/* place */
+//			strat_infos.slot[5][3].flags &= ~(SLOT_BUSY);
+//			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][3].x),
+//									              strat_infos.slot[5][3].y, &side, GO_FORWARD);
+
+#endif
 			/* protect tokens */
 			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(1675), 875);
 			err = wait_traj_end(TRAJ_FLAGS_NO_NEAR);
 			trajectory_only_a_abs(&mainboard.traj, 90);
 			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+
 
 			state = VISIT_OPP_BONUS;
 			break;
@@ -1008,11 +1066,18 @@ uint8_t strat_big_final(void)
 				break;
 			}
 
+#ifdef FORCE_PLACE
 			/* place */
+			strat_infos.slot[4][4].flags &= ~(SLOT_BUSY);
+			strat_infos.slot[5][3].flags &= ~(SLOT_BUSY);
+
 			err = strat_place_token_auto(COLOR_X(strat_infos.slot[4][4].x),
 									              strat_infos.slot[4][4].y, &side, GO_FORWARD);
 			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][3].x),
 									              strat_infos.slot[5][3].y, &side, GO_FORWARD);
+#else
+			err = strat_place_near_slots(0,0);	
+#endif
 
 			/* protect tokens */
 			strat_set_speed(2000, SPEED_ANGLE_FAST);
@@ -1033,12 +1098,18 @@ uint8_t strat_big_final(void)
 				break;
 			}
 
+#ifdef FORCE_PLACE
 			/* place */
+			strat_infos.slot[4][2].flags &= ~(SLOT_BUSY);
+			strat_infos.slot[5][1].flags &= ~(SLOT_BUSY);
+
 			err = strat_place_token_auto(COLOR_X(strat_infos.slot[4][2].x),
 									              strat_infos.slot[4][2].y, &side, GO_FORWARD);
 			err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][1].x),
 									              strat_infos.slot[5][1].y, &side, GO_FORWARD);
-
+#else
+			err = strat_place_near_slots(0,0);
+#endif
 			/* protect tokens */
 			strat_set_speed(2000, SPEED_ANGLE_FAST);
 			trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(1850), 700);

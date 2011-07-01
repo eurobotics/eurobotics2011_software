@@ -567,7 +567,7 @@ uint8_t token_side_score(uint8_t side)
 			return PION_SCORE;			
 	}
 
-	return NULL_SCORE;
+	return 0;
 }
 
 /* return 1 if there is a token on side and has the lower priority */
@@ -714,12 +714,13 @@ void strat_d_rel_side(struct trajectory*traj, double d_mm, uint8_t side)
 /* return 1 if the opponent is near */
 void wait_until_opponent_is_far(void)
 {
+//#ifdef HOMOLOGATION
 	int16_t opp_x, opp_y, opp_d, opp_a;
 
 	if (get_opponent_xyda(&opp_x, &opp_y, &opp_d, &opp_a) == -1)
 		return;
 
-	if(opp_d < 450 ) {
+	if(opp_d < 600 ) {
 		DEBUG(E_USER_STRAT, "waiting opponent far");
 
 		do {
@@ -727,8 +728,9 @@ void wait_until_opponent_is_far(void)
 					      &opp_d, &opp_a) == -1)
 				return;
 	
-		} while(opp_d < 450);
+		} while(opp_d < 600);
 	}
+//#endif
 }
 
 /* apply flags to slot */

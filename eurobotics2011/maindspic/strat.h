@@ -82,8 +82,8 @@
 #define SPEED_DIST_FAST 		2000
 #define SPEED_ANGLE_FAST 		2000
 #else
-#define SPEED_DIST_FAST 		3000
-#define SPEED_ANGLE_FAST 		3000
+#define SPEED_DIST_FAST 		4000
+#define SPEED_ANGLE_FAST 		4000
 #endif
 #define SPEED_DIST_SLOW 		1000
 #define SPEED_ANGLE_SLOW 		1000
@@ -124,12 +124,12 @@ struct conf {
 };
 
 /* token scores */
-#define NULL_SCORE		0
+#define NOPLACE_SCORE	 0
 #define PION_SCORE		10
 #define FIGURE_SCORE		20
 #define TOWER1H_SCORE	40
 #define TOWER2H_SCORE	60
-#define NOPLACE_SCORE	70
+#define PLACE_ALL_SCORE	70
 
 
 /* slot dimensions */
@@ -176,7 +176,7 @@ struct slot_info {
 
 
 	uint16_t flags;
-#define SLOT_BONUS			1
+//#define SLOT_BONUS			1
 #define SLOT_SAFE				2
 #define SLOT_AVOID			4
 #define SLOT_CHECKED			8

@@ -209,8 +209,8 @@ void token_system_manage(token_system_t *ts)
 #define BELTS_BLOCKING_TIMES_TH			50
 
 	static uint8_t flag_catched = 0;
-	static microseconds time_us = 0;
-	static uint8_t blocking_times = 0;
+//	static microseconds time_us = 0;
+//	static uint8_t blocking_times = 0;
 
 #ifdef SENSOR_STOP_TIME
 	static microseconds us = 0;
@@ -233,17 +233,17 @@ void token_system_manage(token_system_t *ts)
 			break;
 
 		case TS_STATE_TAKE:
-			if(!sensor_get(ts->sensor_stop)){
+			//if(!sensor_get(ts->sensor_stop)){
 				belts_mode_set(ts->belts_side, BELTS_MODE_IN, ts->speed);
 
 				STMCH_DEBUG("waiting %s stop...",
 								ts->belts_side==I2C_SIDE_REAR?"REAR":"FRONT");
 
 				ts->state = TS_STATE_WAITING_STOP;
-			}
-			else
-				ts->state = TS_STATE_IDLE;
-			break;
+			//}
+			//else
+			//	ts->state = TS_STATE_IDLE;
+			//break;
 
 		case TS_STATE_WAITING_STOP:
 
@@ -274,6 +274,7 @@ void token_system_manage(token_system_t *ts)
 				ts->state = TS_STATE_IDLE;
 			}
 
+#ifdef BELT_BLOCKING
 			/* stop belts when blocked */
 			if(ABS(time_get_us() - time_us) > BELTS_BLOCKED_SAMPLE_TIME_US)	
 			{
@@ -303,7 +304,7 @@ void token_system_manage(token_system_t *ts)
 			}
 			else
 				ts->belts_blocked = 0;
-
+#endif
 			break;
 
 		case TS_STATE_EJECT:
