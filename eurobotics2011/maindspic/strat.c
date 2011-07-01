@@ -570,27 +570,27 @@ uint8_t strat_beginning(void)
 
 	/* pick & place tokens on line 1 */
 	err = strat_harvest_line1();
-	if (!TRAJ_SUCCESS(err)) {
-		err = strat_harvest_green_area_smart(get_opponent_color());
-		ERROUT(err);		
-	}
+//	if (!TRAJ_SUCCESS(err)) {
+//		err = strat_harvest_green_area_smart(get_opponent_color());
+//		ERROUT(err);		
+//	}
 
 	/* pick & place tokens on line 2 */
 	err = strat_harvest_line2();
-	if (!TRAJ_SUCCESS(err) && !opp_x_is_more_than(975)) {
-		err = strat_harvest_green_area_smart(get_opponent_color());
-		ERROUT(err);		
-	}
+//	if (!TRAJ_SUCCESS(err) && !opp_x_is_more_than(975)) {
+//		err = strat_harvest_green_area_smart(get_opponent_color());
+//		ERROUT(err);		
+//	}
 
-	/* pick & place tokens on green area */
-	if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
-		err = strat_harvest_green_area_smart(get_opponent_color());
-	else
+//	/* pick & place tokens on green area */
+//	if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
+//		err = strat_harvest_green_area_smart(get_opponent_color());
+//	else
 		err = strat_harvest_green_area_smart(get_color());		
 //	if (!TRAJ_SUCCESS(err))
 //		ERROUT(err);
 
-end:
+//end:
 	strat_set_speed(old_spdd, old_spda);
 	return err;
 }
@@ -614,17 +614,56 @@ uint8_t strat_main(void)
 	lasers_set_on();
 #endif
 
-//	err = goto_and_avoid(COLOR_X(strat_infos.slot[2][3].x),
-//									  	  strat_infos.slot[2][3].y, 
+	/* place figures on our side */
+	/* go near */
+	err = goto_and_avoid(COLOR_X(strat_infos.slot[2][3].x),
+									  	  strat_infos.slot[2][3].y, 
+						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+	/* set place thresholds */
+	strat_infos.conf.th_place_prio = SLOT_PRIO_GREEN;
+	strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
+
+	/* place */
+	err = strat_place_near_slots(0,0);
+	//err = strat_harvest_green_area_smart(get_opponent_color());		
+
+	/* q5 */
+	/* go to waiting position */
+	err = goto_and_avoid(COLOR_X(1675),1400, 
+						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+	/* wait the moment */
+	while( (time_get_s() < 40 && !opp_y_is_more_than(875))
+			 || (time_get_s() < 60));
+
+	/* go to near opp zone */
+	err = goto_and_avoid(COLOR_X(2025),525, 
+						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+	/* pickup tower */
+	err = strat_pickup_or_push_near_slots(MODE_ALL);
+
+	/* if no tokens */
+	if(strat_get_num_tokens() == 0) {
+		/* go to near opp zone */
+		err = goto_and_avoid(COLOR_X(2025),1225, 
+							  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+	
+		/* pickup tower */
+		err = strat_pickup_or_push_near_slots(MODE_ALL);
+	}
+
+//	/* go to protect wall bonus */
+//	err = goto_and_avoid(COLOR_X(1675),1400, 
 //						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 //
-//	/* thresholds */
-//	strat_infos.conf.th_place_prio = SLOT_PRIO_GREEN;
-//	strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
-//
-//	err = strat_place_near_slots(0,0);
-//
-//	err = strat_harvest_green_area_smart(get_opponent_color());		
+//	/* wait */
+//	while(time_get_s() < 80);
+
+	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
+	strat_infos.conf.th_token_score = NOPLACE_SCORE;
+
 
 	/* autoplay depends on opponent */
 	while (1) {
@@ -640,6 +679,7 @@ uint8_t strat_main(void)
 			break;
 		}
 	}
+
 
 	/* try to place on bonus */
 	while(1) {

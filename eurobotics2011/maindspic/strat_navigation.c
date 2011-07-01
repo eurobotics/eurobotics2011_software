@@ -1051,7 +1051,12 @@ uint8_t strat_big_final(void)
 			trajectory_only_a_abs(&mainboard.traj, 90);
 			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 
-
+//			if(opp_y_is_more_than(1050))
+//				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(1675), 1250);
+//			else if(!opp_y_is_more_than(1050)) 
+//				trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(1675), 525);
+//		
+//			err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
 
 			state = VISIT_OPP_BONUS;
 			break;
