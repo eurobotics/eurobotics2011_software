@@ -1333,6 +1333,16 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 
 	//DEBUG(E_USER_STRAT, "laser point (d,a) = (%d,%d)", d_pt, (int16_t)DEG(a_pt_rad));
 
+//	/* return if distance is more than beacon range */
+//	if(d_pt > 2000) {
+//		mt->state = RISE_TRIGGER;
+//		mt->x_pt_rise = 0;
+//		mt->y_pt_rise = 0;
+//		mt->x_pt_fall = 0;
+//		mt->y_pt_fall = 0;
+//		goto end;	
+//	}
+
 	/* absolute laser point coordinates */
 	if(a < 0)
 		a += (2 * M_PI);
@@ -1381,7 +1391,7 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 #ifdef ANY_PT_IS_TOWER
 
 	/* return if laser point is out of accesible playground */
-	if(!point_is_in_area(x_pt, y_pt, 450, 1750-90, 2550, 90)) {
+	if(!point_is_in_area(x_pt, y_pt, 100, 2000, 2900, 100)) {
 		//DEBUG(E_USER_STRAT, "point is out of area");
 		return 0;
 	}
@@ -1402,7 +1412,8 @@ uint8_t strat_match_tower( match_tower_t *mt, uint8_t laser_id)
 		case RISE_TRIGGER:
 
 			/* return if laser point is out of accesible playground */
-			if(!point_is_in_area(x_pt, y_pt, 450, 1750-90, 2550, 90)) {
+			if(!point_is_in_area(x_pt, y_pt, 100, 2000, 2900, 100)
+				|| d_pt > 2000) {
 				//DEBUG(E_USER_STRAT, "point is out of area");
 				break;
 			}
@@ -1501,7 +1512,7 @@ uint8_t strat_info_add_tower(int16_t x, int16_t y, int16_t w)
 #endif
 
 	/* slot index */
-	i = (int8_t)((x-strat_infos.grid_line_x[1])/SLOT_SIZE) + 1;
+	i = (int8_t)(x/SLOT_SIZE);
 	j = (int8_t)(y/SLOT_SIZE);
 
 	/* saturators */
@@ -1739,5 +1750,144 @@ void strat_look_for_figures(void)
 //	else
 //		ERROR(E_USER_STRAT, "no figure pos matched", laser_d);
 
+}
+
+/* get a valid ij tower coordenade */
+uint8_t strat_get_best_tower_ij(int8_t *i, int8_t *j)
+{
+#define NB_TIMES_MIN	2
+#define WIDTH_MIN		10
+#define WIDTH_MAX		80
+
+	int16_t opp_x, opp_y;
+	int16_t x = position_get_x_s16(&mainboard.pos);	int16_t y = position_get_y_s16(&mainboard.pos);
+	double q = 0.0, q_max = 0.0;
+	int8_t k, k_max = -1;
+
+	/* return if not towers found */
+	if(strat_infos.num_towers == 0)
+		return 0;
+
+	/* opp position */
+	if(get_opponent_xy(&opp_x, &opp_y) == -1) {
+		opp_x = 1500;
+		opp_y = 1050;	
+	}
+
+	/* get the candidate towers */
+	for(k = 0; k < strat_infos.num_towers; k++)
+	{
+		/* skip protected zones */
+		if((strat_infos.towers[k].i == 1 
+			|| strat_infos.towers[k].i == 2 
+			|| strat_infos.towers[k].i == 5 
+			|| strat_infos.towers[k].i == 6) 
+			&& strat_infos.towers[k].j  == 5) {
+			//DEBUG(E_USER_STRAT, "skip %d by protected zones", k);
+			continue;
+		}
+
+		/* skip home zones */
+		if((strat_infos.towers[k].i == 0 
+			|| strat_infos.towers[k].i == 7) 
+			&& strat_infos.towers[k].j  == 0) {
+			//DEBUG(E_USER_STRAT, "skip %d by home zones", k);
+			continue;
+		}
+
+		/* skip green slots near safe zones */
+		if((strat_infos.towers[k].i == 0 
+			|| strat_infos.towers[k].i == 7)
+			&& strat_infos.towers[k].j  == 5) {
+			//DEBUG(E_USER_STRAT, "skip %d by green near safe", k);
+			continue;
+		}
+
+		/* skip busy slots */
+		if(strat_infos.slot[strat_infos.towers[k].i][strat_infos.towers[k].j].flags & SLOT_BUSY) {
+			//DEBUG(E_USER_STRAT, "skip %d by busy slot", k);
+			continue;
+		}
+
+		/* num filter */
+		if(strat_infos.towers[k].c < NB_TIMES_MIN) {
+			//DEBUG(E_USER_STRAT, "skip %d by NB_TIMES_MIN", k);
+			continue;
+		}
+
+		/* wide filter */
+		if(strat_infos.towers[k].w < WIDTH_MIN) {
+			//DEBUG(E_USER_STRAT, "skip %d by WIDTH_MIN", k);
+			continue;
+		}
+ 
+		if(strat_infos.towers[k].w > WIDTH_MAX) {
+			//DEBUG(E_USER_STRAT, "skip %d by WIDTH_MAX", k);
+			continue;
+		}
+
+		/* q = dist_opp_tower/dist_robot_tower */ 
+		q = distance_between(opp_x, opp_y, strat_infos.towers[k].x, strat_infos.towers[k].y);
+		q /= distance_between(x, y, strat_infos.towers[k].x, strat_infos.towers[k].y);
+
+		//DEBUG(E_USER_STRAT, "k = %d, q = %f", k, q);
+
+		/* q maximun */
+		if(q > q_max) {
+			q_max = q;
+			k_max = k;
+			//DEBUG(E_USER_STRAT, "new q_max = %f", q_max);
+		}
+	}
+
+	/* get candidate ? */
+	if(k_max == -1) {
+		//DEBUG(E_USER_STRAT, "no found valid tower");
+		return 0;
+	}
+
+	/* return tower candidate */
+	*i = strat_infos.towers[k_max].i;
+	*j = strat_infos.towers[k_max].j;
+	
+	DEBUG(E_USER_STRAT, "found tower at (%d,%d)", *i, *j);
+
+	return 1;
+}
+
+/* get slot to pickup a token at ij position */
+void strat_get_slot_to_place(int8_t i, int8_t j, int8_t *i_place, int8_t *j_place)
+{
+	if(strat_infos.slot_actual.i > i) {
+		*i_place = i + 1;
+	}
+	else if(strat_infos.slot_actual.i < i) {
+		*i_place = i - 1;
+	}
+	else {
+		*i_place = i;
+	}
+
+	if(strat_infos.slot_actual.j > j) {
+		*j_place = j + 1;
+	}
+	else if(strat_infos.slot_actual.j < j) {
+		*j_place = j - 1;
+	}
+	else {
+		*j_place = j;
+	}
+
+	/* special case to wall bonus */
+	if(i == 3 && j == 5) {
+		*i_place = 3;
+		*j_place = 4;
+	}
+	if(i == 4 && j == 5) {
+		*i_place = 4;
+		*j_place = 4;
+	}
+
+	DEBUG(E_USER_STRAT, "pickup slot position (%d,%d)", *i_place, *j_place);
 }
 

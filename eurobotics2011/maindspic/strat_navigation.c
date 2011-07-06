@@ -285,7 +285,10 @@ uint8_t strat_play_with_opp(void)
 	uint8_t err;
 	uint8_t our_bonus_token_not_there = 0;
 
-
+#ifdef LOOK_FOR_TOWERS
+	int8_t i_tower, j_tower, i_place_tower, j_place_tower;
+	uint8_t opp_actual_zone;
+#endif
 
 #define TIMEOUT_OPP_IS_WORKING	2000
 #define TIMEOUT_OPP_WAS_WORKING	2000 
@@ -423,10 +426,21 @@ uint8_t strat_play_with_opp(void)
 
 		case WAITING_OPP:
 
-//			/* if found towers */
-//			if() {
-//				/* goto pickup towers */
-//			}
+			/* update opp side */
+			if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_SAFE
+				|| strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME)
+				opp_side_actual = ZONE_OPP_SIDE;
+			else
+				opp_side_actual = ZONE_OUR_SIDE;
+
+#ifdef LOOK_FOR_TOWERS
+			/* if found towers */
+			if(strat_get_best_tower_ij(&i_tower, &j_tower)) {
+				/* goto pickup towers */
+				state = PICKUP_TOWERS;
+				break;
+			}
+#endif
 
 			/* if opp visited bonus wall and was on homes side */
 #ifndef HOMOLOGATION
@@ -445,12 +459,7 @@ uint8_t strat_play_with_opp(void)
 			}
 #endif
 
-			/* update opp side */
-			if(strat_infos.opp_actual_zone == ZONE_OPP_NEAR_SAFE
-				|| strat_infos.opp_actual_zone == ZONE_OPP_NEAR_HOME)
-				opp_side_actual = ZONE_OPP_SIDE;
-			else
-				opp_side_actual = ZONE_OUR_SIDE;
+
 
 			/* if opp has change the side or if is on bonus wall zone during N seconds */
 			if( (opp_side_actual != opp_side_before) 
@@ -511,11 +520,6 @@ uint8_t strat_play_with_opp(void)
 						break;
 					}
 				}
-				/* if nothing to do */
-				else {
-					/* find towers */
-					Nop();
-				}
 			}
 			else {
 
@@ -546,12 +550,43 @@ uint8_t strat_play_with_opp(void)
 					}
 
 				}
-				/* if nothing to do */
-				else {
-					/* find towers */
-					Nop();
-				}
 			}
+#ifdef LOOK_FOR_TOWERS
+			/* find towers */
+			lasers_set_on();
+			strat_look_for_towers_enable();
+
+			strat_get_speed(&old_spdd, &old_spda);
+			strat_set_speed(old_spdd, 500);
+
+			opp_actual_zone = strat_infos.opp_actual_zone;
+
+			trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(360));
+			err = WAIT_COND_OR_TRAJ_END((opp_actual_zone != strat_infos.opp_actual_zone) 
+										|| strat_get_best_tower_ij(&i_tower, &j_tower)
+										, TRAJ_FLAGS_SMALL_DIST);
+			
+			if (TRAJ_SUCCESS(err) && !strat_get_best_tower_ij(&i_tower, &j_tower)) {	
+				trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(-360));
+				err = WAIT_COND_OR_TRAJ_END((opp_actual_zone != strat_infos.opp_actual_zone) 
+											|| strat_get_best_tower_ij(&i_tower, &j_tower)
+											, TRAJ_FLAGS_SMALL_DIST);
+			}
+
+			strat_set_speed(old_spdd, old_spda);
+			strat_look_for_towers_disable();
+			lasers_set_off();
+
+			if(strat_get_best_tower_ij(&i_tower, &j_tower) 
+				&& strat_get_num_tokens() == 2) {
+
+				strat_infos.conf.th_place_prio = SLOT_PRIO_PATH;
+				strat_infos.conf.th_token_score = PLACE_ALL_SCORE;
+
+				err = strat_place_near_slots(1, 0);
+
+			}
+#endif
 			break;
 
 		case WORK_NEAR_OPP_HOME:	
@@ -913,10 +948,27 @@ end_bonus_wall:
 			break;
 
 		case PICKUP_TOWERS:
-			/* work */
-			/* goto near opp */
-			break;
+#ifdef LOOK_FOR_TOWERS
+			strat_get_slot_to_place(i_tower, j_tower, &i_place_tower, &j_place_tower);
 
+			if(i_place_tower == 0 || i_place_tower == 7)
+				strat_set_bounding_box(AREA_BBOX_6X5);
+
+			err = goto_and_avoid(strat_infos.slot[i_place_tower][j_place_tower].x,
+										strat_infos.slot[i_place_tower][j_place_tower].y, 
+									  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+			if (!TRAJ_SUCCESS(err)) {
+				strat_set_bounding_box(AREA_BBOX_4X4);
+				state = GOTO_NEAR_OPP;
+				break;
+			}
+
+			err = strat_pickup_token_auto(strat_infos.slot[i_place_tower][j_place_tower].x,
+													strat_infos.slot[i_place_tower][j_place_tower].y, &side);
+
+			state = GOTO_NEAR_OPP;
+			break;
+#endif
 		default:
 			state = GOTO_NEAR_OPP;
 			break;
@@ -1134,6 +1186,8 @@ uint8_t strat_big_final(void)
 	
 	return 0;
 }
+
+
 
 ///* work on a zone */
 //uint8_t strat_work_on_zone(zone_t * z)

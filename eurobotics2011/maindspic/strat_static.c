@@ -125,6 +125,101 @@ uint8_t line1_push_last_opp_token(void)
 	return err;
 }
 
+void goto_push_green_opp (void)
+{
+	uint8_t err;
+	uint8_t one_token = 0;
+	uint8_t side;
+	int16_t x, y;
+
+	strat_set_bounding_box(AREA_BBOX_6X5);
+
+	if(strat_get_num_tokens() == 1)
+		one_token = 1;
+
+	while(!opp_y_is_more_than(1050));
+
+	err = goto_and_avoid(COLOR_X(2375),
+								  	  700, 
+					  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+
+	err = strat_pickup_token_auto(COLOR_X(strat_infos.slot[7][2].x),
+								  	  strat_infos.slot[7][2].y,&side);
+
+	strat_set_speed(2000, 2000);
+
+	trajectory_d_rel(&mainboard.traj, -100);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+	trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(-90));	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+	trajectory_only_a_rel(&mainboard.traj, COLOR_A_REL(90));	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+	trajectory_d_rel(&mainboard.traj, 100);
+	err = wait_traj_end(TRAJ_FLAGS_SMALL_DIST);
+
+	x = position_get_x_s16(&mainboard.pos); 
+	y = position_get_y_s16(&mainboard.pos);
+	
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[7][4].x),
+								  	  strat_infos.slot[7][4].y);
+	err = wait_traj_end(TRAJ_FLAGS_STD);
+
+	trajectory_goto_xy_abs(&mainboard.traj,x,
+								  	  y);
+	err = wait_traj_end(TRAJ_FLAGS_STD);
+
+
+	while(!opp_y_is_more_than(1050) && opp_y_is_more_than(2200));
+
+	trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(2375),
+			 						700);
+	err = wait_traj_end(TRAJ_FLAGS_STD);
+	//if (!TRAJ_SUCCESS(err))
+	//	break;
+
+//	if(opp_y_is_more_than(1050)) {
+//		trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[6][1].x),
+//				 						strat_infos.slot[6][1].y);
+//		err = wait_traj_end(TRAJ_FLAGS_STD);
+//
+//	}
+//	else {
+		trajectory_goto_xy_abs(&mainboard.traj, COLOR_X(strat_infos.slot[6][1].x),
+				 						strat_infos.slot[6][1].y);
+		err = wait_traj_end(TRAJ_FLAGS_STD);
+//	}
+
+	strat_set_speed(4000, 4000);
+
+//	if(!opp_y_is_more_than(1050)) {
+//		err = goto_and_avoid(COLOR_X(strat_infos.slot[5][4].x),
+//								  	  strat_infos.slot[5][4].y-50, 
+//					  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//
+//		err = strat_place_token_auto(COLOR_X(strat_infos.slot[5][5].x),
+//				 						strat_infos.slot[5][5].y, &side, GO_FORWARD);
+////	}
+//	else {
+
+		err = goto_and_avoid(COLOR_X(strat_infos.slot[6][1].x),
+								  	  strat_infos.slot[6][1].y, 
+					  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+		err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][0].x),
+				 						strat_infos.slot[6][0].y, &side, GO_FORWARD);
+//	}
+
+	//if (!TRAJ_SUCCESS(err))
+	//	break;
+
+	err = goto_and_avoid(COLOR_X(1150),
+								  	  350, 
+					  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+}
+
+
 uint8_t strat_harvest_line1(void)
 {
 	uint8_t err;
@@ -209,6 +304,9 @@ uint8_t strat_harvest_line1(void)
 		if (!TRAJ_SUCCESS(err))
 			ERROUT(err);			
 	}
+
+
+	//goto_push_green_opp();
 
 	/* XXX enable look for figures */
 	lasers_set_on();
@@ -1356,8 +1454,8 @@ uint8_t strat_harvest_green_area(void)
 
 /* take a token from green area */
 
-#define TYPE_PION		0
-#define TYPE_FIGURE	1
+//#define TYPE_PION		0
+//#define TYPE_FIGURE	1
 
 uint8_t strat_pickup_green_token(uint8_t type, uint8_t color)
 {
@@ -1553,6 +1651,7 @@ uint8_t strat_harvest_green_area_smart(uint8_t color)
 	int16_t x_opp, y_opp;
 	uint8_t num_tries = 0;
 
+	strat_set_speed(2000, 2000);
 
 	/* bounding box */
 	strat_set_bounding_box(AREA_BBOX_6X5);
@@ -1574,8 +1673,8 @@ try_near_green:
 		
 		num_tries ++;
 		if(num_tries == NOT_SUCCESS_TRIES_MAX) {
-			if((x_is_more_than(1500) && opp_x_is_more_than(1500)) 
-				|| (!x_is_more_than(1500) && !opp_x_is_more_than(1500))) {
+			if((x_is_more_than(1500) && opp_x_is_more_than(450)) 
+				|| (!x_is_more_than(1500) && !opp_x_is_more_than(450))) {
 				color = (color == get_color()? get_opponent_color() : get_color());
 			}
 			goto near_green;
@@ -1595,8 +1694,8 @@ retry_pickup_first:
 	if( strat_get_num_tokens() < 2) {
 		err = strat_pickup_green_token(TYPE_PION, color);
 		if (!TRAJ_SUCCESS(err)) {
-			if((x_is_more_than(1500) && opp_x_is_more_than(1500)) 
-				|| (!x_is_more_than(1500) && !opp_x_is_more_than(1500))) {
+			if((x_is_more_than(1500) && opp_x_is_more_than(450)) 
+				|| (!x_is_more_than(1500) && !opp_x_is_more_than(450))) {
 				color = (color == get_color()? get_opponent_color() : get_color());
 			}
 			goto retry_pickup_first;
@@ -1607,8 +1706,8 @@ retry_pickup_second:
 	if( strat_get_num_tokens() < 2) {
 		err = strat_pickup_green_token(TYPE_PION, color);
 		if (!TRAJ_SUCCESS(err)) {
-			if((x_is_more_than(1500) && opp_x_is_more_than(1500)) 
-				|| (!x_is_more_than(1500) && !opp_x_is_more_than(1500))) {
+			if((x_is_more_than(1500) && opp_x_is_more_than(450)) 
+				|| (!x_is_more_than(1500) && !opp_x_is_more_than(450))) {
 				color = (color == get_color()? get_opponent_color() : get_color());
 			}
 			goto retry_pickup_second;
@@ -1641,8 +1740,8 @@ retry_place_first:
 	err = goto_and_avoid(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y,
 								TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 	if (!TRAJ_SUCCESS(err)) {
-		if((x_is_more_than(1500) && opp_x_is_more_than(1500)) 
-			|| (!x_is_more_than(1500) && !opp_x_is_more_than(1500))) {
+		if((x_is_more_than(1500) && opp_x_is_more_than(450)) 
+			|| (!x_is_more_than(1500) && !opp_x_is_more_than(450))) {
 			color = (color == get_color()? get_opponent_color() : get_color());
 		}
 		goto retry_place_first;
@@ -1712,8 +1811,8 @@ retry_place_second:
 	err = goto_and_avoid(strat_infos.slot[i][j].x, strat_infos.slot[i][j].y,
 								TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
 	if (!TRAJ_SUCCESS(err)) {
-		if((x_is_more_than(1500) && opp_x_is_more_than(1500)) 
-			|| (!x_is_more_than(1500) && !opp_x_is_more_than(1500))) {
+		if((x_is_more_than(1500) && opp_x_is_more_than(450)) 
+			|| (!x_is_more_than(1500) && !opp_x_is_more_than(450))) {
 			color = (color == get_color()? get_opponent_color() : get_color());
 		}
 		goto retry_place_second;
@@ -1766,8 +1865,8 @@ retry_pickup_fig1:
 	if( strat_get_num_tokens() < 2) {
 		err = strat_pickup_green_token(TYPE_FIGURE, color);
 		if (!TRAJ_SUCCESS(err)) {
-			if((x_is_more_than(1500) && opp_x_is_more_than(1500)) 
-				|| (!x_is_more_than(1500) && !opp_x_is_more_than(1500))) {
+			if((x_is_more_than(1500) && opp_x_is_more_than(450)) 
+				|| (!x_is_more_than(1500) && !opp_x_is_more_than(450))) {
 				color = (color == get_color()? get_opponent_color() : get_color());
 			}
 			goto retry_pickup_fig1;
@@ -1779,8 +1878,8 @@ retry_pickup_fig2:
 	if( strat_get_num_tokens() < 2) {
 		err = strat_pickup_green_token(TYPE_FIGURE, color);
 		if (!TRAJ_SUCCESS(err)) {
-			if((x_is_more_than(1500) && opp_x_is_more_than(1500)) 
-				|| (!x_is_more_than(1500) && !opp_x_is_more_than(1500))) {
+			if((x_is_more_than(1500) && opp_x_is_more_than(450)) 
+				|| (!x_is_more_than(1500) && !opp_x_is_more_than(450))) {
 				color = (color == get_color()? get_opponent_color() : get_color());
 			}
 			goto retry_pickup_fig2;

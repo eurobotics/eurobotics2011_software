@@ -356,6 +356,12 @@ void strat_look_for_figures_disable(void);
 /* try to find figures from line 1 */
 void strat_look_for_figures(void);
 
+/* get a valid ij tower coordenade */
+uint8_t strat_get_best_tower_ij(int8_t *i, int8_t *j);
+
+/* get slot to pickup a token at ij position */
+void strat_get_slot_to_place(int8_t i, int8_t j, int8_t *i_place, int8_t *j_place);
+
 
 /**************************************************
  * in strat_static.c 
@@ -363,6 +369,10 @@ void strat_look_for_figures(void);
 uint8_t strat_harvest_line1(void);
 uint8_t strat_harvest_line2(void);
 uint8_t strat_harvest_green_area(void);
+
+#define TYPE_PION		0
+#define TYPE_FIGURE	1
+uint8_t strat_pickup_green_token(uint8_t type, uint8_t color);
 
 /* harvest green area ending with two figures inside */
 uint8_t strat_harvest_green_area_smart(uint8_t color);

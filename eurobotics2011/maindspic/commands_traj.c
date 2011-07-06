@@ -1082,6 +1082,7 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 	int8_t cmd = 0;
 	struct vt100 vt100;
 	int16_t c;
+	int8_t i, j, i_place, j_place;
 
 
 	if (strcmp_P(res->arg1, PSTR("line1")) == 0) {
@@ -1129,6 +1130,12 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 			err = strat_big_final();	
 		} while(TRAJ_SUCCESS(err));
 	}
+	else if (strcmp_P(res->arg1, PSTR("get_tower")) == 0) {
+		if(strat_get_best_tower_ij(&i, &j)) {
+			strat_get_slot_to_place(i, j, &i_place, &j_place);
+		}	
+	}
+
 
 //	else if (strcmp_P(res->arg1, PSTR("home")) == 0) {
 //		err = strat_work_on_zone(&strat_infos.zones[ZONE_NEAR_HOME]);
@@ -1150,7 +1157,7 @@ static void cmd_subtraj2_parsed(void *parsed_result, void *data)
 prog_char str_subtraj2_arg0[] = "subtraj";
 parse_pgm_token_string_t cmd_subtraj2_arg0 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg0, str_subtraj2_arg0);
 //prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#bonus#pickup_near#place_near#home#safe#opp_home#opp_safe#";
-prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#pickup_near#bonus_wall#play#final";
+prog_char str_subtraj2_arg1[] = "line1#line2#green#beginning#pickup_near#bonus_wall#play#final#get_tower";
 parse_pgm_token_string_t cmd_subtraj2_arg1 = TOKEN_STRING_INITIALIZER(struct cmd_subtraj2_result, arg1, str_subtraj2_arg1);
 //parse_pgm_token_num_t cmd_subtraj2_arg2 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg2, INT32);
 //parse_pgm_token_num_t cmd_subtraj2_arg3 = TOKEN_NUM_INITIALIZER(struct cmd_subtraj2_result, arg3, INT32);

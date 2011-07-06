@@ -570,22 +570,24 @@ uint8_t strat_beginning(void)
 
 	/* pick & place tokens on line 1 */
 	err = strat_harvest_line1();
-//	if (!TRAJ_SUCCESS(err)) {
-//		err = strat_harvest_green_area_smart(get_opponent_color());
-//		ERROUT(err);		
-//	}
+	if (!TRAJ_SUCCESS(err)) {
+		wait_until_opponent_is_far();
+		//err = strat_harvest_green_area_smart(get_opponent_color());
+		//ERROUT(err);		
+	}
 
 	/* pick & place tokens on line 2 */
 	err = strat_harvest_line2();
-//	if (!TRAJ_SUCCESS(err) && !opp_x_is_more_than(975)) {
-//		err = strat_harvest_green_area_smart(get_opponent_color());
-//		ERROUT(err);		
-//	}
+	if (!TRAJ_SUCCESS(err) && !opp_x_is_more_than(975)) {
+		wait_until_opponent_is_far();
+		//err = strat_harvest_green_area_smart(get_opponent_color());
+		//ERROUT(err);		
+	}
 
-//	/* pick & place tokens on green area */
-//	if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
-//		err = strat_harvest_green_area_smart(get_opponent_color());
-//	else
+	/* pick & place tokens on green area */
+	if((strat_infos.conf.flags & GREEN_OPP_ZONE_FIRST))
+		err = strat_harvest_green_area_smart(get_opponent_color());
+	else
 		err = strat_harvest_green_area_smart(get_color());		
 //	if (!TRAJ_SUCCESS(err))
 //		ERROUT(err);
@@ -599,6 +601,7 @@ uint8_t strat_beginning(void)
 uint8_t strat_main(void)
 {
 	uint8_t err; //i, why=0;
+//	uint8_t side;
 
 	/* pick & place our static tokens */
 	err = strat_beginning();
@@ -614,6 +617,7 @@ uint8_t strat_main(void)
 	lasers_set_on();
 #endif
 
+#ifdef PLACE_FIGURES_ON_OUR_SIDE
 	/* place figures on our side */
 	/* go near */
 	err = goto_and_avoid(COLOR_X(strat_infos.slot[2][3].x),
@@ -626,9 +630,13 @@ uint8_t strat_main(void)
 
 	/* place */
 	err = strat_place_near_slots(0,0);
-	//err = strat_harvest_green_area_smart(get_opponent_color());		
+#endif
 
-	/* q5 */
+#ifdef HARVEST_OPP_GREEN_AREA
+	err = strat_harvest_green_area_smart(get_opponent_color());		
+#endif
+
+#ifdef Q5_WAIT_OPP_TO_BUILD_A_TOWER
 	/* go to waiting position */
 	err = goto_and_avoid(COLOR_X(1675),1400, 
 						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
@@ -654,15 +662,75 @@ uint8_t strat_main(void)
 		err = strat_pickup_or_push_near_slots(MODE_ALL);
 	}
 
-//	/* go to protect wall bonus */
-//	err = goto_and_avoid(COLOR_X(1675),1400, 
-//						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
-//
-//	/* wait */
-//	while(time_get_s() < 80);
+	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
+	strat_infos.conf.th_token_score = NOPLACE_SCORE;
+#endif
+
+//#define PLAYOFF_8
+#ifdef PLAYOFF_8
+
+	strat_set_bounding_box(AREA_BBOX_6X5);
+
+	/* place figure */
+	err = goto_and_avoid(COLOR_X(strat_infos.slot[5][1].x),
+									  	  strat_infos.slot[5][1].y, 
+						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+	err = strat_place_token_auto(COLOR_X(strat_infos.slot[6][0].x),
+									  	          strat_infos.slot[6][0].y, &side, GO_FORWARD);
+
+	/* pickup/place green pion */
+	err = strat_pickup_green_token(TYPE_PION, get_opponent_color());
+	err = goto_and_avoid(COLOR_X(strat_infos.slot[5][4].x),
+									  	  strat_infos.slot[5][4].y, 
+						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+	if(token_side_score(SIDE_FRONT) >= token_side_score(SIDE_REAR))
+		side = SIDE_REAR;
+	else
+		side = SIDE_FRONT;
+
+	err = strat_place_token(COLOR_X(strat_infos.slot[5][5].x),
+									  	     strat_infos.slot[5][5].y, side, GO_FORWARD);
+
+
+	/* pickup/place green pion */
+	err = strat_pickup_green_token(TYPE_PION, get_opponent_color());
+	err = goto_and_avoid(COLOR_X(strat_infos.slot[6][2].x),
+									  	  strat_infos.slot[6][2].y, 
+						  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+	if(token_side_score(SIDE_FRONT) >= token_side_score(SIDE_REAR))
+		side = SIDE_REAR;
+	else
+		side = SIDE_FRONT;
+
+	err = strat_place_token(COLOR_X(strat_infos.slot[5][1].x),
+									  	     strat_infos.slot[5][1].y, side, GO_FORWARD);
+
+	/* place green figure trie 1 */
+	err = strat_pickup_green_token(TYPE_FIGURE, get_opponent_color());
+
+	if(strat_get_num_tokens() < 2)
+		err = strat_pickup_green_token(TYPE_FIGURE, get_opponent_color());
+
+	if(opp_y_is_more_than(875)) {
+		err = goto_and_avoid(COLOR_X(strat_infos.slot[4][1].x),
+										  	  strat_infos.slot[4][1].y, 
+							  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+	}
+	else {
+		err = goto_and_avoid(COLOR_X(strat_infos.slot[4][3].x),
+										  	  strat_infos.slot[4][3].y, 
+							  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+	}
+
+	strat_set_bounding_box(AREA_BBOX_6X5);
 
 	strat_infos.conf.th_place_prio = SLOT_PRIO_NEAR_GREEN;
 	strat_infos.conf.th_token_score = NOPLACE_SCORE;
+
+#endif
 
 
 	/* autoplay depends on opponent */
@@ -672,6 +740,7 @@ uint8_t strat_main(void)
 		if(err == END_TRAJ) {
 			break;
 		}
+		
 		/* check end of match */
 		else if (err == END_TIMER) {
 			DEBUG(E_USER_STRAT, "End of time");
@@ -679,6 +748,47 @@ uint8_t strat_main(void)
 			break;
 		}
 	}
+
+//	strat_set_speed(1000, 1000);
+//
+////	while(time_get_s() < 80) {
+//	
+//		err = goto_and_avoid(COLOR_X(strat_infos.slot[5][1].x),
+//											  	  strat_infos.slot[5][1].y, 
+//								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//
+//		err = goto_and_avoid(COLOR_X(strat_infos.slot[5][3].x),
+//											  	  strat_infos.slot[5][3].y, 
+//								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//
+//		err = goto_and_avoid(COLOR_X(strat_infos.slot[4][3].x),
+//											  	  strat_infos.slot[4][3].y, 
+//								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//
+//		err = goto_and_avoid(COLOR_X(strat_infos.slot[4][1].x),
+//											  	  strat_infos.slot[4][1].y, 
+//								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+
+//		if(opp_y_is_more_than(875)) {
+//			err = goto_and_avoid(COLOR_X(strat_infos.slot[2][3].x),
+//											  	  strat_infos.slot[2][3].y, 
+//								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//
+//		}
+//		else {
+//			err = goto_and_avoid(COLOR_X(strat_infos.slot[2][1].x),
+//											  	  strat_infos.slot[2][1].y, 
+//								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+//		}
+//	}
+
+//		err = goto_and_avoid(COLOR_X(strat_infos.slot[5][1].x),
+//											  	  strat_infos.slot[5][1].y, 
+//								  TRAJ_FLAGS_NO_NEAR, TRAJ_FLAGS_NO_NEAR);
+
+//	while(time_get_s() < 80);
+//	strat_set_speed(4000, 4000);
 
 
 	/* try to place on bonus */
